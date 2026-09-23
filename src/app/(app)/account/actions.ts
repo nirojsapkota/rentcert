@@ -7,7 +7,7 @@ import { requireUser } from "@/server/session";
 
 export type ProfileFormState = {
   status: "idle" | "saved" | "invalid";
-  fieldErrors?: Partial<Record<"firstName" | "lastName" | "timezone" | "notificationEmail", string>>;
+  fieldErrors?: Partial<Record<"firstName" | "lastName" | "timezone" | "notificationEmail" | "reminderEmailsEnabled", string>>;
 };
 
 export async function updateProfileAction(_prev: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
@@ -18,6 +18,7 @@ export async function updateProfileAction(_prev: ProfileFormState, formData: For
     lastName: formData.get("lastName") ?? "",
     timezone: formData.get("timezone") ?? "",
     notificationEmail: formData.get("notificationEmail") ?? "",
+    reminderEmailsEnabled: formData.get("reminderEmailsEnabled"),
   });
   if (!parsed.success) {
     const fieldErrors: ProfileFormState["fieldErrors"] = {};

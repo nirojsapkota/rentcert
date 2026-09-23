@@ -3,7 +3,7 @@ import { findProfile, updateProfile } from "@/server/account";
 import { db } from "@/server/db";
 import { createVerifiedUser } from "../support/auth-http";
 
-const input = { firstName: "Sam", lastName: "Lee", timezone: "Australia/Sydney", notificationEmail: "alerts@example.com" };
+const input = { firstName: "Sam", lastName: "Lee", timezone: "Australia/Sydney", notificationEmail: "alerts@example.com", reminderEmailsEnabled: false };
 
 describe("updateProfile", () => {
   it("updates only the given user and records which fields changed", async () => {
@@ -17,7 +17,7 @@ describe("updateProfile", () => {
     expect(await findProfile(other.userId)).toMatchObject({ firstName: "Alex", timezone: "Australia/Melbourne" });
 
     const event = await db.auditEvent.findFirstOrThrow({ where: { userId: alex.userId, action: "user.updated" } });
-    expect(event.metadata).toEqual({ changedFields: ["firstName", "lastName", "timezone", "notificationEmail"] });
+    expect(event.metadata).toEqual({ changedFields: ["firstName", "lastName", "timezone", "notificationEmail", "reminderEmailsEnabled"] });
   });
 
   it("writes no audit event when nothing changed", async () => {
@@ -29,6 +29,7 @@ describe("updateProfile", () => {
       lastName: current.lastName,
       timezone: current.timezone,
       notificationEmail: current.notificationEmail,
+      reminderEmailsEnabled: current.reminderEmailsEnabled,
     });
 
     expect(await db.auditEvent.count({ where: { userId, action: "user.updated" } })).toBe(0);

@@ -12,10 +12,12 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "worker": "tsx --import ./scripts/server-only-shim.mjs --env-file-if-exists=.env src/worker.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1138.0",
+    "@aws-sdk/client-sesv2": "^3.1138.0",
     "@aws-sdk/s3-request-presigner": "^3.1138.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
@@ -23,9 +25,11 @@
     "better-auth": "^1.7.5",
     "next": "16.3.6",
     "pg": "^8.23.0",
+    "pg-boss": "^12.33.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
+    "tsx": "^4.23.15",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -39,7 +43,6 @@
     "eslint-config-next": "16.3.6",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
-    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.1"
   },

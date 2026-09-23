@@ -3,7 +3,13 @@ import { addMonths } from "@/lib/calendar-date";
 import { isUuid } from "@/lib/ids";
 import type { Prisma } from "@/generated/prisma/client";
 import { GENERIC_JURISDICTION, requirementsFor } from "@/server/compliance/requirements";
-import { buildSchedule, type RecordSummary, type RequirementInfo, type ScheduleItem } from "@/server/compliance/schedule";
+import {
+  buildSchedule,
+  currentRecordsByCode,
+  type RecordSummary,
+  type RequirementInfo,
+  type ScheduleItem,
+} from "@/server/compliance/schedule";
 import { db } from "@/server/db";
 import { findPropertyForUser, listActivePropertiesForUser } from "@/server/properties/queries";
 
@@ -140,3 +146,73 @@ export async function listRecentCompletions(userId: string, today: string, limit
   });
 }
 
+
+export type ReminderCandidate = {
+  recordId: string;
+  propertyId: string;
+  userId: string;
+  timezone: string;
+  nextDueOn: string;
+  recordCreatedAt: Date;
+};
+
+// Current records on active properties, for applicable requirements, owned by verified users who
+// want reminder emails. Used by the reminder scan (with a due-date horizon) and to re-check a
+// single record just before sending (with recordIds).
+export async function listReminderCandidates(options: {
+  nextDueOnOrBefore?: Date;
+  recordIds?: string[];
+  skipFinished?: boolean; // skip records whose final (overdue) reminder already exists
+}): Promise<ReminderCandidate[]> {
+  const candidates = await db.complianceRecord.findMany({
+    where: {
+      ...(options.recordIds ? { id: { in: options.recordIds } } : {}),
+      ...(options.nextDueOnOrBefore ? { nextDueOn: { lte: options.nextDueOnOrBefore } } : {}),
+      ...(options.skipFinished ? { reminders: { none: { reminderType: "OVERDUE_7" } } } : {}),
+      property: { archivedAt: null, user: { emailVerified: true, reminderEmailsEnabled: true } },
+    },
+    select: {
+      id: true,
+      propertyId: true,
+      createdAt: true,
+      nextDueOn: true,
+      requirement: { select: { code: true } },
+      property: { select: { state: true, userId: true, user: { select: { timezone: true } } } },
+    },
+  });
+  if (candidates.length === 0) return [];
+
+  const propertyIds = [...new Set(candidates.map((row) => row.propertyId))];
+  const [requirements, exclusions, allRecords] = await Promise.all([
+    db.complianceRequirement.findMany({ where: { active: true }, select: { jurisdiction: true, code: true } }),
+    db.propertyRequirementExclusion.findMany({ where: { propertyId: { in: propertyIds } } }),
+    db.complianceRecord.findMany({ where: { propertyId: { in: propertyIds } }, select: recordSummarySelect }),
+  ]);
+
+  const currentByProperty = new Map(
+    propertyIds.map((id) => [id, currentRecordsByCode(allRecords.filter((row) => row.propertyId === id).map(toSummary))]),
+  );
+  const codesFor = (state: string) => {
+    const specific = requirements.filter((row) => row.jurisdiction === state);
+    return new Set((specific.length > 0 ? specific : requirements.filter((row) => row.jurisdiction === GENERIC_JURISDICTION)).map((row) => row.code));
+  };
+
+  return candidates.flatMap((row) => {
+    const code = row.requirement.code;
+    const isCurrent = currentByProperty.get(row.propertyId)?.get(code)?.id === row.id;
+    const applicable =
+      codesFor(row.property.state).has(code) &&
+      !exclusions.some((exclusion) => exclusion.propertyId === row.propertyId && exclusion.requirementCode === code);
+    if (!isCurrent || !applicable) return [];
+    return [
+      {
+        recordId: row.id,
+        propertyId: row.propertyId,
+        userId: row.property.userId,
+        timezone: row.property.user.timezone,
+        nextDueOn: row.nextDueOn.toISOString().slice(0, 10),
+        recordCreatedAt: row.createdAt,
+      },
+    ];
+  });
+}

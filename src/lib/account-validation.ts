@@ -49,6 +49,8 @@ export const profileSchema = z.object({
     .toLowerCase()
     .transform((value) => (value === "" ? null : value))
     .pipe(z.email("Enter a valid notification email address.").nullable()),
+  // Checkbox: present ("on") when ticked, missing when not.
+  reminderEmailsEnabled: z.preprocess((value) => value === "on" || value === true, z.boolean()),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

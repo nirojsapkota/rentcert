@@ -58,6 +58,19 @@ export class S3Storage implements DocumentStorage {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
   }
 
+  async *listAll() {
+    let token: string | undefined;
+    do {
+      const page = await this.client.send(
+        new ListObjectsV2Command({ Bucket: this.bucket, Prefix: "documents/", ContinuationToken: token }),
+      );
+      for (const object of page.Contents ?? []) {
+        if (object.Key && object.LastModified) yield { key: object.Key, lastModified: object.LastModified };
+      }
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
+  }
+
   async deletePrefix(prefix: string) {
     assertValidPrefix(prefix);
     let token: string | undefined;

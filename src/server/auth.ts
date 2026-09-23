@@ -15,6 +15,8 @@ import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/server/mail/messages";
 import { deleteAllDocumentsForUser } from "@/server/vault/commands";
+import { enqueue } from "@/server/jobs/queue";
+import { JOBS } from "@/server/jobs/names";
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;
 
@@ -57,6 +59,12 @@ export const auth = betterAuth({
     },
     afterEmailVerification: async (user) => {
       await recordAuditEvent({ userId: user.id, resourceType: "user", resourceId: user.id, action: "user.email_verified" });
+      try {
+        await enqueue(JOBS.sendWelcome, { userId: user.id });
+      } catch (error) {
+        // Verification must still succeed if the queue is unavailable.
+        console.error("[auth] could not enqueue welcome email", error instanceof Error ? error.name : "unknown");
+      }
     },
   },
   user: {

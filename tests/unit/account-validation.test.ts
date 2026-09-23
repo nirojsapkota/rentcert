@@ -22,6 +22,11 @@ describe("signUpSchema", () => {
 describe("profileSchema", () => {
   const valid = { firstName: "Alex", lastName: "Nguyen", timezone: "Australia/Melbourne", notificationEmail: "" };
 
+  it("reads the reminder checkbox as a boolean", () => {
+    expect(profileSchema.parse({ ...valid, reminderEmailsEnabled: "on" }).reminderEmailsEnabled).toBe(true);
+    expect(profileSchema.parse({ ...valid, reminderEmailsEnabled: null }).reminderEmailsEnabled).toBe(false);
+  });
+
   it("treats a blank notification email as not set", () => {
     expect(profileSchema.parse(valid).notificationEmail).toBeNull();
   });

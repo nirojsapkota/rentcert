@@ -12,17 +12,19 @@ datasource db {
 }
 
 model User {
-  id                String   @id
-  name              String
-  email             String   @unique
-  emailVerified     Boolean  @default(false) @map("email_verified")
-  image             String?
-  firstName         String   @map("first_name")
-  lastName          String   @map("last_name")
-  timezone          String   @default("Australia/Melbourne")
-  notificationEmail String?  @map("notification_email")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id                    String    @id
+  name                  String
+  email                 String    @unique
+  emailVerified         Boolean   @default(false) @map("email_verified")
+  image                 String?
+  firstName             String    @map("first_name")
+  lastName              String    @map("last_name")
+  timezone              String    @default("Australia/Melbourne")
+  notificationEmail     String?   @map("notification_email")
+  reminderEmailsEnabled Boolean   @default(true) @map("reminder_emails_enabled")
+  welcomeEmailSentAt    DateTime? @map("welcome_email_sent_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   sessions    Session[]
   accounts    Account[]
@@ -194,6 +196,7 @@ model ComplianceRecord {
   updatedAt             DateTime              @updatedAt @map("updated_at")
 
   documents ComplianceDocument[]
+  reminders ComplianceReminder[]
 
   @@index([propertyId, requirementId, nextDueOn])
   @@index([requirementId])
@@ -235,4 +238,38 @@ model ComplianceDocument {
 
   @@index([complianceRecordId, uploadedAt])
   @@map("compliance_documents")
+}
+
+enum ReminderType {
+  DAYS_30
+  DAYS_7
+  DUE_DATE
+  OVERDUE_7
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+// One row per reminder email for a record. The unique (record, type) pair is the idempotency
+// guarantee: a reminder is claimed by inserting its row, so it can never be sent twice.
+model ComplianceReminder {
+  id                 String           @id @default(uuid(7)) @db.Uuid
+  complianceRecordId String           @map("compliance_record_id") @db.Uuid
+  complianceRecord   ComplianceRecord @relation(fields: [complianceRecordId], references: [id], onDelete: Cascade)
+  reminderType       ReminderType     @map("reminder_type")
+  scheduledFor       DateTime         @map("scheduled_for") @db.Date
+  status             ReminderStatus   @default(PENDING)
+  attempts           Int              @default(0)
+  lastError          String?          @map("last_error")
+  sentAt             DateTime?        @map("sent_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  @@unique([complianceRecordId, reminderType])
+  @@index([status, scheduledFor])
+  @@map("compliance_reminders")
 }

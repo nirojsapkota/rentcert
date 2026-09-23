@@ -14,7 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 bin/setup                    # first-time setup (env, packages, dev + test DB migrations, Playwright)
-bin/dev                      # next dev on :3000
+bin/dev                      # next dev on :3000 + background worker
+npm run worker               # pg-boss worker only (tsx + scripts/server-only-shim.mjs)
 npm test                     # Vitest (unit + integration, real Postgres at TEST_DATABASE_URL)
 npm test -- path/to/file.test.ts
 npm test -- -t "test name"
@@ -46,7 +47,8 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
 - Vitest aliases `server-only` to an empty module and truncates every table before each test (`tests/support/setup.ts`). Add new tables to that list and to `tests/e2e/global-setup.ts`.
 - Auth integration tests call `auth.handler` with real `Request` objects (`tests/support/auth-http.ts`), so rate limiting and cookies are exercised.
 - Playwright specs import `test`/`expect` from `tests/e2e/fixtures.ts`, which gives each test its own `x-forwarded-for` IP; use `newUserPage()` for extra users. Without it, auth rate limits (3 sign-ups per minute) make tests flaky. After a client-side navigation, wait for the new page's heading before you fill fields.
-- `tests/integration/architecture.test.ts` fails if a user-owned model is touched outside its module (`property` → `src/server/properties/`; `complianceRecord`, `propertyRequirementExclusion` → `src/server/compliance/`). Add each new user-owned model to that list.
+- `tests/integration/architecture.test.ts` fails if a user-owned model is touched outside its module (`property` → `properties`; `complianceRecord`, `propertyRequirementExclusion` → `compliance`; `complianceDocument` → `vault`; `complianceReminder` → `reminders`). Add each new user-owned model to that list.
+- Reminder integration tests pin `NOW` to midnight UTC on Melbourne's current date (10:00 or 11:00 local), and backdate `createdAt` on records so reminders are eligible.
 - Vitest truncates user tables but never `compliance_requirements`: that is configuration seeded by migration, so tests rely on its rows.
 - Mobile layout: every `<main>` has `min-w-0` (the body is a flex column), and every `overflow-x-auto` table wrapper is `relative` (otherwise `sr-only` cells escape the scroll clip and widen the page). `expectNoHorizontalOverflow()` in `tests/e2e/helpers.ts` guards this.
 
@@ -71,5 +73,12 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - `checkFile()` runs before the compliance record is created, so a bad file never leaves a half-saved record.
   - Account deletion removes the `documents/<userId>/` prefix in Better Auth's `deleteUser.afterDelete`.
   - `next.config.ts` raises `serverActions.bodySizeLimit` to 11 MB for uploads.
+- Reminders and jobs (`src/server/reminders/`, `src/server/jobs/`, `src/worker.ts`):
+  - `dueReminder()` (`reminders/schedule.ts`) is the only place that decides which reminder is due. The rules: from 08:00 local time, only types scheduled after the record's creation day, and only the latest due type.
+  - The idempotency is the unique `(compliance_record_id, reminder_type)` row. `scanDueReminders()` claims with `INSERT … ON CONFLICT DO NOTHING RETURNING`, and `sendReminder()` only sends `PENDING` rows and re-checks eligibility through `listReminderCandidates()` in the compliance module.
+  - Email text uses the real days remaining at send time, so late reminders stay accurate.
+  - `enqueue()` (`jobs/queue.ts`) uses pg-boss, or runs the job inline when `QUEUE_DRIVER=inline` (Vitest and Playwright). Job bodies live in `jobs/handlers.ts` and are shared by both paths.
+  - The worker runs server modules outside Next.js. `scripts/server-only-shim.mjs` resolves `server-only` to an empty module; keep new worker imports free of Next.js-only APIs (`next/headers` and similar).
+  - `tsx` is a runtime dependency because production runs `npm run worker`.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

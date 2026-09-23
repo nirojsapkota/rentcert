@@ -12,6 +12,7 @@ type Profile = {
   lastName: string;
   timezone: string;
   notificationEmail: string | null;
+  reminderEmailsEnabled: boolean;
 };
 
 export function ProfileForm({ profile, timezones }: { profile: Profile; timezones: string[] }) {
@@ -36,6 +37,24 @@ export function ProfileForm({ profile, timezones }: { profile: Profile; timezone
         hint="Reminders go here. Leave blank to use your sign-in email."
         error={errors.notificationEmail}
       />
+      <div className="flex items-start gap-3">
+        <input
+          id="reminderEmailsEnabled"
+          name="reminderEmailsEnabled"
+          type="checkbox"
+          defaultChecked={profile.reminderEmailsEnabled}
+          aria-describedby="reminderEmailsEnabled-hint"
+          className="mt-1 h-4 w-4"
+        />
+        <div>
+          <label htmlFor="reminderEmailsEnabled" className="block text-sm font-medium">
+            Email reminders
+          </label>
+          <p id="reminderEmailsEnabled-hint" className="text-sm text-ink-muted">
+            Emails 30 and 7 days before a due date, on the due date, and 7 days after it.
+          </p>
+        </div>
+      </div>
       <div className="space-y-1.5">
         <label htmlFor="timezone" className="block text-sm font-medium">
           Timezone

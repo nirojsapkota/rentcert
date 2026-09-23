@@ -4,6 +4,8 @@ export interface DocumentStorage {
   download(key: string, filename: string, contentType: string): Promise<Response>;
   delete(key: string): Promise<void>;
   deletePrefix(prefix: string): Promise<void>;
+  // Every stored object under documents/, for the orphan cleanup job.
+  listAll(): AsyncIterable<{ key: string; lastModified: Date }>;
 }
 
 const KEY_PATTERN = /^documents\/[A-Za-z0-9_-]+\/[0-9a-f-]{36}$/;

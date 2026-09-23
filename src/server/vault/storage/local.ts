@@ -1,6 +1,6 @@
 import "server-only";
 import { createReadStream } from "node:fs";
-import { mkdir, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { downloadHeaders } from "@/server/vault/file-type";
@@ -32,6 +32,17 @@ export class LocalStorage implements DocumentStorage {
   async delete(key: string) {
     assertValidKey(key);
     await rm(this.pathFor(key), { force: true });
+  }
+
+  async *listAll() {
+    const root = this.pathFor("documents");
+    const users = await readdir(root).catch(() => [] as string[]);
+    for (const user of users) {
+      for (const name of await readdir(path.join(root, user)).catch(() => [] as string[])) {
+        const { mtime } = await stat(path.join(root, user, name));
+        yield { key: `documents/${user}/${name}`, lastModified: mtime };
+      }
+    }
   }
 
   async deletePrefix(prefix: string) {

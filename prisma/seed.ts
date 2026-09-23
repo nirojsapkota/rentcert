@@ -57,6 +57,8 @@ async function main() {
         completedOn: shifted,
         nextDueOn: parseCalendarDate(nextDue)!,
         providerName: "Example Safety Services",
+        // Entered on the day of the check, so reminders after that date can fire.
+        createdAt: shifted,
       };
     };
     await db.complianceRecord.createMany({
@@ -68,7 +70,7 @@ async function main() {
         completed(brunswick.id, "VIC", "smoke_alarm", 2),
         completed(brunswick.id, "VIC", "electrical", 20),
         completed(parramatta.id, "GENERIC", "smoke_alarm", 11),
-        { propertyId: parramatta.id, requirementId: requirement("GENERIC", "electrical").id, kind: "UNKNOWN_LAST_CHECK", nextDueOn: parseCalendarDate(today)! },
+        { propertyId: parramatta.id, requirementId: requirement("GENERIC", "electrical").id, kind: "UNKNOWN_LAST_CHECK", nextDueOn: parseCalendarDate(addMonths(today, -1))!, createdAt: parseCalendarDate(addMonths(today, -1))! },
       ],
     });
     await db.propertyRequirementExclusion.createMany({

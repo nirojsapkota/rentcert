@@ -52,3 +52,13 @@ export async function listDocumentsForUser(userId: string, page: number) {
   ]);
   return { documents, total, page: currentPage, pageCount: Math.max(1, Math.ceil(total / DOCUMENTS_PAGE_SIZE)) };
 }
+
+// Every document for a property, oldest record first (for the compliance pack).
+export async function listDocumentsForProperty(userId: string, propertyId: string) {
+  if (!isUuid(propertyId)) return [];
+  return db.complianceDocument.findMany({
+    where: { complianceRecord: { propertyId, property: { userId } } },
+    include: { complianceRecord: { select: { completedOn: true, requirement: { select: { name: true } } } } },
+    orderBy: [{ uploadedAt: "asc" }, { id: "asc" }],
+  });
+}

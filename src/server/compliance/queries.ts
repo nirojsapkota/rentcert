@@ -216,3 +216,14 @@ export async function listReminderCandidates(options: {
     ];
   });
 }
+
+// Every record for a property, newest completion first (for the compliance pack).
+export async function listAllPropertyHistory(userId: string, propertyId: string) {
+  const property = await findPropertyForUser(userId, propertyId);
+  if (!property) return null;
+  return db.complianceRecord.findMany({
+    where: { propertyId: property.id },
+    include: { requirement: { select: { name: true } } },
+    orderBy: [{ completedOn: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+  });
+}

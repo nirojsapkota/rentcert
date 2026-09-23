@@ -18,7 +18,8 @@ export type AuditAction =
   | "compliance_record.created"
   | "compliance_record.updated"
   | "document.uploaded"
-  | "document.deleted";
+  | "document.deleted"
+  | "compliance_pack.generated";
 
 type AuditInput = {
   userId: string;

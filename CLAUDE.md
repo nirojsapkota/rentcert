@@ -80,5 +80,8 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - `enqueue()` (`jobs/queue.ts`) uses pg-boss, or runs the job inline when `QUEUE_DRIVER=inline` (Vitest and Playwright). Job bodies live in `jobs/handlers.ts` and are shared by both paths.
   - The worker runs server modules outside Next.js. `scripts/server-only-shim.mjs` resolves `server-only` to an empty module; keep new worker imports free of Next.js-only APIs (`next/headers` and similar).
   - `tsx` is a runtime dependency because production runs `npm run worker`.
+- Compliance pack (`src/server/compliance-pack/`): `loadCompliancePack()` gathers pre-formatted data owner-scoped (reusing `getPropertySchedule`), and `CompliancePackGenerator` renders it with PDFKit and bundled Noto Sans (`assets/fonts/`, Latin/Greek/Cyrillic only). `pdfkit` is in `serverExternalPackages`, and the fonts are added through `outputFileTracingIncludes`. Every page footer carries the "not a certificate" disclaimer.
+- Tests read PDFs back with `tests/support/pdf-text.ts` (pdfjs-dist, dev only).
+- Next.js 16 allows only one `next dev` per folder. If the user's `bin/dev` is running, `npm run test:e2e` cannot start its server on :3100. Ask before stopping their server.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

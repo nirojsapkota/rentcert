@@ -13,6 +13,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // PDFKit loads its own font data from disk at runtime, so it must not be bundled.
+  serverExternalPackages: ["pdfkit"],
+  outputFileTracingIncludes: {
+    "/api/properties/[id]/compliance-pack": ["./assets/fonts/**"],
+  },
   experimental: {
     // Certificate uploads are up to 10 MB; leave room for the other form fields.
     serverActions: { bodySizeLimit: "11mb" },

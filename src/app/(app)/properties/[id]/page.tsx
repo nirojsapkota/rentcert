@@ -74,6 +74,9 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
           <Link href={`/properties/${property.id}/edit`} className={buttonClasses("secondary")}>
             Edit
           </Link>
+          <a href={`/api/properties/${property.id}/compliance-pack`} className={buttonClasses("secondary")}>
+            Download Compliance Pack
+          </a>
           <form action={(archived ? restorePropertyAction : archivePropertyAction).bind(null, property.id)}>
             <Button type="submit" variant="secondary">
               {archived ? "Restore" : "Archive"}

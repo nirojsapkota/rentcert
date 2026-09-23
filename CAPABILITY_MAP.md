@@ -12,7 +12,7 @@ section 57.
 | 3 (done) | compliance | `ComplianceRequirement` config (VIC rules plus a labelled generic schedule for other states), per-property applicability, `ComplianceRecord`, due-date and status calculators, property cards, history, mark-completed flow, onboarding wizard, dashboard statuses and filters | properties |
 | 4 (done) | vault | `ComplianceDocument`, S3 private storage, upload validation (magic bytes), authorised download and delete, scan hook | compliance |
 | 5 (done) | reminders | `ComplianceReminder`, daily scheduler (pg-boss), idempotent reminder emails, welcome email | compliance |
-| 6 | compliance-pack | `CompliancePackGenerator` PDF: cover, details, summary, history, document index | compliance, vault |
+| 6 (done) | compliance-pack | `CompliancePackGenerator` PDF: cover, details, summary, history, document index | compliance, vault |
 | 7 | billing | Stripe Checkout, idempotent signed webhooks, `BillingAccount`, `Subscription`, plan limits, admin-configurable trial length | foundation, properties |
 | 8 | hardening | Admin (read-only), data export, legal pages, landing, pricing, FAQ, analytics events, observability, CI/CD, deploy | all |
 

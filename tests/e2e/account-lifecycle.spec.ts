@@ -9,7 +9,7 @@ test("landlord signs up, verifies, manages the account and deletes it", async ({
 
   // Scenario 1: sign up requests email verification.
   await page.goto("/");
-  await page.getByRole("link", { name: "Start free" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Start free" }).first().click();
   await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
   await page.getByLabel("First name").fill("Alex");
   await page.getByLabel("Last name").fill("Nguyen");

@@ -21,7 +21,12 @@ export type AuditAction =
   | "document.deleted"
   | "compliance_pack.generated"
   | "billing.checkout_started"
-  | "billing.subscription_changed";
+  | "billing.subscription_changed"
+  | "admin.viewed"
+  | "admin.requirement_updated"
+  | "admin.requirement_verified"
+  | "admin.setting_updated"
+  | "account.exported";
 
 type AuditInput = {
   userId: string;

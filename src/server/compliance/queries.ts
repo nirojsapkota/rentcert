@@ -232,3 +232,16 @@ export async function listAllPropertyHistory(userId: string, propertyId: string)
     orderBy: [{ completedOn: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
   });
 }
+
+// Every compliance record and exclusion of the user, for the account data export.
+export async function listComplianceForExport(userId: string) {
+  const [records, exclusions] = await Promise.all([
+    db.complianceRecord.findMany({
+      where: { property: { userId } },
+      include: { requirement: { select: { code: true, name: true, jurisdiction: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    db.propertyRequirementExclusion.findMany({ where: { property: { userId } } }),
+  ]);
+  return { records, exclusions };
+}

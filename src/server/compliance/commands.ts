@@ -2,6 +2,7 @@ import "server-only";
 import { parseCalendarDate, toCalendarDateString } from "@/lib/calendar-date";
 import type { CompletionInput, SetupAnswer } from "@/lib/compliance-validation";
 import type { Prisma } from "@/generated/prisma/client";
+import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
 import { nextDueOn } from "@/server/compliance/due-date";
 import { canWrite } from "@/server/billing/entitlements";
@@ -73,6 +74,7 @@ export async function setUpChecks(
             nextDueOn: asDate(nextDueOn(answer.lastCheckOn, requirement.recurrenceMonths)),
           },
         });
+        await track("compliance_record_created", userId, tx);
       }
     }
     if (Object.keys(summary).length > 0) {
@@ -120,6 +122,7 @@ export async function recordCompletion(
       },
       tx,
     );
+    await track("compliance_record_created", userId, tx);
     return created;
   });
   return { ok: true, recordId: record.id, nextDueOn: due };

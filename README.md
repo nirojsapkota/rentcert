@@ -94,6 +94,22 @@ in each user's timezone. Each reminder is claimed by a unique database row, so i
 For production email, set `EMAIL_PROVIDER=ses` and `MAILER_FROM` to an address on a domain
 verified in Amazon SES, and move the SES account out of the sandbox.
 
+## Admin
+
+Grant or revoke admin access from the command line (there is no UI for roles):
+
+```bash
+npm run admin:grant -- someone@example.com
+npm run admin:grant -- someone@example.com --revoke
+```
+
+Admins see `/admin`: funnel metrics and MRR, users, properties (no street addresses),
+subscriptions, compliance requirement settings (including "mark verified"), and the trial length.
+Admins cannot open users' documents. Every admin page view and change is audited.
+
+Users can download all their data from Account → "Export my data" (a ZIP of JSON files plus
+their original documents).
+
 ## Billing and Stripe
 
 New accounts get a free trial (length from the `trial_days` row in `app_settings`, default 365

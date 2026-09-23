@@ -2,6 +2,7 @@ import "server-only";
 import { parseCalendarDate } from "@/lib/calendar-date";
 import type { Prisma } from "@/generated/prisma/client";
 import type { PropertyInput } from "@/lib/property-validation";
+import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
 import { hasPropertySlot } from "@/server/billing/entitlements";
 import { propertyHasRecords } from "@/server/compliance/commands";
@@ -28,6 +29,7 @@ export async function createProperty(userId: string, input: PropertyInput) {
     if (!(await hasPropertySlot(tx, userId, activeCount(tx, userId)))) return { ok: false as const, reason: "limit_reached" as const };
     const property = await tx.property.create({ data: { ...toRow(input), userId } });
     await recordAuditEvent(audit(userId, property.id, "property.created"), tx);
+    await track("property_created", userId, tx);
     return { ok: true as const, property };
   });
 }

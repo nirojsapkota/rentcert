@@ -2,6 +2,7 @@ import "server-only";
 import { localityLine, streetLine } from "@/components/property-address";
 import { formatCalendarDate, parseCalendarDate, todayIn } from "@/lib/calendar-date";
 import { formatBytes } from "@/lib/format";
+import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
 import { getPropertySchedule, listAllPropertyHistory } from "@/server/compliance/queries";
 import { listDocumentsForProperty } from "@/server/vault/queries";
@@ -91,4 +92,5 @@ export async function recordPackGenerated(userId: string, propertyId: string) {
     action: "compliance_pack.generated",
     metadata: { propertyId },
   });
+  await track("compliance_pack_downloaded", userId);
 }

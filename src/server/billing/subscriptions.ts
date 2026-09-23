@@ -1,8 +1,10 @@
 import "server-only";
 import type Stripe from "stripe";
 import type { Prisma } from "@/generated/prisma/client";
+import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
-import { planForPriceId } from "./plans";
+
+import { ACTIVE_SUBSCRIPTION_STATUSES, planForPriceId } from "./plans";
 
 const idOf = (value: string | { id: string } | null | undefined) => (typeof value === "string" ? value : value?.id);
 const toDate = (seconds: number | null | undefined) => (seconds ? new Date(seconds * 1000) : null);
@@ -37,6 +39,10 @@ export async function upsertSubscription(tx: Prisma.TransactionClient, subscript
     create: { ...data, stripeSubscriptionId: subscription.id, billingAccountId: account.id },
     update: data,
   });
+  const wasActive = existing ? ACTIVE_SUBSCRIPTION_STATUSES.includes(existing.status) : false;
+  if (!wasActive && ACTIVE_SUBSCRIPTION_STATUSES.includes(subscription.status)) {
+    await track("subscription_started", account.userId, tx);
+  }
   if (!existing || existing.plan !== plan || existing.status !== subscription.status) {
     await recordAuditEvent(
       {

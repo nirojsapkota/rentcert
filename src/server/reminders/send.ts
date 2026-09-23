@@ -4,6 +4,7 @@ import { formatCalendarDate, toCalendarDateString, todayIn } from "@/lib/calenda
 import { daysRemaining } from "@/server/compliance/status";
 import { listReminderCandidates } from "@/server/compliance/queries";
 import { db } from "@/server/db";
+import { track } from "@/server/analytics/track";
 import { sendReminderEmail } from "@/server/mail/messages";
 
 export const MAX_SEND_ATTEMPTS = 5;
@@ -74,5 +75,6 @@ export async function sendReminder(reminderId: string): Promise<SendOutcome> {
     where: { id: reminder.id },
     data: { status: "SENT", sentAt: new Date(), attempts: reminder.attempts + 1, lastError: null },
   });
+  await track("reminder_sent", stillApplies.userId);
   return "sent";
 }

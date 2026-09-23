@@ -11,6 +11,7 @@ import {
   fullName,
   lastNameSchema,
 } from "@/lib/account-validation";
+import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/server/mail/messages";
@@ -77,6 +78,8 @@ export const auth = betterAuth({
       notificationEmail: { type: "string", required: false, input: false },
       // Set by the create hook from the trial_days setting; never accepted from the client.
       trialEndsAt: { type: "date", required: false, input: false },
+      // Granted only by `npm run admin:grant`; never accepted from the client.
+      role: { type: "string", required: false, input: false, defaultValue: "USER" },
     },
     deleteUser: {
       enabled: true,
@@ -113,6 +116,7 @@ export const auth = betterAuth({
         },
         after: async (user) => {
           await recordAuditEvent({ userId: user.id, resourceType: "user", resourceId: user.id, action: "user.created" });
+          await track("signup", user.id);
         },
       },
       update: {

@@ -62,3 +62,11 @@ export async function listDocumentsForProperty(userId: string, propertyId: strin
     orderBy: [{ uploadedAt: "asc" }, { id: "asc" }],
   });
 }
+
+// Every document row of the user, for the account data export.
+export async function listDocumentsForExport(userId: string) {
+  return db.complianceDocument.findMany({
+    where: { complianceRecord: { property: { userId } } },
+    orderBy: { uploadedAt: "asc" },
+  });
+}

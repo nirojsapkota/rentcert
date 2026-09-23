@@ -15,20 +15,41 @@ function sourceFiles(dir: string): string[] {
 
 describe("tenant isolation architecture", () => {
   // Each user-owned table may only be touched by its own module, which scopes every query by user.
+  // The admin module is the one deliberate cross-account reader (admin-only pages), and it may
+  // read properties but never documents.
   it.each([
-    ["property", "properties"],
-    ["complianceRecord", "compliance"],
-    ["propertyRequirementExclusion", "compliance"],
-    ["complianceDocument", "vault"],
-    ["complianceReminder", "reminders"],
-  ])("only src/server/%s's module touches %s", (model, moduleDir) => {
-    const allowed = path.join(SRC, "server", moduleDir);
+    ["property", ["properties", "admin"]],
+    ["complianceRecord", ["compliance"]],
+    ["propertyRequirementExclusion", ["compliance"]],
+    ["complianceDocument", ["vault"]],
+    ["complianceReminder", ["reminders"]],
+  ])("only the allowed modules touch %s", (model, moduleDirs) => {
+    const allowed = moduleDirs.map((dir) => path.join(SRC, "server", dir));
     const pattern = new RegExp(`\\b(db|tx)\\.${model}\\.`);
     const offenders = sourceFiles(SRC)
-      .filter((file) => !file.startsWith(allowed))
+      .filter((file) => !allowed.some((dir) => file.startsWith(dir)))
       .filter((file) => pattern.test(readFileSync(file, "utf8")))
       .map((file) => path.relative(SRC, file));
 
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("admin architecture", () => {
+  const ADMIN_APP = path.join(SRC, "app", "(app)", "admin");
+
+  it("every admin page and action checks requireAdmin()", () => {
+    const offenders = sourceFiles(ADMIN_APP)
+      .filter((file) => /(page|actions)\.tsx?$/.test(file))
+      .filter((file) => !readFileSync(file, "utf8").includes("requireAdmin()"))
+      .map((file) => path.relative(SRC, file));
+    expect(offenders).toEqual([]);
+  });
+
+  it("the admin module never reads documents", () => {
+    const offenders = sourceFiles(path.join(SRC, "server", "admin")).filter((file) =>
+      /complianceDocument|compliance_documents|storageKey|filename/.test(readFileSync(file, "utf8").replace(/\/\/.*$/gm, "")),
+    );
     expect(offenders).toEqual([]);
   });
 });

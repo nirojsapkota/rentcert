@@ -53,6 +53,13 @@ export class S3Storage implements DocumentStorage {
     return new Response(null, { status: 302, headers: { Location: url, "Cache-Control": "private, no-store" } });
   }
 
+  async read(key: string) {
+    assertValidKey(key);
+    const object = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    if (!object.Body) throw new Error("Empty object body");
+    return object.Body.transformToByteArray();
+  }
+
   async delete(key: string) {
     assertValidKey(key);
     await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));

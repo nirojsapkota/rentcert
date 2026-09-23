@@ -39,3 +39,8 @@ export async function listActivePropertiesForUser(userId: string) {
     select: { id: true, nickname: true, addressLine1: true, addressLine2: true, suburb: true, state: true, postcode: true },
   });
 }
+
+// Every property of the user, for the account data export.
+export async function listPropertiesForExport(userId: string) {
+  return db.property.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+}

@@ -1,6 +1,6 @@
 import "server-only";
 import { createReadStream } from "node:fs";
-import { mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { downloadHeaders } from "@/server/vault/file-type";
@@ -27,6 +27,11 @@ export class LocalStorage implements DocumentStorage {
     const { size } = await stat(file);
     const body = Readable.toWeb(createReadStream(file)) as ReadableStream<Uint8Array>;
     return new Response(body, { headers: { ...downloadHeaders(filename, contentType), "Content-Length": String(size) } });
+  }
+
+  async read(key: string) {
+    assertValidKey(key);
+    return new Uint8Array(await readFile(this.pathFor(key)));
   }
 
   async delete(key: string) {

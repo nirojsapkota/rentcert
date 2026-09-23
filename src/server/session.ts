@@ -1,6 +1,6 @@
 import "server-only";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { auth } from "@/server/auth";
 
@@ -17,3 +17,10 @@ export const requireUser = cache(async () => {
 });
 
 export type CurrentUser = Awaited<ReturnType<typeof requireUser>>;
+
+// Admin pages return 404 to everyone else, so their existence is not revealed.
+export const requireAdmin = cache(async () => {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") notFound();
+  return user;
+});

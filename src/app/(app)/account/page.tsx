@@ -28,6 +28,19 @@ export default async function AccountPage() {
         </div>
       </section>
 
+      <section aria-labelledby="export-heading" className="rounded-lg border border-line bg-surface p-6">
+        <h2 id="export-heading" className="text-lg font-semibold">
+          Export your data
+        </h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          Download a ZIP file with your account details, properties, compliance records, reminders, history and
+          uploaded documents.
+        </p>
+        <a href="/api/account/export" className="mt-4 inline-block font-medium text-brand hover:underline">
+          Export my data
+        </a>
+      </section>
+
       <section aria-labelledby="delete-heading" className="rounded-lg border border-danger/40 bg-surface p-6">
         <h2 id="delete-heading" className="text-lg font-semibold text-danger">
           Delete account

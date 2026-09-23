@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               <SignOutButton />
             </div>
           </div>
-          <AppNav />
+          <AppNav isAdmin={user.role === "ADMIN"} />
         </div>
       </header>
       {entitlement.plan === "READ_ONLY" && (

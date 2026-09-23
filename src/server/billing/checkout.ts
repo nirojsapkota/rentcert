@@ -1,5 +1,6 @@
 import "server-only";
 import type { Plan } from "@/generated/prisma/client";
+import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
 import { appUrl } from "@/server/mail/app-url";
@@ -50,6 +51,7 @@ export async function startCheckout(userId: string, plan: Plan, stripe: StripeLi
   if (!session.url) throw new Error("Stripe did not return a Checkout URL");
 
   await recordAuditEvent({ userId, resourceType: "user", resourceId: userId, action: "billing.checkout_started", metadata: { plan } });
+  await track("checkout_started", userId);
   return session.url;
 }
 

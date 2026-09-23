@@ -3,6 +3,8 @@ export interface DocumentStorage {
   // Returns the HTTP response for an already-authorised download.
   download(key: string, filename: string, contentType: string): Promise<Response>;
   delete(key: string): Promise<void>;
+  // Whole file contents, for the account data export.
+  read(key: string): Promise<Uint8Array>;
   deletePrefix(prefix: string): Promise<void>;
   // Every stored object under documents/, for the orphan cleanup job.
   listAll(): AsyncIterable<{ key: string; lastModified: Date }>;

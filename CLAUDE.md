@@ -90,6 +90,11 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - `trialEndsAt` is a Better Auth `input: false` field set in the user create hook from `app_settings.trial_days`. `app_settings` is seeded by migration and never truncated in tests.
   - Account deletion cancels subscriptions in `beforeDelete`; if Stripe fails, deletion fails with 503.
   - E2E uses `tests/e2e/fake-stripe-server.ts` (port 12111) through `STRIPE_API_HOST/PORT/PROTOCOL`.
+- Admin (`src/server/admin/`, `src/app/(app)/admin/`): `requireAdmin()` (404 for non-admins) in every admin page and action, enforced by the architecture test. The admin module is the only cross-account reader, may read `property`, and must never touch documents. `role` is a Better Auth `input: false` field, granted only by `npm run admin:grant`.
+- Analytics: `track()` (`src/server/analytics/track.ts`) writes `product_events` (name, user id, time; never addresses or filenames). It swallows its own errors. Landing visits are a cookieless daily counter (`/api/visit`).
+- Data export (`src/server/account-export.ts`) composes per-module `list…ForExport(userId)` functions and streams a ZIP with fflate. It never includes storage keys or password hashes.
+- Public pages live in `src/app/(marketing)/`. `tests/unit/public-wording.test.ts` bans the PLAN.md section 61 claims, and the privacy and terms pages must keep `<DraftNotice />` until legal review.
+- On this Mac the machine can sleep during long runs, which shows up as tests taking many minutes or the web server "timing out". Run `caffeinate -dims npm run test:e2e` for long suites.
 - Next.js 16 allows only one `next dev` per folder. If the user's `bin/dev` is running, `npm run test:e2e` cannot start its server on :3100. Ask before stopping their server.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

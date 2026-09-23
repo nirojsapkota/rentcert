@@ -25,6 +25,8 @@ model User {
   welcomeEmailSentAt    DateTime? @map("welcome_email_sent_at")
   // Set at sign-up from the trial_days setting; the default is a safety net only.
   trialEndsAt           DateTime  @default(dbgenerated("(now() + '365 days'::interval)")) @map("trial_ends_at")
+  // Granted only from the command line (npm run admin:grant). Never settable through the app.
+  role                  Role      @default(USER)
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
@@ -33,6 +35,7 @@ model User {
   auditEvents    AuditEvent[]
   properties     Property[]
   billingAccount BillingAccount?
+  productEvents  ProductEvent[]
 
   @@map("users")
 }
@@ -329,4 +332,31 @@ model AppSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("app_settings")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// First-party product analytics. Event name and time only: no addresses, filenames or documents.
+// user_id is cleared when an account is deleted so historical counts survive.
+model ProductEvent {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([name, createdAt])
+  @@index([userId, name])
+  @@map("product_events")
+}
+
+// Cookieless landing-page visit counter, one row per day. No personal data.
+model LandingVisit {
+  day   DateTime @id @db.Date
+  count Int      @default(0)
+
+  @@map("landing_visits")
 }

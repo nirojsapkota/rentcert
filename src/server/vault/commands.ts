@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
+import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
 import { canWrite } from "@/server/billing/entitlements";
 import { findRecordForUser } from "@/server/compliance/queries";
@@ -87,6 +88,7 @@ export async function uploadDocument(
         },
         tx,
       );
+      await track("document_uploaded", userId, tx);
     });
   } catch (error) {
     await storage.delete(storageKey).catch(() => undefined);

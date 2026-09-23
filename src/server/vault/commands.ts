@@ -1,4 +1,5 @@
 import "server-only";
+import { reportError } from "@/server/observability";
 import { createHash, randomUUID } from "node:crypto";
 import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
@@ -121,7 +122,7 @@ export async function deleteDocument(
     await getStorage().delete(document.storageKey);
   } catch (error) {
     // The row is gone, so the file is unreachable. A cleanup job can remove the orphan later.
-    console.error("[vault] failed to delete stored object", error instanceof Error ? error.name : "unknown");
+    reportError("vault", "failed to delete stored object", error);
   }
   return { ok: true, propertyId: document.complianceRecord.propertyId, recordId: document.complianceRecordId };
 }

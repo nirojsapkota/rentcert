@@ -2,6 +2,8 @@ import "server-only";
 import { scanDueReminders } from "@/server/reminders/scan";
 import { sendReminder } from "@/server/reminders/send";
 import { sendWelcome } from "@/server/reminders/welcome";
+import { checkJobHealth } from "@/server/ops/job-health";
+import { recordWorkerHeartbeat } from "@/server/ops/health";
 import { deleteOrphanedFiles } from "@/server/vault/cleanup";
 import { JOBS, type JobName } from "./names";
 
@@ -23,6 +25,12 @@ export async function runJob(name: JobName, data: Record<string, string>, enqueu
       return;
     case JOBS.cleanupFiles:
       await deleteOrphanedFiles();
+      return;
+    case JOBS.heartbeat:
+      await recordWorkerHeartbeat();
+      return;
+    case JOBS.checkJobHealth:
+      await checkJobHealth();
       return;
   }
 }

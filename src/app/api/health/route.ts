@@ -1,12 +1,14 @@
-import { db } from "@/server/db";
+import { checkHealth } from "@/server/ops/health";
+import { reportError } from "@/server/observability";
 
-// Liveness plus database reachability. Never return connection details or error text.
+// Database reachability plus, in production, a fresh worker heartbeat.
+// Never returns connection details or error text.
 export async function GET() {
   try {
-    await db.$queryRaw`SELECT 1`;
-    return Response.json({ status: "ok" });
+    const status = await checkHealth();
+    return Response.json({ status }, { status: status === "ok" ? 200 : 503, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error("[health] database check failed", error instanceof Error ? error.name : "unknown");
-    return Response.json({ status: "error" }, { status: 503 });
+    reportError("health", "health check failed", error);
+    return Response.json({ status: "degraded" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
 }

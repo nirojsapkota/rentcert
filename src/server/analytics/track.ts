@@ -1,4 +1,5 @@
 import "server-only";
+import { reportError } from "@/server/observability";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/server/db";
 
@@ -18,7 +19,7 @@ export async function track(name: ProductEventName, userId: string | null, clien
   try {
     await client.productEvent.create({ data: { name, userId } });
   } catch (error) {
-    console.error(`[analytics] could not record ${name}`, error instanceof Error ? error.name : "unknown");
+    reportError("analytics", `could not record ${name}`, error);
   }
 }
 

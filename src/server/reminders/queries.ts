@@ -9,3 +9,8 @@ export async function listRemindersForExport(userId: string) {
     orderBy: { createdAt: "asc" },
   });
 }
+
+// Reminders that failed after all retries since `since` (for operational alerts).
+export async function countFailedReminders(since: Date) {
+  return db.complianceReminder.count({ where: { status: "FAILED", updatedAt: { gte: since } } });
+}

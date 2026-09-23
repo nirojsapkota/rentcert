@@ -1,4 +1,5 @@
 "use server";
+import { reportError } from "@/server/observability";
 
 import { redirect } from "next/navigation";
 import { openBillingPortal, startCheckout } from "@/server/billing/checkout";
@@ -10,7 +11,7 @@ export async function checkoutAction(plan: "PROPERTY" | "PORTFOLIO") {
   try {
     url = await startCheckout(user.id, plan);
   } catch (error) {
-    console.error("[billing] checkout failed", error instanceof Error ? error.name : "unknown");
+    reportError("billing", "checkout failed", error);
     redirect("/billing?error=checkout");
   }
   redirect(url);
@@ -22,7 +23,7 @@ export async function portalAction() {
   try {
     url = await openBillingPortal(user.id);
   } catch (error) {
-    console.error("[billing] portal failed", error instanceof Error ? error.name : "unknown");
+    reportError("billing", "portal failed", error);
     redirect("/billing?error=portal");
   }
   redirect(url ?? "/billing");

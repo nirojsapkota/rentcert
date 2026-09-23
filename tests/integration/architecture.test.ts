@@ -53,3 +53,33 @@ describe("admin architecture", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe("route protection", () => {
+  const APP = path.join(SRC, "app");
+
+  it("every signed-in page and server action checks the session", () => {
+    const offenders = sourceFiles(path.join(APP, "(app)"))
+      .filter((file) => /(page\.tsx|actions\.ts)$/.test(file))
+      .filter((file) => !/requireUser\(\)|requireAdmin\(\)/.test(readFileSync(file, "utf8")))
+      .map((file) => path.relative(SRC, file));
+    expect(offenders).toEqual([]);
+  });
+
+  it("every API route is on the reviewed list with its access check", () => {
+    // Reviewed in docs/security-review.md. Add new routes there and here together.
+    const REVIEWED: Record<string, RegExp> = {
+      "api/account/export/route.ts": /auth\.api\.getSession/,
+      "api/auth/[...all]/route.ts": /toNextJsHandler/,
+      "api/documents/[id]/download/route.ts": /auth\.api\.getSession/,
+      "api/health/route.ts": /checkHealth/,
+      "api/properties/[id]/compliance-pack/route.ts": /auth\.api\.getSession/,
+      "api/visit/route.ts": /countLandingVisit/,
+      "api/webhooks/stripe/route.ts": /handleStripeWebhook/,
+    };
+    const routes = sourceFiles(path.join(APP, "api")).map((file) => path.relative(APP, file));
+    expect(routes.sort()).toEqual(Object.keys(REVIEWED).sort());
+    for (const [route, check] of Object.entries(REVIEWED)) {
+      expect(readFileSync(path.join(APP, route), "utf8")).toMatch(check);
+    }
+  });
+});

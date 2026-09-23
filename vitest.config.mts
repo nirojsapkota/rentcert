@@ -27,6 +27,7 @@ export default defineConfig({
       BETTER_AUTH_URL: "http://localhost:3000",
       BETTER_AUTH_SECRET: "test-secret-that-is-at-least-32-characters-long",
       QUEUE_DRIVER: "inline",
+      TRUSTED_PROXY_CIDRS: "172.18.0.0/16",
       STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
       STRIPE_PRICE_PROPERTY: "price_property",
       STRIPE_PRICE_PORTFOLIO: "price_portfolio",

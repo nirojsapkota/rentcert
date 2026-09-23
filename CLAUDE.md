@@ -94,6 +94,11 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
 - Analytics: `track()` (`src/server/analytics/track.ts`) writes `product_events` (name, user id, time; never addresses or filenames). It swallows its own errors. Landing visits are a cookieless daily counter (`/api/visit`).
 - Data export (`src/server/account-export.ts`) composes per-module `list…ForExport(userId)` functions and streams a ZIP with fflate. It never includes storage keys or password hashes.
 - Public pages live in `src/app/(marketing)/`. `tests/unit/public-wording.test.ts` bans the PLAN.md section 61 claims, and the privacy and terms pages must keep `<DraftNotice />` until legal review.
+- Security and observability (8b):
+  - `src/proxy.ts` sets a per-request nonce CSP and `x-request-id`. The root layout calls `connection()`, so every page renders dynamically, which nonces need. Never add inline `<script>` without the nonce (`headers().get("x-nonce")`), and keep `connect-src 'self'` (Sentry uses the `/monitoring` tunnel).
+  - Log with `logger` from `src/server/logger.ts` or `reportError()` from `src/server/observability.ts`, never `console.*` (the dev-only console mail adapter is the exception). Log error names, not messages.
+  - Better Auth reads the client IP from `x-forwarded-for` with `TRUSTED_PROXY_CIDRS`. Tests set `172.18.0.0/16` and send "spoofed, real" chains.
+  - `tests/integration/architecture.test.ts` requires `requireUser()`/`requireAdmin()` in every `(app)` page and action, and every `/api` route to be on its reviewed list (mirrored in `docs/security-review.md`).
 - On this Mac the machine can sleep during long runs, which shows up as tests taking many minutes or the web server "timing out". Run `caffeinate -dims npm run test:e2e` for long suites.
 - Next.js 16 allows only one `next dev` per folder. If the user's `bin/dev` is running, `npm run test:e2e` cannot start its server on :3100. Ask before stopping their server.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.

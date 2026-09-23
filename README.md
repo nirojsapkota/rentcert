@@ -94,6 +94,18 @@ in each user's timezone. Each reminder is claimed by a unique database row, so i
 For production email, set `EMAIL_PROVIDER=ses` and `MAILER_FROM` to an address on a domain
 verified in Amazon SES, and move the SES account out of the sandbox.
 
+## Observability
+
+- JSON logs (pino) with sensitive fields and emails redacted. `LOG_LEVEL` sets the level.
+- Sentry for web, browser and worker when `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` are set. Browser
+  events go through the same-origin `/monitoring` tunnel, and events never include cookies, headers,
+  query strings, request bodies or emails.
+- The worker writes a heartbeat every minute. An hourly check alerts (Sentry and `ALERT_EMAIL`) on
+  failed reminders, failed jobs or a stale worker, at most every 6 hours.
+- `/api/health` returns `{"status":"ok"}`, or 503 `{"status":"degraded"}`. With
+  `HEALTH_CHECK_WORKER=true` it also requires a fresh worker heartbeat.
+- A nonce-based Content-Security-Policy is set in `src/proxy.ts`. See `docs/security-review.md`.
+
 ## Admin
 
 Grant or revoke admin access from the command line (there is no UI for roles):

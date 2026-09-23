@@ -1,4 +1,5 @@
 import "server-only";
+import { logger } from "@/server/logger";
 import type Stripe from "stripe";
 import type { Prisma } from "@/generated/prisma/client";
 import { track } from "@/server/analytics/track";
@@ -15,13 +16,13 @@ export async function upsertSubscription(tx: Prisma.TransactionClient, subscript
   const customerId = idOf(subscription.customer);
   const account = customerId ? await tx.billingAccount.findUnique({ where: { stripeCustomerId: customerId } }) : null;
   if (!account) {
-    console.warn("[billing] subscription for an unknown customer ignored");
+    logger.warn({ module: "billing" }, "subscription for an unknown customer ignored");
     return;
   }
   const item = subscription.items.data[0];
   const plan = planForPriceId(item?.price.id);
   if (!plan) {
-    console.warn("[billing] subscription with an unknown price ignored");
+    logger.warn({ module: "billing" }, "subscription with an unknown price ignored");
     return;
   }
 

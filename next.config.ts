@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 // Baseline security headers. A Content-Security-Policy is added during production hardening (Phase 8).
@@ -27,4 +28,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry: browser events go through the same-origin /monitoring tunnel, so the CSP can keep
+// connect-src 'self'. Source maps upload only when SENTRY_AUTH_TOKEN is set (CI).
+export default withSentryConfig(nextConfig, {
+  tunnelRoute: "/monitoring",
+  silent: true,
+  telemetry: false,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+});

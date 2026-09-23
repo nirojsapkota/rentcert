@@ -1,4 +1,5 @@
 import "server-only";
+import { reportError } from "@/server/observability";
 import { PgBoss } from "pg-boss";
 import { runJob } from "./handlers";
 import { RETRY_OPTIONS, type JobName } from "./names";
@@ -19,7 +20,7 @@ export async function enqueue(name: JobName, data: Record<string, string>): Prom
     try {
       await runJob(name, data, enqueue);
     } catch (error) {
-      console.error(`[jobs] inline job ${name} failed`, error instanceof Error ? error.name : "unknown");
+      reportError("jobs", `inline job ${name} failed`, error);
     }
     return;
   }

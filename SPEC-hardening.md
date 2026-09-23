@@ -1,6 +1,6 @@
 # Spec: hardening (Phase 8)
 
-Status: 8a IMPLEMENTED (2026-09-23); 8b and 8c scoped. Module id: `hardening`. Depends on: all earlier modules.
+Status: 8a IMPLEMENTED (2026-09-23); 8b IMPLEMENTED (2026-09-24); 8c scoped. Module id: `hardening`. Depends on: all earlier modules.
 Source: PLAN.md sections 31–36, 38, 42, 46, 47, 50–55, 60, 61, 65.
 
 Phase 8 is too large for one review, so it is split into three sub-phases, each with its own
@@ -62,16 +62,66 @@ public pages contain none of the PLAN.md section 61 phrases.
 
 ---
 
-## 8b. Production hardening (scope; detailed spec after 8a)
+## 8b. Production hardening (approved 2026-09-24)
 
-- Content-Security-Policy with nonces (Next.js 16 proxy), in addition to the existing headers.
-- Trusted client IP for rate limiting: only the load balancer's `x-forwarded-for` hop is used
-  (Better Auth `advanced.ipAddress`). This closes the spoofing gap noted in Phase 1.
-- Structured JSON logs with request ids, and redaction of tokens, cookies, signed URLs and emails.
-- Error tracking (see question 4), job failure alerts (FAILED reminders, dead pg-boss jobs), and a
-  `/api/health` check extended to the queue.
-- Human-readable error pages; no stack traces in production.
-- A security review pass: dependency audit, OWASP checklist, and IDOR sweep across every route.
+### Content-Security-Policy (nonce-based)
+
+- `src/proxy.ts` (Next.js 16 Proxy) generates a nonce per request and sets:
+  `default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline';
+  img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self';
+  form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests` (development adds `'unsafe-eval'`).
+- Nonces need dynamic rendering, so the few static pages (landing, pricing, legal, auth forms)
+  become dynamic. The cost is small at our traffic.
+- `style-src 'unsafe-inline'` stays because React and Next inject inline styles. Scripts are the
+  risk that CSP closes, and they are nonce-only.
+- Sentry events go through a same-origin tunnel route, so `connect-src` stays `'self'`.
+- A test checks the header on a page and that no inline script runs without the nonce.
+
+### Trusted client IP for rate limiting
+
+- Better Auth `advanced.ipAddress`: `ipAddressHeaders: ["x-forwarded-for"]` and
+  `trustedProxies` set to the Docker network range kamal-proxy connects from
+  (`TRUSTED_PROXY_CIDRS`, for example `172.18.0.0/16`). The chain is walked right to left, so a
+  client-supplied `x-forwarded-for` value can no longer choose its own rate-limit bucket.
+- The app port is reachable only from kamal-proxy (8c security group and Docker network).
+- A test sends a spoofed header through a simulated proxy chain and checks the rate limit still applies.
+
+### Structured logs
+
+- `pino` JSON logs in web and worker, with `requestId` (from `x-request-id`, set in the Proxy if
+  missing), level, message and module. Redaction paths remove cookies, authorization, tokens,
+  passwords, signed URLs (`X-Amz-Signature`), storage keys and email addresses.
+- Existing `console.*` calls move to the logger. A unit test checks that redaction works.
+
+### Error tracking and alerts
+
+- **Sentry** (`@sentry/nextjs`) for web and worker, disabled when `SENTRY_DSN` is unset.
+  `sendDefaultPii: false`; `beforeSend` strips cookies, headers, query strings and request bodies;
+  traces are sampled at 10 % for basic performance metrics.
+- **Job alerts:** an hourly check reports to Sentry, and emails `ALERT_EMAIL`, when reminders
+  reached `FAILED` in the last 24 hours, pg-boss has failed jobs, or the worker heartbeat is
+  older than 10 minutes.
+- **Health:** `/api/health` returns `{"status":"ok"}` only when the database answers and the worker
+  heartbeat (written every minute to `app_settings`) is fresh. Otherwise it returns 503
+  `{"status":"degraded"}`, with no detail.
+
+### Error pages
+
+`app/error.tsx`, `app/global-error.tsx` and `not-found.tsx` show plain messages with a reference id
+(the Sentry event id). There are no stack traces in production (Next.js default, checked by a test
+against `next start`).
+
+### Security review pass
+
+`docs/security-review.md`: an OWASP Top 10 checklist with findings and fixes; cookie flags in
+production (`Secure`, `HttpOnly`, `SameSite=Lax`); `npm audit`; a list of every route with its
+auth check, cross-checked against the IDOR tests; secrets kept only in the environment.
+
+### Needs from you (8b)
+
+- A Sentry account and project DSN (free tier is fine). The code ships without it and turns on once
+  `SENTRY_DSN` is set.
+- An address for `ALERT_EMAIL`.
 
 ## 8c. Deployment (scope; detailed spec after 8b)
 

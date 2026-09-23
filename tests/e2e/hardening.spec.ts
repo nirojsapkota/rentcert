@@ -69,3 +69,38 @@ test("a user exports their data as a ZIP", async ({ page }, testInfo) => {
   expect(Object.keys(files)).toContain("account.json");
   expect(new TextDecoder().decode(files["account.json"])).toContain(email);
 });
+
+test("pages send a nonce CSP and run without CSP violations", async ({ page }, testInfo) => {
+  const violations: string[] = [];
+  page.on("console", (message) => {
+    if (/Content Security Policy|Refused to (execute|load|apply|connect)/i.test(message.text())) violations.push(message.text());
+  });
+
+  const home = await page.goto("/");
+  const csp = home?.headers()["content-security-policy"] ?? "";
+  const nonce = csp.match(/'nonce-([^']+)'/)?.[1];
+  expect(nonce).toBeTruthy();
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(home?.headers()["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/);
+  // Every script tag in the server-rendered HTML carries this request's nonce. (Scripts that
+  // those scripts add later are allowed by 'strict-dynamic' and need no nonce of their own.)
+  const html = (await home?.text()) ?? "";
+  const scriptTags = html.match(/<script\b[^>]*>/g) ?? [];
+  expect(scriptTags.length).toBeGreaterThan(0);
+  expect(scriptTags.filter((tag) => !tag.includes(`nonce="${nonce}"`))).toEqual([]);
+
+  // A second request gets a different nonce.
+  const again = await page.request.get("/");
+  expect(again.headers()["content-security-policy"]).not.toContain(`'nonce-${nonce}'`);
+
+  await signUpAndVerify(page, `csp-${testInfo.project.name}@example.com`);
+  for (const path of ["/dashboard", "/properties/new", "/documents", "/billing", "/account", "/pricing"]) {
+    await page.goto(path);
+    await expect(page.locator("main")).toBeVisible();
+  }
+  // Client-side navigation and hydration still work under the policy.
+  await page.goto("/dashboard");
+  await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Properties" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Properties" })).toBeVisible();
+  expect(violations).toEqual([]);
+});

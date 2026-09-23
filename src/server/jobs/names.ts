@@ -3,6 +3,8 @@ export const JOBS = {
   sendReminder: "send-reminder-email",
   sendWelcome: "send-welcome-email",
   cleanupFiles: "cleanup-orphaned-files",
+  heartbeat: "worker-heartbeat",
+  checkJobHealth: "check-job-health",
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

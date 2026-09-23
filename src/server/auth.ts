@@ -1,4 +1,5 @@
 import "server-only";
+import { reportError } from "@/server/observability";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError } from "better-auth/api";
@@ -66,7 +67,7 @@ export const auth = betterAuth({
         await enqueue(JOBS.sendWelcome, { userId: user.id });
       } catch (error) {
         // Verification must still succeed if the queue is unavailable.
-        console.error("[auth] could not enqueue welcome email", error instanceof Error ? error.name : "unknown");
+        reportError("auth", "could not enqueue welcome email", error);
       }
     },
   },
@@ -89,7 +90,7 @@ export const auth = betterAuth({
         try {
           await cancelSubscriptionsForUser(user.id);
         } catch (error) {
-          console.error("[auth] could not cancel subscriptions before account deletion", error instanceof Error ? error.name : "unknown");
+          reportError("auth", "could not cancel subscriptions before account deletion", error);
           throw new APIError("SERVICE_UNAVAILABLE", { message: "We couldn't cancel your subscription. Please try again in a few minutes." });
         }
       },
@@ -100,7 +101,7 @@ export const auth = betterAuth({
         try {
           await deleteAllDocumentsForUser(user.id);
         } catch (error) {
-          console.error("[auth] failed to delete stored documents after account deletion", error instanceof Error ? error.name : "unknown");
+          reportError("auth", "failed to delete stored documents after account deletion", error);
         }
       },
     },
@@ -139,6 +140,18 @@ export const auth = betterAuth({
       "/send-verification-email": { window: 300, max: 3 },
       "/reset-password": { window: 300, max: 5 },
       "/delete-user": { window: 300, max: 5 },
+    },
+  },
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: ["x-forwarded-for"],
+      // The reverse proxy (kamal-proxy) appends the real client address to X-Forwarded-For.
+      // With its network listed here, the chain is read right to left and a client-supplied
+      // X-Forwarded-For value can no longer pick its own rate-limit bucket.
+      trustedProxies: (process.env.TRUSTED_PROXY_CIDRS ?? "")
+        .split(",")
+        .map((cidr) => cidr.trim())
+        .filter(Boolean),
     },
   },
   plugins: [nextCookies()],

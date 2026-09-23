@@ -16,3 +16,12 @@ export async function signUpAndVerify(page: Page, email: string, firstName = "Al
   await page.goto(await linkFromLatestMail(email, "Verify your email for RentCert"));
   await expect(page).toHaveURL(/\/dashboard$/);
 }
+
+// Fails if the page is wider than the viewport (a phone would zoom out or scroll sideways).
+export async function expectNoHorizontalOverflow(page: Page) {
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+}

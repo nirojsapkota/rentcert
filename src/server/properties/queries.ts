@@ -1,5 +1,5 @@
 import "server-only";
-import { z } from "zod";
+import { isUuid } from "@/lib/ids";
 import { db } from "@/server/db";
 
 // Every query takes the signed-in user's id. Nothing here looks up a property by id alone.
@@ -7,8 +7,6 @@ import { db } from "@/server/db";
 export const PROPERTIES_PAGE_SIZE = 20;
 
 export type PropertyView = "active" | "archived";
-
-const isUuid = (value: string) => z.uuid().safeParse(value).success;
 
 export async function findPropertyForUser(userId: string, propertyId: string) {
   if (!isUuid(propertyId)) return null;
@@ -33,4 +31,11 @@ export async function countActiveProperties(userId: string) {
   return db.property.count({ where: { userId, archivedAt: null } });
 }
 
-export { isUuid };
+// Active properties for dashboard summaries. Owner-scoped, newest first.
+export async function listActivePropertiesForUser(userId: string) {
+  return db.property.findMany({
+    where: { userId, archivedAt: null },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { id: true, nickname: true, addressLine1: true, addressLine2: true, suburb: true, state: true, postcode: true },
+  });
+}

@@ -4,18 +4,27 @@ import { notFound } from "next/navigation";
 import { localityLine, propertyTitle, streetLine } from "@/components/property-address";
 import { Alert } from "@/components/ui/alert";
 import { Button, buttonClasses } from "@/components/ui/button";
-import { formatCalendarDate } from "@/lib/calendar-date";
-import { findPropertyForUser } from "@/server/properties/queries";
+import { formatCalendarDate, todayIn } from "@/lib/calendar-date";
+import { getPropertySchedule, listPropertyHistory } from "@/server/compliance/queries";
 import { requireUser } from "@/server/session";
 import { archivePropertyAction, deletePropertyAction, restorePropertyAction } from "../actions";
+import { ComplianceSection } from "../compliance-section";
+import { HistoryTable } from "../history-table";
 
 export const metadata: Metadata = { title: "Property" };
 
 export default async function PropertyPage({ params, searchParams }: PageProps<"/properties/[id]">) {
-  const [{ id }, { saved }] = await Promise.all([params, searchParams]);
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const user = await requireUser();
-  const property = await findPropertyForUser(user.id, id);
-  if (!property) notFound();
+  const today = todayIn(user.timezone ?? "Australia/Melbourne");
+  const historyPage = Number.parseInt(String(query.history ?? "1"), 10);
+  const [schedule, history] = await Promise.all([
+    getPropertySchedule(user.id, id, today),
+    listPropertyHistory(user.id, id, Number.isFinite(historyPage) ? historyPage : 1),
+  ]);
+  if (!schedule || !history) notFound();
+  const { property } = schedule;
+  const completedItem = schedule.items.find((item) => item.requirement.code === query.completed);
 
   const archived = property.archivedAt !== null;
 
@@ -27,7 +36,23 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
         </Link>
       </p>
 
-      {saved === "1" && <Alert tone="success">Your changes have been saved.</Alert>}
+      {query.saved === "1" && <Alert tone="success">Your changes have been saved.</Alert>}
+      {query.recordSaved === "1" && <Alert tone="success">The compliance record has been updated.</Alert>}
+      {query.setup === "1" && (
+        <Alert tone="success">
+          Based on the dates you entered, your next reminder dates are below. These are reminders based on information
+          you entered and are not legal advice.
+        </Alert>
+      )}
+      {completedItem && (
+        <Alert tone="success">
+          {completedItem.requirement.name} saved. Next due:{" "}
+          {completedItem.nextDueOn ? formatCalendarDate(new Date(`${completedItem.nextDueOn}T00:00:00Z`)) : "—"}.
+        </Alert>
+      )}
+      {query.delete === "blocked" && (
+        <Alert tone="error">This property has compliance history, so it can&apos;t be deleted. Archive it instead.</Alert>
+      )}
       {archived && (
         <Alert tone="info">
           This property is archived. It is hidden from your active properties and does not get reminders.
@@ -80,20 +105,23 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
         </dl>
       </section>
 
-      <section aria-labelledby="compliance-heading" className="rounded-lg border border-dashed border-line bg-surface p-6">
-        <h2 id="compliance-heading" className="text-lg font-semibold">
-          Compliance
-        </h2>
-        <p className="mt-1 text-ink-muted">Compliance dates and certificates for this property are coming soon.</p>
-      </section>
+      <ComplianceSection
+        propertyId={property.id}
+        state={property.state}
+        isGeneric={schedule.isGeneric}
+        items={schedule.items}
+        archived={archived}
+      />
+
+      <HistoryTable propertyId={property.id} history={history} />
 
       <section aria-labelledby="delete-heading" className="rounded-lg border border-danger/40 bg-surface p-6">
         <h2 id="delete-heading" className="text-lg font-semibold text-danger">
           Delete property
         </h2>
         <p className="mt-1 text-sm text-ink-muted">
-          Deletes this property permanently. Use this for a property added by mistake. To stop tracking a property
-          you no longer rent out, archive it instead.
+          Deletes this property permanently. Use this for a property added by mistake. A property with compliance
+          history can&apos;t be deleted. To stop tracking a property you no longer rent out, archive it instead.
         </p>
         <details className="mt-4">
           <summary className="cursor-pointer text-sm font-medium text-danger">Delete this property…</summary>

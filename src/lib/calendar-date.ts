@@ -42,3 +42,33 @@ export function addYears(calendarDate: string, years: number): string {
   // 29 February moves to 28 February in a non-leap year.
   return isCalendarDate(candidate) ? candidate : `${String(year + years).padStart(4, "0")}-02-28`;
 }
+
+function daysInMonth(year: number, monthIndex: number): number {
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+}
+
+// Calendar month arithmetic. A day missing from the target month becomes that month's last day
+// (31 August + 6 months = 28 February; 29 February 2024 + 12 months = 28 February 2025).
+export function addMonths(calendarDate: string, months: number): string {
+  const date = parseCalendarDate(calendarDate);
+  if (!date) throw new Error(`Invalid calendar date: ${calendarDate}`);
+  const totalMonths = date.getUTCFullYear() * 12 + date.getUTCMonth() + months;
+  const year = Math.floor(totalMonths / 12);
+  const monthIndex = totalMonths % 12;
+  const day = Math.min(date.getUTCDate(), daysInMonth(year, monthIndex));
+  return toCalendarDateString(new Date(Date.UTC(year, monthIndex, day)));
+}
+
+export function addDays(calendarDate: string, days: number): string {
+  const date = parseCalendarDate(calendarDate);
+  if (!date) throw new Error(`Invalid calendar date: ${calendarDate}`);
+  return toCalendarDateString(new Date(date.getTime() + days * 86_400_000));
+}
+
+// Whole days from `from` to `to` (negative when `to` is earlier).
+export function daysBetween(from: string, to: string): number {
+  const start = parseCalendarDate(from);
+  const end = parseCalendarDate(to);
+  if (!start || !end) throw new Error(`Invalid calendar date: ${from} or ${to}`);
+  return Math.round((end.getTime() - start.getTime()) / 86_400_000);
+}

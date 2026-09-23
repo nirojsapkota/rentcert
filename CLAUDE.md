@@ -22,7 +22,7 @@ npm run test:e2e             # Playwright; boots next dev on :3100 with EMAIL_PR
 npm run lint
 npm run typecheck            # next typegen && tsc (PageProps/LayoutProps come from typegen)
 npm run db:migrate -- --name <change>
-npm run db:seed              # demo@rentcert.local / demo-password-123 with 3 properties
+npm run db:seed              # demo@rentcert.local / demo-password-123, 3 properties with sample statuses
 ```
 
 ## Architecture
@@ -46,7 +46,9 @@ npm run db:seed              # demo@rentcert.local / demo-password-123 with 3 pr
 - Vitest aliases `server-only` to an empty module and truncates every table before each test (`tests/support/setup.ts`). Add new tables to that list and to `tests/e2e/global-setup.ts`.
 - Auth integration tests call `auth.handler` with real `Request` objects (`tests/support/auth-http.ts`), so rate limiting and cookies are exercised.
 - Playwright specs import `test`/`expect` from `tests/e2e/fixtures.ts`, which gives each test its own `x-forwarded-for` IP; use `newUserPage()` for extra users. Without it, auth rate limits (3 sign-ups per minute) make tests flaky. After a client-side navigation, wait for the new page's heading before you fill fields.
-- `tests/integration/architecture.test.ts` fails if anything outside `src/server/properties/` calls `db.property`/`tx.property`. Follow the same pattern for new user-owned tables.
+- `tests/integration/architecture.test.ts` fails if a user-owned model is touched outside its module (`property` → `src/server/properties/`; `complianceRecord`, `propertyRequirementExclusion` → `src/server/compliance/`). Add each new user-owned model to that list.
+- Vitest truncates user tables but never `compliance_requirements`: that is configuration seeded by migration, so tests rely on its rows.
+- Mobile layout: every `<main>` has `min-w-0` (the body is a flex column), and every `overflow-x-auto` table wrapper is `relative` (otherwise `sr-only` cells escape the scroll clip and widen the page). `expectNoHorizontalOverflow()` in `tests/e2e/helpers.ts` guards this.
 
 ## Conventions
 
@@ -54,5 +56,13 @@ npm run db:seed              # demo@rentcert.local / demo-password-123 with 3 pr
 - User-facing errors are plain sentences (`src/lib/auth-errors.ts`). Log technical detail on the server only.
 - Calendar dates are `@db.Date` columns and pass through the app as `YYYY-MM-DD` strings (`src/lib/calendar-date.ts`). Format them in UTC so no timezone shifts the day. Work out "today" with `todayIn(user.timezone)`. Due dates use month arithmetic, never `365` days.
 - Properties cover all Australian states (`AustralianState` enum). Postcodes are any 4 digits from 0200 up, with no state-postcode cross-check. Only Victoria has researched compliance rules.
+- Compliance domain (`src/server/compliance/`):
+  - `ComplianceRequirement` is configuration (per `jurisdiction`, with `GENERIC` as the fallback for unresearched states), seeded in a migration because production needs it. `ComplianceRecord` is an event. Keep the two separate.
+  - `requirementsFor(state)` picks the jurisdiction. Adding a state's rules is a data change.
+  - `nextDueOn()` (`due-date.ts`) and `complianceStatus()` (`status.ts`) are the only places that do due-date and status logic. Views, jobs and emails call them; never re-derive status elsewhere.
+  - The current record per requirement code is the one with the latest `nextDueOn` (`schedule.ts`). `UNKNOWN_LAST_CHECK` records are due on the setup day.
+  - Exclusions ("not applicable") key on requirement `code`, not id, so they survive a state change.
+  - A property with records cannot be deleted (only archived). Records can be edited with an audit of old and new values, never deleted.
+- Wording: never say a property is "compliant" or imply legal status. Say "due", "overdue", "up to date", "based on the dates you entered".
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

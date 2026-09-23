@@ -53,8 +53,8 @@ export async function createPropertyAction(_prev: PropertyFormState, formData: F
   if (!parsed.ok) return parsed.state;
 
   const property = await createProperty(user.id, parsed.data);
-  revalidatePath("/properties");
-  redirect(`/properties/${property.id}`);
+  revalidatePath("/", "layout");
+  redirect(`/properties/${property.id}/setup`);
 }
 
 export async function updatePropertyAction(
@@ -88,7 +88,9 @@ export async function restorePropertyAction(propertyId: string) {
 
 export async function deletePropertyAction(propertyId: string) {
   const user = await requireUser();
-  if (!(await deleteProperty(user.id, propertyId))) notFound();
+  const result = await deleteProperty(user.id, propertyId);
+  if (result === "not_found") notFound();
+  if (result === "has_history") redirect(`/properties/${propertyId}?delete=blocked`);
   revalidatePath("/properties", "layout");
   redirect("/properties?deleted=1");
 }

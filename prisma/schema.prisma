@@ -141,6 +141,71 @@ model Property {
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
+  complianceRecords     ComplianceRecord[]
+  requirementExclusions PropertyRequirementExclusion[]
+
   @@index([userId, archivedAt, createdAt])
   @@map("properties")
+}
+
+// Configuration: what must happen and how often, per jurisdiction ("VIC", or "GENERIC" for the
+// unresearched fallback). Rows are seeded by migration; last_verified_at stays null until a person verifies them.
+model ComplianceRequirement {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  code             String
+  jurisdiction     String
+  name             String
+  description      String
+  recurrenceMonths Int       @map("recurrence_months")
+  sortOrder        Int       @map("sort_order")
+  active           Boolean   @default(true)
+  sourceName       String?   @map("source_name")
+  sourceUrl        String?   @map("source_url")
+  lastVerifiedAt   DateTime? @map("last_verified_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  records ComplianceRecord[]
+
+  @@unique([jurisdiction, code])
+  @@map("compliance_requirements")
+}
+
+enum ComplianceRecordKind {
+  COMPLETED
+  UNKNOWN_LAST_CHECK
+}
+
+// An event: a check done at a property, or the "last check unknown" starting point.
+// Migration adds CHECK (kind <> 'COMPLETED' OR completed_on IS NOT NULL).
+model ComplianceRecord {
+  id                    String                @id @default(uuid(7)) @db.Uuid
+  propertyId            String                @map("property_id") @db.Uuid
+  property              Property              @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  requirementId         String                @map("requirement_id") @db.Uuid
+  requirement           ComplianceRequirement @relation(fields: [requirementId], references: [id], onDelete: Restrict)
+  kind                  ComplianceRecordKind
+  completedOn           DateTime?             @map("completed_on") @db.Date
+  nextDueOn             DateTime              @map("next_due_on") @db.Date
+  providerName          String?               @map("provider_name")
+  providerLicenceNumber String?               @map("provider_licence_number")
+  notes                 String?
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+
+  @@index([propertyId, requirementId, nextDueOn])
+  @@index([requirementId])
+  @@index([nextDueOn])
+  @@map("compliance_records")
+}
+
+// A requirement code the owner marked "not applicable" for one property (for example no gas).
+model PropertyRequirementExclusion {
+  propertyId      String   @map("property_id") @db.Uuid
+  property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  requirementCode String   @map("requirement_code")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@id([propertyId, requirementCode])
+  @@map("property_requirement_exclusions")
 }

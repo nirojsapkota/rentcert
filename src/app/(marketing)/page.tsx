@@ -14,7 +14,7 @@ export default function HomePage() {
           </Link>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-16">
+      <main className="min-w-0 mx-auto w-full max-w-5xl flex-1 px-4 py-16">
         <h1 className="max-w-2xl text-4xl font-bold tracking-tight">Never miss a rental compliance deadline again.</h1>
         <p className="mt-4 max-w-2xl text-lg text-ink-muted">
           RentCert helps self-managing Australian landlords track compliance dates, store certificates and get

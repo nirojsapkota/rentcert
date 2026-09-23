@@ -2,8 +2,9 @@ import "server-only";
 import { parseCalendarDate } from "@/lib/calendar-date";
 import type { PropertyInput } from "@/lib/property-validation";
 import { recordAuditEvent } from "@/server/audit";
+import { propertyHasRecords } from "@/server/compliance/commands";
 import { db } from "@/server/db";
-import { isUuid } from "@/server/properties/queries";
+import { isUuid } from "@/lib/ids";
 
 // Mutations scoped to the owner. A property that is missing or belongs to someone else
 // returns null (or false), and callers show the same "not found" response for both.
@@ -65,13 +66,15 @@ async function setArchived(userId: string, propertyId: string, archived: boolean
 export const archiveProperty = (userId: string, propertyId: string) => setArchived(userId, propertyId, true);
 export const restoreProperty = (userId: string, propertyId: string) => setArchived(userId, propertyId, false);
 
-// Phase 3 adds: refuse when the property has compliance records (archive instead).
-export async function deleteProperty(userId: string, propertyId: string) {
-  if (!isUuid(propertyId)) return false;
+// A property with compliance history can only be archived, so its records are never lost.
+export async function deleteProperty(userId: string, propertyId: string): Promise<"deleted" | "not_found" | "has_history"> {
+  if (!isUuid(propertyId)) return "not_found";
   return db.$transaction(async (tx) => {
-    const { count } = await tx.property.deleteMany({ where: { id: propertyId, userId } });
-    if (count === 0) return false;
-    await recordAuditEvent(audit(userId, propertyId, "property.deleted"), tx);
-    return true;
+    const owned = await tx.property.findFirst({ where: { id: propertyId, userId }, select: { id: true } });
+    if (!owned) return "not_found";
+    if (await propertyHasRecords(owned.id, tx)) return "has_history";
+    await tx.property.delete({ where: { id: owned.id } });
+    await recordAuditEvent(audit(userId, owned.id, "property.deleted"), tx);
+    return "deleted";
   });
 }

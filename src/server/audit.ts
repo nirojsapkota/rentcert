@@ -11,7 +11,12 @@ export type AuditAction =
   | "property.updated"
   | "property.archived"
   | "property.restored"
-  | "property.deleted";
+  | "property.deleted"
+  | "property.checks_set_up"
+  | "property.requirement_excluded"
+  | "property.requirement_included"
+  | "compliance_record.created"
+  | "compliance_record.updated";
 
 type AuditInput = {
   userId: string;

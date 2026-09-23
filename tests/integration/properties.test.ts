@@ -66,7 +66,7 @@ describe("property commands", () => {
     const user = await createUser();
     const property = await createProperty(user.id, propertyInput());
 
-    expect(await deleteProperty(user.id, property.id)).toBe(true);
+    expect(await deleteProperty(user.id, property.id)).toBe("deleted");
     expect(await findPropertyForUser(user.id, property.id)).toBeNull();
     expect(await auditActions(user.id)).toContain("property.deleted");
   });
@@ -77,7 +77,7 @@ describe("property commands", () => {
     expect(await findPropertyForUser(user.id, "not-a-uuid")).toBeNull();
     expect(await updateProperty(user.id, "not-a-uuid", propertyInput())).toBeNull();
     expect(await archiveProperty(user.id, "1 OR 1=1")).toBe(false);
-    expect(await deleteProperty(user.id, "../../etc")).toBe(false);
+    expect(await deleteProperty(user.id, "../../etc")).toBe("not_found");
   });
 });
 
@@ -92,7 +92,7 @@ describe("tenant isolation", () => {
     expect(await updateProperty(bob.id, property.id, propertyInput({ nickname: "Mine now" }))).toBeNull();
     expect(await archiveProperty(bob.id, property.id)).toBe(false);
     expect(await restoreProperty(bob.id, property.id)).toBe(false);
-    expect(await deleteProperty(bob.id, property.id)).toBe(false);
+    expect(await deleteProperty(bob.id, property.id)).toBe("not_found");
 
     expect(await db.property.findUniqueOrThrow({ where: { id: property.id } })).toEqual(snapshot);
     expect(await db.auditEvent.count({ where: { userId: bob.id } })).toBe(0);

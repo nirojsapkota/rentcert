@@ -6,7 +6,7 @@ test("landlord adds, edits, archives, restores and deletes a property", async ({
 
   await expect(page.getByRole("heading", { name: "Add your first property" })).toBeVisible();
   await page.getByRole("link", { name: "Add property" }).click();
-  await expect(page.getByRole("heading", { name: "Add property" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tell us about your first property" })).toBeVisible();
 
   // Invalid input keeps the entered values and shows field errors.
   await page.getByLabel("Street address").fill("12 Example Street");
@@ -21,6 +21,9 @@ test("landlord adds, edits, archives, restores and deletes a property", async ({
   await page.getByLabel("Postcode").fill("2150");
   await page.getByLabel("Lease start date (optional)").fill("2024-10-12");
   await page.getByRole("button", { name: "Add property" }).click();
+  // New properties go to compliance setup first; skip it for this test.
+  await expect(page.getByRole("heading", { name: "Review compliance dates" })).toBeVisible();
+  await page.goto(page.url().replace(/\/setup$/, ""));
   await expect(page.getByRole("heading", { level: 1, name: "12 Example Street" })).toBeVisible();
   await expect(page.getByText("Parramatta NSW 2150").first()).toBeVisible();
   await expect(page.getByText("12 October 2024")).toBeVisible();
@@ -44,7 +47,7 @@ test("landlord adds, edits, archives, restores and deletes a property", async ({
 
   // Dashboard count.
   await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Dashboard" }).click();
-  await expect(page.getByText("Active property", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /1\s*Property/ })).toBeVisible();
 
   // Delete.
   await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Properties" }).click();
@@ -64,12 +67,12 @@ test("another user's property returns 404 with no data (scenario 5)", async ({ b
   await owner.getByLabel("State or territory").selectOption("TAS");
   await owner.getByLabel("Postcode").fill("7000");
   await owner.getByRole("button", { name: "Add property" }).click();
-  await expect(owner.getByRole("heading", { level: 1, name: "99 Private Lane" })).toBeVisible();
-  const propertyUrl = new URL(owner.url()).pathname;
+  await expect(owner.getByRole("heading", { name: "Review compliance dates" })).toBeVisible();
+  const propertyUrl = new URL(owner.url()).pathname.replace(/\/setup$/, "");
 
   const intruder = await newUserPage(browser, testInfo, "intruder");
   await signUpAndVerify(intruder, `bob-${testInfo.project.name}@example.com`, "Bob");
-  for (const path of [propertyUrl, `${propertyUrl}/edit`]) {
+  for (const path of [propertyUrl, `${propertyUrl}/edit`, `${propertyUrl}/setup`, `${propertyUrl}/checks/gas/complete`]) {
     const response = await intruder.goto(path);
     expect(response?.status()).toBe(404);
     await expect(intruder.getByRole("heading", { name: "Page not found" })).toBeVisible();

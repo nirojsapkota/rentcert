@@ -41,6 +41,7 @@ Prisma creates the databases when they do not exist.
 | `EMAIL_PROVIDER` | `console` (dev), `file` (writes `tmp/mail/*.json`), `test` (in memory). Production providers arrive in Phase 5. |
 | `MAILER_FROM` | From address for emails |
 | `EMAIL_PROVIDER_API_KEY` | Production email provider key (Phase 5) |
+| `COMPLIANCE_DUE_SOON_DAYS` | Days before a due date that counts as "due soon" (default 30) |
 
 Stripe and AWS S3 variables are added in the phases that need them (see `PLAN.md` section 38).
 Never commit `.env`.
@@ -65,7 +66,7 @@ npm run typecheck                          # generates Next.js route types, then
 
 ```bash
 npm run db:migrate -- --name <change>   # create and apply a migration in development
-npm run db:seed                         # demo@rentcert.local / demo-password-123, 3 fictional properties
+npm run db:seed                         # demo@rentcert.local / demo-password-123, 3 fictional properties with sample compliance records
 npx prisma studio                       # browse data
 ```
 

@@ -13,6 +13,7 @@ export async function scanDueReminders(now: Date = new Date()): Promise<string[]
   const candidates = await listReminderCandidates({
     nextDueOnOrBefore: new Date(`${horizon}T00:00:00Z`),
     skipFinished: true,
+    now,
   });
 
   const claimed: string[] = [];

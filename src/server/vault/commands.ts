@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { recordAuditEvent } from "@/server/audit";
+import { canWrite } from "@/server/billing/entitlements";
 import { findRecordForUser } from "@/server/compliance/queries";
 import { db } from "@/server/db";
 import {
@@ -20,6 +21,8 @@ export type UploadResult =
   | { ok: true; documentId: string }
   | { ok: false; reason: "not_found" }
   | { ok: false; reason: "invalid"; message: string };
+
+const READ_ONLY_MESSAGE = "Your free trial has ended. Choose a plan in Billing to add documents.";
 
 export const UPLOAD_MESSAGES = {
   empty: "Choose a file to upload.",
@@ -47,6 +50,7 @@ export async function uploadDocument(
   const record = await findRecordForUser(userId, propertyId, recordId);
   if (!record) return { ok: false, reason: "not_found" };
   if (record.property.archivedAt) return { ok: false, reason: "invalid", message: UPLOAD_MESSAGES.archived };
+  if (!(await canWrite(userId))) return { ok: false, reason: "invalid", message: READ_ONLY_MESSAGE };
 
   const checked = checkFile(file);
   if (!checked.ok) return { ok: false, reason: "invalid", message: checked.message };

@@ -25,7 +25,7 @@ const FIELDS: PropertyField[] = [
 ];
 
 export type PropertyFormState = {
-  status: "idle" | "invalid";
+  status: "idle" | "invalid" | "limit_reached";
   fieldErrors?: Partial<Record<PropertyField, string>>;
   // Submitted values, so the form can show them again after a validation error.
   values?: Partial<Record<PropertyField, string>>;
@@ -52,9 +52,10 @@ export async function createPropertyAction(_prev: PropertyFormState, formData: F
   const parsed = parse(formData, user.timezone ?? "Australia/Melbourne");
   if (!parsed.ok) return parsed.state;
 
-  const property = await createProperty(user.id, parsed.data);
+  const result = await createProperty(user.id, parsed.data);
+  if (!result.ok) return { status: "limit_reached", values: Object.fromEntries(FIELDS.map((field) => [field, String(formData.get(field) ?? "")])) };
   revalidatePath("/", "layout");
-  redirect(`/properties/${property.id}/setup`);
+  redirect(`/properties/${result.property.id}/setup`);
 }
 
 export async function updatePropertyAction(
@@ -81,7 +82,9 @@ export async function archivePropertyAction(propertyId: string) {
 
 export async function restorePropertyAction(propertyId: string) {
   const user = await requireUser();
-  if (!(await restoreProperty(user.id, propertyId))) notFound();
+  const result = await restoreProperty(user.id, propertyId);
+  if (result === "limit_reached") redirect(`/properties/${propertyId}?restore=limit`);
+  if (!result) notFound();
   revalidatePath("/properties", "layout");
   redirect(`/properties/${propertyId}`);
 }

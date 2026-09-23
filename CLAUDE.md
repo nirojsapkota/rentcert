@@ -82,6 +82,14 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - `tsx` is a runtime dependency because production runs `npm run worker`.
 - Compliance pack (`src/server/compliance-pack/`): `loadCompliancePack()` gathers pre-formatted data owner-scoped (reusing `getPropertySchedule`), and `CompliancePackGenerator` renders it with PDFKit and bundled Noto Sans (`assets/fonts/`, Latin/Greek/Cyrillic only). `pdfkit` is in `serverExternalPackages`, and the fonts are added through `outputFileTracingIncludes`. Every page footer carries the "not a certificate" disclaimer.
 - Tests read PDFs back with `tests/support/pdf-text.ts` (pdfjs-dist, dev only).
+- Billing (`src/server/billing/`):
+  - `getEntitlement()` is the only place that decides the plan (TRIAL, PROPERTY, PORTFOLIO, READ_ONLY), the property limit and write access. `past_due` keeps access.
+  - Limits are enforced inside the create and restore transactions (`hasPropertySlot`, with a per-user advisory lock). Compliance writes and uploads check `canWrite`, and the reminder scan filters with `entitledUserWhere()`.
+  - `createProperty()` returns `{ ok, property } | { ok: false, reason: "limit_reached" }`, and `restoreProperty()` can return `"limit_reached"`. Tests that only need fixture properties use `insertProperty()` from `tests/support/factories.ts`; `subscribe()` gives a user a plan.
+  - Webhooks: verify the signature on the raw body, de-duplicate by `stripe_events.id`, then always **re-fetch the subscription from Stripe** before upserting (so out-of-order events are harmless). Stripe API periods are on subscription items (API `2026-08-26.dahlia`).
+  - `trialEndsAt` is a Better Auth `input: false` field set in the user create hook from `app_settings.trial_days`. `app_settings` is seeded by migration and never truncated in tests.
+  - Account deletion cancels subscriptions in `beforeDelete`; if Stripe fails, deletion fails with 503.
+  - E2E uses `tests/e2e/fake-stripe-server.ts` (port 12111) through `STRIPE_API_HOST/PORT/PROTOCOL`.
 - Next.js 16 allows only one `next dev` per folder. If the user's `bin/dev` is running, `npm run test:e2e` cannot start its server on :3100. Ask before stopping their server.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

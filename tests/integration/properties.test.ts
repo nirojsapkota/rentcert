@@ -13,7 +13,13 @@ import {
   findPropertyForUser,
   listPropertiesForUser,
 } from "@/server/properties/queries";
-import { createUser, propertyInput } from "../support/factories";
+import { createUser, insertProperty, propertyInput, subscribe } from "../support/factories";
+
+async function create(userId: string, input = propertyInput()) {
+  const result = await createProperty(userId, input);
+  if (!result.ok) throw new Error(`createProperty failed: ${result.reason}`);
+  return result.property;
+}
 
 async function auditActions(userId: string) {
   const events = await db.auditEvent.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
@@ -24,7 +30,7 @@ describe("property commands", () => {
   it("creates a property with a calendar lease date and an audit event", async () => {
     const user = await createUser();
 
-    const property = await createProperty(user.id, propertyInput());
+    const property = await create(user.id);
 
     expect(property).toMatchObject({ userId: user.id, state: "VIC", postcode: "3805", archivedAt: null });
     expect(property.leaseStartDate?.toISOString()).toBe("2024-10-12T00:00:00.000Z");
@@ -33,7 +39,7 @@ describe("property commands", () => {
 
   it("records only the changed fields on update", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await create(user.id);
 
     await updateProperty(user.id, property.id, propertyInput({ nickname: "Smith St", leaseStartDate: "2025-01-01" }));
     await updateProperty(user.id, property.id, propertyInput({ nickname: "Smith St", leaseStartDate: "2025-01-01" }));
@@ -45,8 +51,9 @@ describe("property commands", () => {
 
   it("archives and restores, and counts only active properties", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
-    await createProperty(user.id, propertyInput({ addressLine1: "4 Sample Road" }));
+    await subscribe(user.id, "PORTFOLIO");
+    const property = await create(user.id);
+    await create(user.id, propertyInput({ addressLine1: "4 Sample Road" }));
 
     expect(await archiveProperty(user.id, property.id)).toBe(true);
     expect(await countActiveProperties(user.id)).toBe(1);
@@ -64,7 +71,7 @@ describe("property commands", () => {
 
   it("deletes a property", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await create(user.id);
 
     expect(await deleteProperty(user.id, property.id)).toBe("deleted");
     expect(await findPropertyForUser(user.id, property.id)).toBeNull();
@@ -85,7 +92,7 @@ describe("tenant isolation", () => {
   it("never lets user B read or change user A's property", async () => {
     const alice = await createUser("alice@example.com");
     const bob = await createUser("bob@example.com");
-    const property = await createProperty(alice.id, propertyInput());
+    const property = await create(alice.id);
     const snapshot = await db.property.findUniqueOrThrow({ where: { id: property.id } });
 
     expect(await findPropertyForUser(bob.id, property.id)).toBeNull();
@@ -101,8 +108,8 @@ describe("tenant isolation", () => {
   it("lists and counts only the user's own properties", async () => {
     const alice = await createUser("alice@example.com");
     const bob = await createUser("bob@example.com");
-    await createProperty(alice.id, propertyInput());
-    await createProperty(bob.id, propertyInput({ state: "NSW", postcode: "2150", suburb: "Parramatta" }));
+    await create(alice.id);
+    await create(bob.id, propertyInput({ state: "NSW", postcode: "2150", suburb: "Parramatta" }));
 
     const list = await listPropertiesForUser(alice.id, { view: "active", page: 1 });
     expect(list.items.map((item) => item.userId)).toEqual([alice.id]);
@@ -111,7 +118,7 @@ describe("tenant isolation", () => {
 
   it("deletes a user's properties with the account", async () => {
     const alice = await createUser();
-    await createProperty(alice.id, propertyInput());
+    await create(alice.id);
 
     await db.user.delete({ where: { id: alice.id } });
 
@@ -124,7 +131,8 @@ describe("listPropertiesForUser", () => {
     const user = await createUser();
     const created = [];
     for (let i = 1; i <= PROPERTIES_PAGE_SIZE + 2; i++) {
-      created.push(await createProperty(user.id, propertyInput({ addressLine1: `${i} Example Street` })));
+      // Fixture rows; the plan limit is not what this test is about.
+      created.push(await insertProperty(user.id, { addressLine1: `${i} Example Street` }));
     }
     await archiveProperty(user.id, created[0].id);
 

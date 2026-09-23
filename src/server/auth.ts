@@ -15,6 +15,8 @@ import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/server/mail/messages";
 import { deleteAllDocumentsForUser } from "@/server/vault/commands";
+import { cancelSubscriptionsForUser } from "@/server/billing/checkout";
+import { trialDays } from "@/server/billing/settings";
 import { enqueue } from "@/server/jobs/queue";
 import { JOBS } from "@/server/jobs/names";
 
@@ -73,9 +75,21 @@ export const auth = betterAuth({
       lastName: { type: "string", required: true, input: true },
       timezone: { type: "string", required: false, input: false, defaultValue: DEFAULT_TIMEZONE },
       notificationEmail: { type: "string", required: false, input: false },
+      // Set by the create hook from the trial_days setting; never accepted from the client.
+      trialEndsAt: { type: "date", required: false, input: false },
     },
     deleteUser: {
       enabled: true,
+      // Stop billing first. If Stripe cannot be reached, the deletion fails and can be retried,
+      // so a deleted account is never charged again.
+      beforeDelete: async (user) => {
+        try {
+          await cancelSubscriptionsForUser(user.id);
+        } catch (error) {
+          console.error("[auth] could not cancel subscriptions before account deletion", error instanceof Error ? error.name : "unknown");
+          throw new APIError("SERVICE_UNAVAILABLE", { message: "We couldn't cancel your subscription. Please try again in a few minutes." });
+        }
+      },
       // Dependent rows are removed by ON DELETE CASCADE. Stored files are removed here.
       // Keep only a timestamp.
       afterDelete: async (user) => {
@@ -94,7 +108,8 @@ export const auth = betterAuth({
         before: async (user) => {
           const firstName = parseName(firstNameSchema, user.firstName);
           const lastName = parseName(lastNameSchema, user.lastName);
-          return { data: { ...user, firstName, lastName, name: fullName(firstName, lastName) } };
+          const trialEndsAt = new Date(Date.now() + (await trialDays()) * 24 * 60 * 60 * 1000);
+          return { data: { ...user, firstName, lastName, name: fullName(firstName, lastName), trialEndsAt } };
         },
         after: async (user) => {
           await recordAuditEvent({ userId: user.id, resourceType: "user", resourceId: user.id, action: "user.created" });

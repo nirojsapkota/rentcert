@@ -4,6 +4,7 @@ import type { CompletionInput, SetupAnswer } from "@/lib/compliance-validation";
 import type { Prisma } from "@/generated/prisma/client";
 import { recordAuditEvent } from "@/server/audit";
 import { nextDueOn } from "@/server/compliance/due-date";
+import { canWrite } from "@/server/billing/entitlements";
 import { requirementsFor } from "@/server/compliance/requirements";
 import { db } from "@/server/db";
 import { findPropertyForUser } from "@/server/properties/queries";
@@ -13,6 +14,8 @@ import { findPropertyForUser } from "@/server/properties/queries";
 
 type NotFound = { ok: false; reason: "not_found" };
 const NOT_FOUND: NotFound = { ok: false, reason: "not_found" };
+type ReadOnly = { ok: false; reason: "read_only" };
+const READ_ONLY: ReadOnly = { ok: false, reason: "read_only" };
 
 function asDate(calendarDate: string): Date {
   const date = parseCalendarDate(calendarDate);
@@ -41,9 +44,10 @@ export async function setUpChecks(
   propertyId: string,
   today: string,
   answers: Record<string, SetupAnswer>,
-): Promise<{ ok: true } | NotFound> {
+): Promise<{ ok: true } | NotFound | ReadOnly> {
   const owned = await loadOwnedProperty(userId, propertyId);
   if (!owned) return NOT_FOUND;
+  if (!(await canWrite(userId))) return READ_ONLY;
   const done = await codesAlreadySetUp(owned.property.id);
 
   await db.$transaction(async (tx) => {
@@ -86,10 +90,11 @@ export async function recordCompletion(
   propertyId: string,
   code: string,
   input: CompletionInput,
-): Promise<{ ok: true; recordId: string; nextDueOn: string } | NotFound> {
+): Promise<{ ok: true; recordId: string; nextDueOn: string } | NotFound | ReadOnly> {
   const owned = await loadOwnedProperty(userId, propertyId);
   const requirement = owned?.requirements.find((row) => row.code === code);
   if (!owned || !requirement) return NOT_FOUND;
+  if (!(await canWrite(userId))) return READ_ONLY;
 
   const due = nextDueOn(input.completedOn, requirement.recurrenceMonths);
   const record = await db.$transaction(async (tx) => {

@@ -15,8 +15,8 @@ import {
   listPropertyHistory,
   listRecentCompletions,
 } from "@/server/compliance/queries";
-import { archiveProperty, createProperty, deleteProperty } from "@/server/properties/commands";
-import { createUser, propertyInput } from "../support/factories";
+import { archiveProperty, deleteProperty } from "@/server/properties/commands";
+import { createUser, insertProperty } from "../support/factories";
 
 const TODAY = "2026-09-23";
 
@@ -28,7 +28,7 @@ const completion = (completedOn: string, providerName: string | null = "ABC Safe
 });
 
 async function vicPropertyWithSetup(userId: string) {
-  const property = await createProperty(userId, propertyInput());
+  const property = await insertProperty(userId);
   await setUpChecks(userId, property.id, TODAY, {
     smoke_alarm: { choice: "date", lastCheckOn: "2025-10-10" },
     electrical: { choice: "unknown" },
@@ -80,7 +80,7 @@ describe("setting up checks (scenario 2)", () => {
 
   it("gives an NSW property the general schedule", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput({ state: "NSW", postcode: "2150", suburb: "Parramatta" }));
+    const property = await insertProperty(user.id, { state: "NSW", postcode: "2150", suburb: "Parramatta" });
 
     const schedule = await getPropertySchedule(user.id, property.id, TODAY);
     expect(schedule).toMatchObject({ isGeneric: true, jurisdiction: "GENERIC" });
@@ -91,7 +91,7 @@ describe("setting up checks (scenario 2)", () => {
 describe("recording a completed check (scenario 3)", () => {
   it("saves the record, calculates the next due date and keeps history", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await insertProperty(user.id);
     await setUpChecks(user.id, property.id, TODAY, { gas: { choice: "date", lastCheckOn: "2024-09-02" } });
 
     const result = await recordCompletion(user.id, property.id, "gas", completion(TODAY));
@@ -107,7 +107,7 @@ describe("recording a completed check (scenario 3)", () => {
 
   it("refuses an unknown requirement code", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await insertProperty(user.id);
 
     expect(await recordCompletion(user.id, property.id, "pool_fence", completion(TODAY))).toEqual({ ok: false, reason: "not_found" });
   });
@@ -116,7 +116,7 @@ describe("recording a completed check (scenario 3)", () => {
 describe("editing a record", () => {
   it("recalculates the next due date and audits old and new values", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await insertProperty(user.id);
     const created = await recordCompletion(user.id, property.id, "smoke_alarm", completion("2026-09-01"));
     if (!created.ok) throw new Error("setup failed");
 
@@ -139,7 +139,7 @@ describe("editing a record", () => {
 describe("applicability", () => {
   it("toggles a requirement off and on with audit events", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await insertProperty(user.id);
 
     await setRequirementApplicable(user.id, property.id, "gas", false);
     expect((await getPropertySchedule(user.id, property.id, TODAY))!.items[2].status).toBe("not_applicable");
@@ -147,7 +147,7 @@ describe("applicability", () => {
     expect((await getPropertySchedule(user.id, property.id, TODAY))!.items[2].status).toBe("not_set_up");
 
     const actions = (await db.auditEvent.findMany({ where: { userId: user.id }, orderBy: { createdAt: "asc" } })).map((e) => e.action);
-    expect(actions).toEqual(["property.created", "property.requirement_excluded", "property.requirement_included"]);
+    expect(actions).toEqual(["property.requirement_excluded", "property.requirement_included"]);
   });
 });
 
@@ -189,7 +189,7 @@ describe("tenant isolation", () => {
     expect(await setUpChecks(bob.id, property.id, TODAY, { gas: { choice: "unknown" } })).toEqual({ ok: false, reason: "not_found" });
 
     // Bob's own property id with Alice's record id must not match either.
-    const bobs = await createProperty(bob.id, propertyInput());
+    const bobs = await insertProperty(bob.id);
     expect(await findRecordForUser(bob.id, bobs.id, record.id)).toBeNull();
     expect(await updateRecord(bob.id, bobs.id, record.id, completion(TODAY))).toEqual({ ok: false, reason: "not_found" });
 
@@ -204,7 +204,7 @@ describe("dashboard", () => {
   it("counts statuses across active properties only and filters rows", async () => {
     const user = await createUser();
     await vicPropertyWithSetup(user.id); // smoke due soon, electrical due today, gas n/a
-    const second = await createProperty(user.id, propertyInput({ addressLine1: "4 Sample Road" }));
+    const second = await insertProperty(user.id, { addressLine1: "4 Sample Road" });
     await setUpChecks(user.id, second.id, TODAY, {
       smoke_alarm: { choice: "date", lastCheckOn: "2025-09-01" }, // overdue (2026-09-01)
       electrical: { choice: "date", lastCheckOn: "2026-01-01" }, // upcoming (2028-01-01)
@@ -247,7 +247,7 @@ describe("dashboard", () => {
 
   it("lists completions from the last 12 months", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await insertProperty(user.id);
     await recordCompletion(user.id, property.id, "gas", completion("2025-09-22"));
     await recordCompletion(user.id, property.id, "smoke_alarm", completion("2026-09-01"));
 
@@ -257,7 +257,7 @@ describe("dashboard", () => {
 
   it("decides 'today' from the date passed in, so the user's timezone controls status", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await insertProperty(user.id);
     await setUpChecks(user.id, property.id, "2026-09-22", { gas: { choice: "unknown" } });
 
     const beforeMidnight = await getPropertySchedule(user.id, property.id, "2026-09-22");

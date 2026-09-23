@@ -24,6 +24,14 @@ export function PropertyForm({ action, initialValues, submitLabel, cancelHref }:
 
   return (
     <form action={formAction} noValidate className="space-y-5" key={JSON.stringify(values)}>
+      {state.status === "limit_reached" && (
+        <Alert tone="error">
+          You&apos;ve reached the number of active properties your plan allows.{" "}
+          <Link href="/billing" className="font-medium underline">
+            Go to Billing
+          </Link>
+        </Alert>
+      )}
       {state.status === "invalid" && (
         <Alert tone="error">We couldn&apos;t save this property. Check the highlighted fields and try again.</Alert>
       )}

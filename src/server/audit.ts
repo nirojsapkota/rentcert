@@ -19,7 +19,9 @@ export type AuditAction =
   | "compliance_record.updated"
   | "document.uploaded"
   | "document.deleted"
-  | "compliance_pack.generated";
+  | "compliance_pack.generated"
+  | "billing.checkout_started"
+  | "billing.subscription_changed";
 
 type AuditInput = {
   userId: string;

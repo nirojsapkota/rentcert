@@ -10,6 +10,7 @@ import {
   type RequirementInfo,
   type ScheduleItem,
 } from "@/server/compliance/schedule";
+import { entitledUserWhere } from "@/server/billing/entitlements";
 import { db } from "@/server/db";
 import { findPropertyForUser, listActivePropertiesForUser } from "@/server/properties/queries";
 
@@ -163,13 +164,17 @@ export async function listReminderCandidates(options: {
   nextDueOnOrBefore?: Date;
   recordIds?: string[];
   skipFinished?: boolean; // skip records whose final (overdue) reminder already exists
+  now?: Date; // accounts must be entitled (trial or paid) at this time
 }): Promise<ReminderCandidate[]> {
   const candidates = await db.complianceRecord.findMany({
     where: {
       ...(options.recordIds ? { id: { in: options.recordIds } } : {}),
       ...(options.nextDueOnOrBefore ? { nextDueOn: { lte: options.nextDueOnOrBefore } } : {}),
       ...(options.skipFinished ? { reminders: { none: { reminderType: "OVERDUE_7" } } } : {}),
-      property: { archivedAt: null, user: { emailVerified: true, reminderEmailsEnabled: true } },
+      property: {
+        archivedAt: null,
+        user: { emailVerified: true, reminderEmailsEnabled: true, ...entitledUserWhere(options.now ?? new Date()) },
+      },
     },
     select: {
       id: true,

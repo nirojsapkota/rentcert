@@ -16,7 +16,9 @@ import { readUpload } from "./document-actions";
 
 const DEFAULT_TIMEZONE = "Australia/Melbourne";
 
-export type SetupFormState = { status: "idle" | "invalid"; errors?: Record<string, string>; values?: Record<string, string> };
+const READ_ONLY_MESSAGE = "Your free trial has ended. Choose a plan in Billing to add compliance records.";
+
+export type SetupFormState = { status: "idle" | "invalid"; errors?: Record<string, string>; values?: Record<string, string>; message?: string };
 
 export async function setUpChecksAction(
   propertyId: string,
@@ -34,6 +36,7 @@ export async function setUpChecksAction(
   }
 
   const result = await setUpChecks(user.id, propertyId, today, parsed.answers);
+  if (!result.ok && result.reason === "read_only") return { status: "invalid", message: READ_ONLY_MESSAGE };
   if (!result.ok) notFound();
   revalidatePath("/", "layout");
   redirect(`/properties/${propertyId}?setup=1`);
@@ -41,6 +44,7 @@ export async function setUpChecksAction(
 
 export type CompletionFormState = {
   status: "idle" | "invalid";
+  message?: string;
   fieldErrors?: Partial<Record<CompletionField | "document", string>>;
   values?: Partial<Record<CompletionField, string>>;
 };
@@ -79,6 +83,7 @@ export async function recordCompletionAction(
   }
 
   const result = await recordCompletion(user.id, propertyId, code, parsed.data);
+  if (!result.ok && result.reason === "read_only") return { status: "invalid", message: READ_ONLY_MESSAGE };
   if (!result.ok) notFound();
   let uploadFailed = false;
   if (file) {

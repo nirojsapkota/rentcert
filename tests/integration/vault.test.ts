@@ -4,19 +4,19 @@ import { describe, expect, it } from "vitest";
 import { GET as download } from "@/app/api/documents/[id]/download/route";
 import { recordCompletion } from "@/server/compliance/commands";
 import { db } from "@/server/db";
-import { archiveProperty, createProperty } from "@/server/properties/commands";
+import { archiveProperty } from "@/server/properties/commands";
 import { deleteDocument, UPLOAD_MESSAGES, uploadDocument } from "@/server/vault/commands";
 import { MAX_DOCUMENTS_PER_RECORD } from "@/server/vault/file-type";
 import { listDocumentsForUser } from "@/server/vault/queries";
 import { callAuth, createVerifiedUser, VALID_PASSWORD } from "../support/auth-http";
-import { propertyInput } from "../support/factories";
+import { insertProperty } from "../support/factories";
 import { pdfBytes, pngBytes, textBytes } from "../support/files";
 
 const STORAGE_ROOT = path.resolve("tmp/test-storage");
 
 async function ownerWithRecord(email = "owner@example.com") {
   const { cookie, userId } = await createVerifiedUser(email);
-  const property = await createProperty(userId, propertyInput());
+  const property = await insertProperty(userId);
   const completion = await recordCompletion(userId, property.id, "gas", {
     completedOn: "2026-09-01",
     providerName: "ABC Safety",

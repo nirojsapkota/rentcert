@@ -20,7 +20,7 @@ export function SetupForm({ action, requirements, today }: Props) {
 
   return (
     <form action={formAction} noValidate className="space-y-6" key={JSON.stringify(values)}>
-      {state.status === "invalid" && <Alert tone="error">Answer each check below before you continue.</Alert>}
+      {state.status === "invalid" && <Alert tone="error">{state.message ?? "Answer each check below before you continue."}</Alert>}
       {requirements.map((requirement) => {
         const choice = values[`choice_${requirement.code}`] ?? "date";
         const errorId = `${requirement.code}-error`;

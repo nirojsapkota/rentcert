@@ -5,13 +5,13 @@ import { addDays, todayIn } from "@/lib/calendar-date";
 import { recordCompletion, setRequirementApplicable, setUpChecks } from "@/server/compliance/commands";
 import { db } from "@/server/db";
 import { testOutbox } from "@/server/mail/deliver";
-import { archiveProperty, createProperty } from "@/server/properties/commands";
+import { archiveProperty } from "@/server/properties/commands";
 import { scanDueReminders } from "@/server/reminders/scan";
 import { MAX_SEND_ATTEMPTS, sendReminder } from "@/server/reminders/send";
 import { sendWelcome } from "@/server/reminders/welcome";
 import { deleteOrphanedFiles } from "@/server/vault/cleanup";
 import { createVerifiedUser } from "../support/auth-http";
-import { createUser, propertyInput } from "../support/factories";
+import { createUser, insertProperty } from "../support/factories";
 
 // A fixed instant: midnight UTC on Melbourne's current date, which is 10:00 or 11:00 in Melbourne.
 const T = todayIn("Australia/Melbourne");
@@ -23,7 +23,7 @@ afterEach(() => {
 
 // A gas record whose next due date is T + daysUntilDue, entered `enteredDaysAgo` days ago.
 async function gasRecord(userId: string, daysUntilDue: number, enteredDaysAgo = 60, overrides = {}) {
-  const property = await createProperty(userId, propertyInput(overrides));
+  const property = await insertProperty(userId, overrides);
   const completedOn = addDays(addDays(T, daysUntilDue), -730); // 24-month interval, approximately
   const result = await recordCompletion(userId, property.id, "gas", {
     completedOn,
@@ -117,7 +117,7 @@ describe("which reminder", () => {
 
   it("sends no 'due today' email for an unknown last check entered today", async () => {
     const user = await createUser();
-    const property = await createProperty(user.id, propertyInput());
+    const property = await insertProperty(user.id);
     await setUpChecks(user.id, property.id, T, { gas: { choice: "unknown" } });
 
     expect(await scanDueReminders(NOW)).toEqual([]);

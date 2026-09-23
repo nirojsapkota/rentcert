@@ -3,16 +3,15 @@ import { GET as downloadPack } from "@/app/api/properties/[id]/compliance-pack/r
 import { recordCompletion, setUpChecks } from "@/server/compliance/commands";
 import { loadCompliancePack } from "@/server/compliance-pack/load";
 import { db } from "@/server/db";
-import { createProperty } from "@/server/properties/commands";
 import { uploadDocument } from "@/server/vault/commands";
 import { createVerifiedUser } from "../support/auth-http";
-import { propertyInput } from "../support/factories";
+import { insertProperty } from "../support/factories";
 import { pdfBytes } from "../support/files";
 import { flat, pdfPages } from "../support/pdf-text";
 
 async function ownerWithHistory(email = "owner@example.com") {
   const { cookie, userId } = await createVerifiedUser(email);
-  const property = await createProperty(userId, propertyInput());
+  const property = await insertProperty(userId);
   await setUpChecks(userId, property.id, "2026-09-23", {
     smoke_alarm: { choice: "date", lastCheckOn: "2025-10-11" },
     electrical: { choice: "unknown" },

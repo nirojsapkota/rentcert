@@ -23,13 +23,16 @@ model User {
   notificationEmail     String?   @map("notification_email")
   reminderEmailsEnabled Boolean   @default(true) @map("reminder_emails_enabled")
   welcomeEmailSentAt    DateTime? @map("welcome_email_sent_at")
+  // Set at sign-up from the trial_days setting; the default is a safety net only.
+  trialEndsAt           DateTime  @default(dbgenerated("(now() + '365 days'::interval)")) @map("trial_ends_at")
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  sessions    Session[]
-  accounts    Account[]
-  auditEvents AuditEvent[]
-  properties  Property[]
+  sessions       Session[]
+  accounts       Account[]
+  auditEvents    AuditEvent[]
+  properties     Property[]
+  billingAccount BillingAccount?
 
   @@map("users")
 }
@@ -272,4 +275,58 @@ model ComplianceReminder {
   @@unique([complianceRecordId, reminderType])
   @@index([status, scheduledFor])
   @@map("compliance_reminders")
+}
+
+enum Plan {
+  PROPERTY
+  PORTFOLIO
+}
+
+// One Stripe customer per user. Stripe is the source of truth for payment state.
+model BillingAccount {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  userId           String         @unique @map("user_id")
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId String         @unique @map("stripe_customer_id")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  subscriptions    Subscription[]
+
+  @@map("billing_accounts")
+}
+
+// Mirror of a Stripe subscription, refreshed from the Stripe API on every webhook.
+model Subscription {
+  id                   String         @id @default(uuid(7)) @db.Uuid
+  billingAccountId     String         @map("billing_account_id") @db.Uuid
+  billingAccount       BillingAccount @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String         @unique @map("stripe_subscription_id")
+  plan                 Plan
+  status               String
+  currentPeriodStart   DateTime?      @map("current_period_start")
+  currentPeriodEnd     DateTime?      @map("current_period_end")
+  cancelAtPeriodEnd    Boolean        @default(false) @map("cancel_at_period_end")
+  trialEnd             DateTime?      @map("trial_end")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  @@index([billingAccountId, status])
+  @@map("subscriptions")
+}
+
+// Processed Stripe webhook events. The primary key makes webhook handling idempotent.
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@map("stripe_events")
+}
+
+// Admin-managed settings (for example trial_days). Editing UI arrives in Phase 8.
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
 }

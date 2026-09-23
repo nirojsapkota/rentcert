@@ -26,7 +26,7 @@ export function CompletionForm({ action, initialValues, today, submitLabel, canc
   return (
     <form action={formAction} noValidate className="space-y-4" key={JSON.stringify(values)}>
       {state.status === "invalid" && (
-        <Alert tone="error">We couldn&apos;t save this compliance record. Check the completed date and try again.</Alert>
+        <Alert tone="error">{state.message ?? "We couldn't save this compliance record. Check the completed date and try again."}</Alert>
       )}
       <Field label="Completed date" name="completedOn" type="date" max={today} defaultValue={values.completedOn ?? ""} error={errors.completedOn} />
       <Field label="Provider (optional)" name="providerName" defaultValue={values.providerName ?? ""} hint="The business or person who did the check." error={errors.providerName} />

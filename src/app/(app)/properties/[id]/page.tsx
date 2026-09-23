@@ -53,6 +53,12 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
       {query.uploadFailed === "1" && (
         <Alert tone="error">The check was saved, but the document could not be uploaded. Add it again from the history below.</Alert>
       )}
+      {query.restore === "limit" && (
+        <Alert tone="error">
+          You&apos;ve reached the number of active properties your plan allows. Choose a plan with more properties in{" "}
+          <Link href="/billing" className="font-medium underline">Billing</Link>, or archive another property first.
+        </Alert>
+      )}
       {query.delete === "blocked" && (
         <Alert tone="error">This property has compliance history, so it can&apos;t be deleted. Archive it instead.</Alert>
       )}

@@ -1,7 +1,9 @@
 import "server-only";
 import { parseCalendarDate } from "@/lib/calendar-date";
+import type { Prisma } from "@/generated/prisma/client";
 import type { PropertyInput } from "@/lib/property-validation";
 import { recordAuditEvent } from "@/server/audit";
+import { hasPropertySlot } from "@/server/billing/entitlements";
 import { propertyHasRecords } from "@/server/compliance/commands";
 import { db } from "@/server/db";
 import { isUuid } from "@/lib/ids";
@@ -17,11 +19,16 @@ function audit(userId: string, propertyId: string, action: Parameters<typeof rec
   return { userId, resourceType: "property", resourceId: propertyId, action, metadata };
 }
 
+const activeCount = (tx: Prisma.TransactionClient, userId: string) => () =>
+  tx.property.count({ where: { userId, archivedAt: null } });
+
+// Checks the plan's property limit inside the same transaction as the insert.
 export async function createProperty(userId: string, input: PropertyInput) {
   return db.$transaction(async (tx) => {
+    if (!(await hasPropertySlot(tx, userId, activeCount(tx, userId)))) return { ok: false as const, reason: "limit_reached" as const };
     const property = await tx.property.create({ data: { ...toRow(input), userId } });
     await recordAuditEvent(audit(userId, property.id, "property.created"), tx);
-    return property;
+    return { ok: true as const, property };
   });
 }
 
@@ -47,9 +54,14 @@ export async function updateProperty(userId: string, propertyId: string, input: 
   });
 }
 
-async function setArchived(userId: string, propertyId: string, archived: boolean) {
+async function setArchived(userId: string, propertyId: string, archived: boolean): Promise<boolean | "limit_reached"> {
   if (!isUuid(propertyId)) return false;
   return db.$transaction(async (tx) => {
+    if (!archived) {
+      const target = await tx.property.findFirst({ where: { id: propertyId, userId }, select: { archivedAt: true } });
+      if (!target) return false;
+      if (target.archivedAt && !(await hasPropertySlot(tx, userId, activeCount(tx, userId)))) return "limit_reached" as const;
+    }
     const { count } = await tx.property.updateMany({
       where: { id: propertyId, userId, archivedAt: archived ? null : { not: null } },
       data: { archivedAt: archived ? new Date() : null },

@@ -40,6 +40,8 @@ Prisma creates the databases when they do not exist.
 | `BETTER_AUTH_URL` | Public base URL of the app, used in email links |
 | `EMAIL_PROVIDER` | `console` (dev), `file` (writes `tmp/mail/*.json`), `test` (in memory), `ses` (production, Amazon SES) |
 | `MAILER_FROM` | From address for emails |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe API key and webhook signing secret |
+| `STRIPE_PRICE_PROPERTY`, `STRIPE_PRICE_PORTFOLIO` | Stripe price ids for the two monthly AUD plans |
 | `QUEUE_DRIVER` | `pgboss` (default, needs `npm run worker`) or `inline` (tests run jobs immediately) |
 | `COMPLIANCE_DUE_SOON_DAYS` | Days before a due date that counts as "due soon" (default 30) |
 | `STORAGE_DRIVER` | `local` (development, tests) or `s3` (production) |
@@ -92,6 +94,23 @@ in each user's timezone. Each reminder is claimed by a unique database row, so i
 For production email, set `EMAIL_PROVIDER=ses` and `MAILER_FROM` to an address on a domain
 verified in Amazon SES, and move the SES account out of the sandbox.
 
-## Not yet covered
+## Billing and Stripe
 
-Stripe local webhook testing arrives with Phase 7.
+New accounts get a free trial (length from the `trial_days` row in `app_settings`, default 365
+days) with 1 active property and no card. Plans: Single Property ($9 AUD/month, 1 property) and
+Portfolio ($19 AUD/month, up to 5). After the trial without a plan, the account is read-only.
+Payment uses Stripe-hosted Checkout and the Stripe customer portal. The app never handles card data.
+
+Local webhook testing needs the Stripe CLI (`brew install stripe/stripe-cli/stripe`):
+
+```bash
+stripe login
+stripe listen --forward-to localhost:3000/api/webhooks/stripe   # prints the whsec_… secret for .env
+```
+
+In Stripe (test mode first), create 2 recurring monthly AUD prices and put their ids in `.env`.
+Webhook events to enable: `checkout.session.completed`, `customer.subscription.created`,
+`customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
+
+End-to-end tests use a local fake of the Stripe API (`tests/e2e/fake-stripe-server.ts`), so they
+never call Stripe.

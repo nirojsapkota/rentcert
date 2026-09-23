@@ -6,7 +6,12 @@ export type AuditAction =
   | "user.created"
   | "user.updated"
   | "user.email_verified"
-  | "user.password_reset";
+  | "user.password_reset"
+  | "property.created"
+  | "property.updated"
+  | "property.archived"
+  | "property.restored"
+  | "property.deleted";
 
 type AuditInput = {
   userId: string;

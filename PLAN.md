@@ -1,6 +1,6 @@
 # RentCert
 
-## Compliance Deadline Reminders & Certificate Vault for Self-Managing Victorian Landlords
+## Compliance Deadline Reminders & Certificate Vault for Self-Managing Australian Landlords
 
 ## 1. ROLE
 
@@ -28,11 +28,13 @@ The initial product is intentionally a small SaaS.
 
 # 2. PRODUCT
 
-RentCert helps self-managing Victorian residential landlords track rental-property compliance deadlines and securely store compliance certificates/reports.
+RentCert helps self-managing Australian residential landlords track rental-property compliance deadlines and securely store compliance certificates/reports.
+
+Victoria is the first state with researched compliance rules. Properties in every state and territory are supported (decision 2026-09-23).
 
 Primary customer:
 
-* Victorian residential landlord
+* Australian residential landlord (Victoria first)
 * Self-managing
 * 1–5 properties
 * Not using a professional property manager
@@ -68,6 +70,8 @@ Do NOT assume that the business rules supplied in this specification are legally
 The application must make compliance intervals configurable rather than scattering hard-coded values throughout the codebase.
 
 Initial Victorian configuration should be based on verified official Victorian sources before production launch.
+
+Other states and territories start with a generic reminder schedule (the same three checks), clearly labelled as not based on that state's rules. Per-state rules are added later, each verified against that state's official sources.
 
 Potential initial requirements include:
 
@@ -152,14 +156,16 @@ lease_start_date
 active
 ```
 
-For MVP, only Victorian properties are supported.
+Properties in every Australian state and territory are supported.
 
 Validate:
 
 ```text
-state = VIC
-postcode = valid Victorian postcode format
+state = one of NSW, VIC, QLD, SA, WA, TAS, NT, ACT
+postcode = 4-digit Australian postcode (0200–9999)
 ```
+
+Do not check that the postcode belongs to the state: border towns break simple ranges.
 
 Do not build a complete Australian address database.
 
@@ -268,7 +274,7 @@ Do NOT blindly assume lease start date is always the legal trigger date.
 
 The UI should explain:
 
-> RentCert uses the dates you provide to calculate reminders. Confirm the applicable compliance date with your licensed provider or official Victorian guidance.
+> RentCert uses the dates you provide to calculate reminders. Confirm the applicable compliance date with your licensed provider or the official guidance for your state or territory.
 
 When a compliance event is completed:
 
@@ -1309,7 +1315,7 @@ Never miss a rental compliance deadline again.
 Subheading:
 
 ```text
-RentCert helps Victorian self-managing landlords track compliance dates,
+RentCert helps self-managing Australian landlords track compliance dates,
 store certificates and get reminders before important deadlines.
 ```
 
@@ -1390,7 +1396,7 @@ No.
 
 ### Who performs safety checks?
 
-Use appropriately qualified/licensed professionals as required by applicable Victorian rules.
+Use appropriately qualified/licensed professionals as required by the rules in your state or territory.
 
 ### Can I store certificates?
 
@@ -1807,9 +1813,9 @@ NSW smoke alarm
 QLD smoke alarm
 ```
 
-But DO NOT implement NSW/QLD in MVP.
+For the MVP, only Victorian rules are researched and configured. Properties in other states use a generic schedule labelled as not state-specific.
 
-Design for it without building it.
+Do not configure NSW/QLD or other state-specific rules until each is verified against official sources.
 
 ---
 
@@ -2251,7 +2257,7 @@ Explicitly avoid:
 * Mobile native apps
 * AI assistant
 * Chatbot
-* NSW/QLD compliance
+* State-specific compliance rules outside Victoria (generic schedule only)
 * Provider marketplace
 * Automatic inspection booking
 * Advanced analytics
@@ -2267,7 +2273,7 @@ The MVP must remain small.
 
 The product should support the following validation hypothesis:
 
-> Victorian self-managing landlords with 1–5 properties will pay approximately $9–19/month for a simple compliance reminder and certificate-storage product.
+> Australian self-managing landlords with 1–5 properties, starting in Victoria, will pay approximately $9–19/month for a simple compliance reminder and certificate-storage product.
 
 Do not assume this hypothesis is true.
 
@@ -2478,7 +2484,7 @@ For legal/compliance requirements:
 
 * flag assumptions
 * isolate them in configuration
-* recommend verification against current official Victorian sources
+* recommend verification against current official sources for the relevant state or territory
 
 For technical decisions:
 

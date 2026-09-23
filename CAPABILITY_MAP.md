@@ -8,8 +8,8 @@ section 57.
 | Phase | Module id | Responsibility | Depends on |
 |---|---|---|---|
 | 1 (done) | foundation | Next.js app, PostgreSQL + Prisma, Tailwind, base layout, `User`, auth (sign up, sign in, sign out, reset, email verification, account deletion), `AuditEvent`, `/health`, mail adapter | — |
-| 2 | properties | Property CRUD, archive, VIC validation, per-property applicable requirements, tenant scoping, dashboard shell (counts only) | foundation |
-| 3 | compliance | `ComplianceRequirement` config, `ComplianceRecord`, due-date and status calculators, property cards, history, mark-completed flow, onboarding wizard, dashboard statuses and filters | properties |
+| 2 (done) | properties | Property CRUD, archive and restore, Australian state and postcode validation, tenant scoping, dashboard shell (counts only) | foundation |
+| 3 | compliance | `ComplianceRequirement` config (VIC rules plus a labelled generic schedule for other states), per-property applicability, `ComplianceRecord`, due-date and status calculators, property cards, history, mark-completed flow, onboarding wizard, dashboard statuses and filters | properties |
 | 4 | vault | `ComplianceDocument`, S3 private storage, upload validation (magic bytes), authorised download and delete, scan hook | compliance |
 | 5 | reminders | `ComplianceReminder`, daily scheduler (pg-boss), idempotent reminder emails, welcome email | compliance |
 | 6 | compliance-pack | `CompliancePackGenerator` PDF: cover, details, summary, history, document index | compliance, vault |

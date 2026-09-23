@@ -65,6 +65,7 @@ npm run typecheck                          # generates Next.js route types, then
 
 ```bash
 npm run db:migrate -- --name <change>   # create and apply a migration in development
+npm run db:seed                         # demo@rentcert.local / demo-password-123, 3 fictional properties
 npx prisma studio                       # browse data
 ```
 

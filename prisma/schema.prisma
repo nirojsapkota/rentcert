@@ -27,6 +27,7 @@ model User {
   sessions    Session[]
   accounts    Account[]
   auditEvents AuditEvent[]
+  properties  Property[]
 
   @@map("users")
 }
@@ -109,4 +110,37 @@ model AccountDeletion {
   deletedAt DateTime @default(now()) @map("deleted_at")
 
   @@map("account_deletions")
+}
+
+enum AustralianState {
+  NSW
+  VIC
+  QLD
+  SA
+  WA
+  TAS
+  NT
+  ACT
+}
+
+// A rental property. Active while archivedAt is null.
+// Migration adds CHECK (postcode ~ '^[0-9]{4}$' AND postcode >= '0200').
+model Property {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  userId         String          @map("user_id")
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addressLine1   String          @map("address_line_1")
+  addressLine2   String?         @map("address_line_2")
+  suburb         String
+  state          AustralianState
+  postcode       String
+  nickname       String?
+  notes          String?
+  leaseStartDate DateTime?       @map("lease_start_date") @db.Date
+  archivedAt     DateTime?       @map("archived_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  @@index([userId, archivedAt, createdAt])
+  @@map("properties")
 }

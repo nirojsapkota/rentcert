@@ -5,7 +5,7 @@ export function SiteFooter() {
         <p>
           RentCert is a tracking and document-storage tool. It does not provide legal, electrical, gas,
           smoke alarm or other compliance advice. Confirm the requirements that apply to your property with
-          a licensed provider or official Victorian guidance.
+          a licensed provider or the official guidance for your state or territory.
         </p>
         <p className="mt-2">© {new Date().getFullYear()} RentCert</p>
       </div>

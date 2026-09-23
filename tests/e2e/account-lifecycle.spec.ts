@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { linkFromLatestMail } from "./mail";
 
 const PASSWORD = "correct horse battery staple";

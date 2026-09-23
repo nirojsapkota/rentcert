@@ -17,10 +17,11 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL: BASE_URL, trace: "retain-on-failure" },
-  // Each project gets its own client IP so auth rate limits do not collide between projects.
+  // Tests import `test` from tests/e2e/fixtures.ts, which gives each test its own client IP
+  // so auth rate limits never collide.
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"], extraHTTPHeaders: { "x-forwarded-for": "203.0.113.1" } } },
-    { name: "mobile", use: { ...devices["Pixel 7"], extraHTTPHeaders: { "x-forwarded-for": "203.0.113.2" } } },
+    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
     command: `npx prisma migrate deploy && npx next dev --port ${PORT}`,

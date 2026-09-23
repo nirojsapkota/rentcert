@@ -16,6 +16,7 @@ This spec also holds the project-wide decisions required by PLAN.md section 68 (
 | 2026-09-23 | Trial length is an admin setting. Default 365 days. | Owner decision. |
 | 2026-09-23 | Accounts are deleted on user request, with hard delete of dependent data and documents. | Owner decision. |
 | 2026-09-23 | Archived properties do not count toward plan limits. | Owner decision. |
+| 2026-09-23 | Properties in all Australian states and territories are supported. Victoria has researched rules; other states get a labelled generic schedule. | Owner decision. PLAN.md updated to match. |
 | 2026-09-23 | Seed intervals: smoke alarm 12 months, electrical 24 months, gas 24 months, all `last_verified_at = null`. | Research in `docs/compliance-sources.md`. A human verifies before launch. |
 
 ---

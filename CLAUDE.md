@@ -22,6 +22,7 @@ npm run test:e2e             # Playwright; boots next dev on :3100 with EMAIL_PR
 npm run lint
 npm run typecheck            # next typegen && tsc (PageProps/LayoutProps come from typegen)
 npm run db:migrate -- --name <change>
+npm run db:seed              # demo@rentcert.local / demo-password-123 with 3 properties
 ```
 
 ## Architecture
@@ -34,7 +35,7 @@ npm run db:migrate -- --name <change>
   - Client auth forms use `method="post"` and stay disabled until hydrated (`useHydrated`). This stops a pre-hydration click from putting credentials in the URL.
   - A `databaseHooks.user.create.before` hook validates names and builds `name` from `firstName` and `lastName`.
 - Session checks go through `src/server/session.ts` (`getSession`, `requireUser`). Every `(app)` page and every server action calls `requireUser()` itself. The layout check is not enough, because layouts do not re-run on client navigation.
-- Tenant isolation: data access functions take `userId` and filter by it (`findFirst({ where: { id, userId } })`). Never look up user data by record id alone.
+- Tenant isolation: data access functions take `userId` and filter by it (`findFirst({ where: { id, userId } })`). Never look up user data by record id alone. Ids that are not valid UUIDs are treated as not found. Pages call `notFound()` for both "missing" and "someone else's", so the two cases look the same.
 - `AuditEvent` rows (`src/server/audit.ts`) record changes to user data. Pass `tx` to write them inside the same transaction. Metadata holds field names only, never secrets or document contents.
 - Account deletion is a hard delete. Every user-owned table needs `onDelete: Cascade` to `User`. `AccountDeletion` keeps only a timestamp.
 - Mail: `src/server/mail/deliver.ts` picks the adapter from `EMAIL_PROVIDER`. Tests read `testOutbox` (Vitest) or `tmp/mail/*.json` (Playwright).
@@ -44,11 +45,14 @@ npm run db:migrate -- --name <change>
 
 - Vitest aliases `server-only` to an empty module and truncates every table before each test (`tests/support/setup.ts`). Add new tables to that list and to `tests/e2e/global-setup.ts`.
 - Auth integration tests call `auth.handler` with real `Request` objects (`tests/support/auth-http.ts`), so rate limiting and cookies are exercised.
-- Playwright projects send distinct `x-forwarded-for` headers so rate limits don't collide. After a client-side navigation, wait for the new page's heading before you fill fields.
+- Playwright specs import `test`/`expect` from `tests/e2e/fixtures.ts`, which gives each test its own `x-forwarded-for` IP; use `newUserPage()` for extra users. Without it, auth rate limits (3 sign-ups per minute) make tests flaky. After a client-side navigation, wait for the new page's heading before you fill fields.
+- `tests/integration/architecture.test.ts` fails if anything outside `src/server/properties/` calls `db.property`/`tx.property`. Follow the same pattern for new user-owned tables.
 
 ## Conventions
 
 - Validation schemas shared by browser and server live in `src/lib/` (Zod 4) and must not import server code.
 - User-facing errors are plain sentences (`src/lib/auth-errors.ts`). Log technical detail on the server only.
-- Calendar dates (due dates) will be `@db.Date` and calculated in the user's timezone (default `Australia/Melbourne`) with month arithmetic, never `365` days.
+- Calendar dates are `@db.Date` columns and pass through the app as `YYYY-MM-DD` strings (`src/lib/calendar-date.ts`). Format them in UTC so no timezone shifts the day. Work out "today" with `todayIn(user.timezone)`. Due dates use month arithmetic, never `365` days.
+- Properties cover all Australian states (`AustralianState` enum). Postcodes are any 4 digits from 0200 up, with no state-postcode cross-check. Only Victoria has researched compliance rules.
+- Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

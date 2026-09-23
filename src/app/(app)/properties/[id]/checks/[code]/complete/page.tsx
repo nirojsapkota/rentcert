@@ -30,6 +30,7 @@ export default async function CompleteCheckPage({ params }: PageProps<"/properti
           today={today}
           submitLabel="Save completed check"
           cancelHref={`/properties/${schedule.property.id}`}
+          allowUpload
         />
       </div>
     </section>

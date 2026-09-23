@@ -193,6 +193,8 @@ model ComplianceRecord {
   createdAt             DateTime              @default(now()) @map("created_at")
   updatedAt             DateTime              @updatedAt @map("updated_at")
 
+  documents ComplianceDocument[]
+
   @@index([propertyId, requirementId, nextDueOn])
   @@index([requirementId])
   @@index([nextDueOn])
@@ -208,4 +210,29 @@ model PropertyRequirementExclusion {
 
   @@id([propertyId, requirementCode])
   @@map("property_requirement_exclusions")
+}
+
+enum ScanStatus {
+  NOT_SCANNED
+  CLEAN
+  INFECTED
+}
+
+// An uploaded certificate or report. The file lives in object storage under storage_key
+// (documents/<userId>/<uuid>); the key never contains the filename.
+// Migration adds CHECK constraints on byte_size (1..10 MB) and content_type (PDF, JPEG, PNG).
+model ComplianceDocument {
+  id                 String           @id @default(uuid(7)) @db.Uuid
+  complianceRecordId String           @map("compliance_record_id") @db.Uuid
+  complianceRecord   ComplianceRecord @relation(fields: [complianceRecordId], references: [id], onDelete: Cascade)
+  filename           String
+  contentType        String           @map("content_type")
+  byteSize           Int              @map("byte_size")
+  sha256             String
+  storageKey         String           @unique @map("storage_key")
+  scanStatus         ScanStatus       @default(NOT_SCANNED) @map("scan_status")
+  uploadedAt         DateTime         @default(now()) @map("uploaded_at")
+
+  @@index([complianceRecordId, uploadedAt])
+  @@map("compliance_documents")
 }

@@ -64,5 +64,12 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - Exclusions ("not applicable") key on requirement `code`, not id, so they survive a state change.
   - A property with records cannot be deleted (only archived). Records can be edited with an audit of old and new values, never deleted.
 - Wording: never say a property is "compliant" or imply legal status. Say "due", "overdue", "up to date", "based on the dates you entered".
+- Document vault (`src/server/vault/`):
+  - File type comes only from magic bytes (`file-type.ts`). The browser MIME type and the extension are ignored, and the extension is rewritten to match the detected type.
+  - Storage keys are `documents/<userId>/<uuid>` and never contain filenames. Drivers (`storage/local.ts`, `storage/s3.ts`) reject any key the app did not generate.
+  - Downloads only go through `/api/documents/[id]/download`: session check, owner-scoped lookup, then always `attachment` with `nosniff`. S3 downloads are 60-second presigned redirects. Never log signed URLs or storage keys.
+  - `checkFile()` runs before the compliance record is created, so a bad file never leaves a half-saved record.
+  - Account deletion removes the `documents/<userId>/` prefix in Better Auth's `deleteUser.afterDelete`.
+  - `next.config.ts` raises `serverActions.bodySizeLimit` to 11 MB for uploads.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

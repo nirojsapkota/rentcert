@@ -14,6 +14,7 @@ import {
 import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/server/mail/messages";
+import { deleteAllDocumentsForUser } from "@/server/vault/commands";
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;
 
@@ -67,9 +68,15 @@ export const auth = betterAuth({
     },
     deleteUser: {
       enabled: true,
-      // Dependent rows are removed by ON DELETE CASCADE. Keep only a timestamp.
-      afterDelete: async () => {
+      // Dependent rows are removed by ON DELETE CASCADE. Stored files are removed here.
+      // Keep only a timestamp.
+      afterDelete: async (user) => {
         await db.accountDeletion.create({ data: {} });
+        try {
+          await deleteAllDocumentsForUser(user.id);
+        } catch (error) {
+          console.error("[auth] failed to delete stored documents after account deletion", error instanceof Error ? error.name : "unknown");
+        }
       },
     },
   },

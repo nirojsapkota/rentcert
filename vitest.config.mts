@@ -26,6 +26,8 @@ export default defineConfig({
       EMAIL_PROVIDER: "test",
       BETTER_AUTH_URL: "http://localhost:3000",
       BETTER_AUTH_SECRET: "test-secret-that-is-at-least-32-characters-long",
+      STORAGE_DRIVER: "local",
+      STORAGE_LOCAL_PATH: "tmp/test-storage",
     },
   },
 });

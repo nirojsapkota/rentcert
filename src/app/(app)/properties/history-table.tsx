@@ -8,6 +8,7 @@ type HistoryRecord = {
   nextDueOn: Date;
   providerName: string | null;
   requirement: { name: string };
+  documents: { id: string; filename: string }[];
 };
 
 type History = { records: HistoryRecord[]; total: number; page: number; pageCount: number };
@@ -23,13 +24,14 @@ export function HistoryTable({ propertyId, history }: { propertyId: string; hist
       ) : (
         <>
           <div className="relative overflow-x-auto rounded-lg border border-line bg-surface">
-            <table className="w-full min-w-[36rem] text-left text-sm">
+            <table className="w-full min-w-[44rem] text-left text-sm">
               <thead className="border-b border-line bg-canvas text-ink-muted">
                 <tr>
                   <th scope="col" className="px-4 py-2 font-medium">Requirement</th>
                   <th scope="col" className="px-4 py-2 font-medium">Completed</th>
                   <th scope="col" className="px-4 py-2 font-medium">Next due</th>
                   <th scope="col" className="px-4 py-2 font-medium">Provider</th>
+                  <th scope="col" className="px-4 py-2 font-medium">Documents</th>
                   <th scope="col" className="px-4 py-2 font-medium"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
@@ -42,6 +44,24 @@ export function HistoryTable({ propertyId, history }: { propertyId: string; hist
                     </td>
                     <td className="px-4 py-2">{formatCalendarDate(record.nextDueOn)}</td>
                     <td className="px-4 py-2">{record.providerName ?? "—"}</td>
+                    <td className="px-4 py-2">
+                      <ul className="space-y-1">
+                        {record.documents.map((document) => (
+                          <li key={document.id}>
+                            <a href={`/api/documents/${document.id}/download`} className="text-brand hover:underline">
+                              {document.filename}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link
+                        href={`/properties/${propertyId}/records/${record.id}/documents`}
+                        className="text-ink-muted hover:underline"
+                        aria-label={`${record.documents.length > 0 ? "Manage" : "Add"} documents for ${record.requirement.name.toLowerCase()}${record.completedOn ? ` from ${formatCalendarDate(record.completedOn)}` : ""}`}
+                      >
+                        {record.documents.length > 0 ? "Manage" : "Add document"}
+                      </Link>
+                    </td>
                     <td className="px-4 py-2 text-right">
                       {record.kind === "COMPLETED" && (
                         <Link

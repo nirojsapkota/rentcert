@@ -56,7 +56,10 @@ export async function listPropertyHistory(userId: string, propertyId: string, pa
     db.complianceRecord.count({ where }),
     db.complianceRecord.findMany({
       where,
-      include: { requirement: { select: { name: true, code: true } } },
+      include: {
+        requirement: { select: { name: true, code: true } },
+        documents: { select: { id: true, filename: true }, orderBy: { uploadedAt: "asc" } },
+      },
       orderBy: [{ completedOn: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
       skip: (currentPage - 1) * HISTORY_PAGE_SIZE,
       take: HISTORY_PAGE_SIZE,
@@ -69,7 +72,7 @@ export async function findRecordForUser(userId: string, propertyId: string, reco
   if (!isUuid(recordId) || !isUuid(propertyId)) return null;
   return db.complianceRecord.findFirst({
     where: { id: recordId, propertyId, property: { userId } },
-    include: { requirement: true },
+    include: { requirement: true, property: { select: { archivedAt: true } } },
   });
 }
 

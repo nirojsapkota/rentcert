@@ -3,7 +3,7 @@ import { db } from "@/server/db";
 import { testOutbox } from "@/server/mail/deliver";
 
 // compliance_requirements is configuration seeded by migration, so it is never truncated.
-const TABLES = ["compliance_records", "property_requirement_exclusions", "properties", "audit_events", "sessions", "accounts", "verifications", "rate_limits", "account_deletions", "users"];
+const TABLES = ["compliance_documents", "compliance_records", "property_requirement_exclusions", "properties", "audit_events", "sessions", "accounts", "verifications", "rate_limits", "account_deletions", "users"];
 
 beforeEach(async () => {
   await db.$executeRawUnsafe(`TRUNCATE ${TABLES.join(", ")} CASCADE`);

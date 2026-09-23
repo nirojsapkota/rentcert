@@ -19,6 +19,7 @@ describe("tenant isolation architecture", () => {
     ["property", "properties"],
     ["complianceRecord", "compliance"],
     ["propertyRequirementExclusion", "compliance"],
+    ["complianceDocument", "vault"],
   ])("only src/server/%s's module touches %s", (model, moduleDir) => {
     const allowed = path.join(SRC, "server", moduleDir);
     const pattern = new RegExp(`\\b(db|tx)\\.${model}\\.`);

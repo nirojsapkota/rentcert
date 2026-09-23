@@ -13,6 +13,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    // Certificate uploads are up to 10 MB; leave room for the other form fields.
+    serverActions: { bodySizeLimit: "11mb" },
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

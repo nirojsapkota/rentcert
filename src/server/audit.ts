@@ -16,7 +16,9 @@ export type AuditAction =
   | "property.requirement_excluded"
   | "property.requirement_included"
   | "compliance_record.created"
-  | "compliance_record.updated";
+  | "compliance_record.updated"
+  | "document.uploaded"
+  | "document.deleted";
 
 type AuditInput = {
   userId: string;

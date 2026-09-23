@@ -11,6 +11,8 @@ import {
   updateRecord,
 } from "@/server/compliance/commands";
 import { requireUser } from "@/server/session";
+import { checkFile, uploadDocument } from "@/server/vault/commands";
+import { readUpload } from "./document-actions";
 
 const DEFAULT_TIMEZONE = "Australia/Melbourne";
 
@@ -39,7 +41,7 @@ export async function setUpChecksAction(
 
 export type CompletionFormState = {
   status: "idle" | "invalid";
-  fieldErrors?: Partial<Record<CompletionField, string>>;
+  fieldErrors?: Partial<Record<CompletionField | "document", string>>;
   values?: Partial<Record<CompletionField, string>>;
 };
 
@@ -65,12 +67,26 @@ export async function recordCompletionAction(
 ): Promise<CompletionFormState> {
   const user = await requireUser();
   const parsed = parseCompletion(formData, user.timezone ?? DEFAULT_TIMEZONE);
-  if (!parsed.ok) return parsed.state;
+  const file = await readUpload(formData, "document");
+  // Check the file before saving anything, so a bad file never leaves a record without it.
+  const fileCheck = file ? checkFile(file) : null;
+  if (!parsed.ok || (fileCheck && !fileCheck.ok)) {
+    const state: CompletionFormState = parsed.ok
+      ? { status: "invalid", values: Object.fromEntries(["completedOn", "providerName", "providerLicenceNumber", "notes"].map((key) => [key, String(formData.get(key) ?? "")])) }
+      : parsed.state;
+    if (fileCheck && !fileCheck.ok) state.fieldErrors = { ...state.fieldErrors, document: fileCheck.message };
+    return state;
+  }
 
   const result = await recordCompletion(user.id, propertyId, code, parsed.data);
   if (!result.ok) notFound();
+  let uploadFailed = false;
+  if (file) {
+    const upload = await uploadDocument(user.id, propertyId, result.recordId, file);
+    uploadFailed = !upload.ok;
+  }
   revalidatePath("/", "layout");
-  redirect(`/properties/${propertyId}?completed=${encodeURIComponent(code)}`);
+  redirect(`/properties/${propertyId}?completed=${encodeURIComponent(code)}${uploadFailed ? "&uploadFailed=1" : ""}`);
 }
 
 export async function updateRecordAction(

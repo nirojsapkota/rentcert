@@ -50,6 +50,9 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
           {completedItem.nextDueOn ? formatCalendarDate(new Date(`${completedItem.nextDueOn}T00:00:00Z`)) : "—"}.
         </Alert>
       )}
+      {query.uploadFailed === "1" && (
+        <Alert tone="error">The check was saved, but the document could not be uploaded. Add it again from the history below.</Alert>
+      )}
       {query.delete === "blocked" && (
         <Alert tone="error">This property has compliance history, so it can&apos;t be deleted. Archive it instead.</Alert>
       )}

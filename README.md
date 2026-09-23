@@ -42,6 +42,9 @@ Prisma creates the databases when they do not exist.
 | `MAILER_FROM` | From address for emails |
 | `EMAIL_PROVIDER_API_KEY` | Production email provider key (Phase 5) |
 | `COMPLIANCE_DUE_SOON_DAYS` | Days before a due date that counts as "due soon" (default 30) |
+| `STORAGE_DRIVER` | `local` (development, tests) or `s3` (production) |
+| `STORAGE_LOCAL_PATH` | Folder for local document storage (default `storage/`, gitignored) |
+| `AWS_REGION`, `AWS_S3_BUCKET` | Private bucket for `STORAGE_DRIVER=s3`. Credentials come from the AWS credential chain, never from `.env` in production. |
 
 Stripe and AWS S3 variables are added in the phases that need them (see `PLAN.md` section 38).
 Never commit `.env`.
@@ -70,7 +73,14 @@ npm run db:seed                         # demo@rentcert.local / demo-password-12
 npx prisma studio                       # browse data
 ```
 
+## Document storage
+
+Uploads (PDF, JPG, PNG, up to 10 MB) go through the app, which checks the file bytes before
+storing them. In development they are written to `storage/`. With `STORAGE_DRIVER=s3` they go to
+a private bucket with server-side encryption, and downloads redirect to presigned URLs that
+expire after 60 seconds. The bucket must block all public access.
+
 ## Not yet covered
 
-Stripe local webhook testing (Phase 7), S3 storage (Phase 4) and email providers (Phase 5) are
-documented when those phases land.
+Stripe local webhook testing (Phase 7) and email providers (Phase 5) are documented when those
+phases land.

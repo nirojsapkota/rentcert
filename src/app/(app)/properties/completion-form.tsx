@@ -7,6 +7,7 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import type { CompletionField } from "@/lib/compliance-validation";
 import type { CompletionFormState } from "./compliance-actions";
+import { DOCUMENT_ACCEPT } from "./upload-form";
 
 type Props = {
   action: (state: CompletionFormState, formData: FormData) => Promise<CompletionFormState>;
@@ -14,9 +15,10 @@ type Props = {
   today: string;
   submitLabel: string;
   cancelHref: string;
+  allowUpload?: boolean;
 };
 
-export function CompletionForm({ action, initialValues, today, submitLabel, cancelHref }: Props) {
+export function CompletionForm({ action, initialValues, today, submitLabel, cancelHref, allowUpload = false }: Props) {
   const [state, formAction, pending] = useActionState(action, { status: "idle" });
   const errors = state.fieldErrors ?? {};
   const values = state.values ?? initialValues;
@@ -48,7 +50,30 @@ export function CompletionForm({ action, initialValues, today, submitLabel, canc
           </p>
         )}
       </div>
-      <p className="text-sm text-ink-muted">Certificate uploads are coming soon.</p>
+      {allowUpload && (
+        <div className="space-y-1.5">
+          <label htmlFor="document" className="block text-sm font-medium">
+            Certificate or report (optional)
+          </label>
+          <input
+            id="document"
+            name="document"
+            type="file"
+            accept={DOCUMENT_ACCEPT}
+            aria-describedby={errors.document ? "document-hint document-error" : "document-hint"}
+            aria-invalid={errors.document ? true : undefined}
+            className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-line file:bg-surface file:px-3 file:py-2 file:text-sm file:font-medium"
+          />
+          <p id="document-hint" className="text-sm text-ink-muted">
+            PDF, JPG or PNG, up to 10 MB.
+          </p>
+          {errors.document && (
+            <p id="document-error" className="text-sm text-danger">
+              {errors.document} Choose the file again.
+            </p>
+          )}
+        </div>
+      )}
       <div className="flex flex-col-reverse gap-3 sm:flex-row">
         <Link href={cancelHref} className={buttonClasses("secondary")}>
           Cancel

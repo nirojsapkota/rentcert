@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Prepares a local development environment. Safe to run more than once.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+if [ ! -f .env ]; then
+  cp .env.example .env
+  secret="$(openssl rand -base64 32)"
+  sed -i.bak "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=\"${secret}\"|" .env && rm .env.bak
+  echo "Created .env from .env.example. Check DATABASE_URL and TEST_DATABASE_URL."
+fi
+
+echo "== Installing dependencies"
+npm install
+
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
+
+echo "== Migrating development database"
+npx prisma migrate deploy
+
+echo "== Migrating test database"
+DATABASE_URL="${TEST_DATABASE_URL}" npx prisma migrate deploy
+
+echo "== Installing Playwright browser (for npm run test:e2e)"
+npx playwright install chromium
+
+echo "Done. Run bin/dev to start the app."

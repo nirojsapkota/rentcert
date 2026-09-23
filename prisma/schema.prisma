@@ -1,0 +1,112 @@
+// RentCert data model.
+// Tables and columns use snake_case in PostgreSQL; Prisma fields stay camelCase.
+// User, Session, Account, Verification and RateLimit follow the Better Auth core schema.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String   @id
+  name              String
+  email             String   @unique
+  emailVerified     Boolean  @default(false) @map("email_verified")
+  image             String?
+  firstName         String   @map("first_name")
+  lastName          String   @map("last_name")
+  timezone          String   @default("Australia/Melbourne")
+  notificationEmail String?  @map("notification_email")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  sessions    Session[]
+  accounts    Account[]
+  auditEvents AuditEvent[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt @map("last_request")
+
+  @@map("rate_limits")
+}
+
+// Append-only record of changes to user data. Never store document contents here.
+model AuditEvent {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceType String   @map("resource_type")
+  resourceId   String   @map("resource_id")
+  action       String
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("audit_events")
+}
+
+// Timestamp-only log kept after an account is deleted. Holds no personal data.
+model AccountDeletion {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  deletedAt DateTime @default(now()) @map("deleted_at")
+
+  @@map("account_deletions")
+}

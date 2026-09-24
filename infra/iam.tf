@@ -32,6 +32,20 @@ resource "aws_iam_role_policy" "web_app" {
           Resource = "${aws_s3_bucket.documents.arn}/documents/*"
         },
         {
+          # The host's backup timer writes dumps; the worker lists them to alert on stale backups.
+          Sid      = "DatabaseBackups"
+          Effect   = "Allow"
+          Action   = ["s3:PutObject", "s3:GetObject"]
+          Resource = "${aws_s3_bucket.backups.arn}/postgres/*"
+        },
+        {
+          Sid       = "BackupListing"
+          Effect    = "Allow"
+          Action    = ["s3:ListBucket"]
+          Resource  = aws_s3_bucket.backups.arn
+          Condition = { StringLike = { "s3:prefix" = ["postgres/*"] } }
+        },
+        {
           Sid       = "DocumentListing"
           Effect    = "Allow"
           Action    = ["s3:ListBucket"]

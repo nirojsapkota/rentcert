@@ -67,7 +67,25 @@ describe("job health alerts", () => {
 
   it("stays quiet when everything is healthy", async () => {
     await recordWorkerHeartbeat();
-    expect(await checkJobHealth()).toEqual({ alerted: false, health: { failedReminders: 0, failedJobs: 0, heartbeatStale: false } });
+    expect(await checkJobHealth()).toEqual({ alerted: false, health: { failedReminders: 0, failedJobs: 0, heartbeatStale: false, backupStale: false } });
+  });
+
+  it("alerts when database backups stop", async () => {
+    vi.stubEnv("AWS_BACKUP_BUCKET", "rentcert-backups-test");
+    await recordWorkerHeartbeat();
+    const now = new Date();
+
+    const fresh = async () => [new Date(now.getTime() - 30 * 60 * 1000)];
+    expect((await checkJobHealth(now, fresh)).health.backupStale).toBe(false);
+
+    const stale = async () => [new Date(now.getTime() - 3 * 60 * 60 * 1000)];
+    const result = await checkJobHealth(now, stale);
+    expect(result).toMatchObject({ alerted: true, health: { backupStale: true } });
+
+    const unreadable = async () => {
+      throw new Error("AccessDenied");
+    };
+    expect((await checkJobHealth(new Date(now.getTime() + 7 * 60 * 60 * 1000), unreadable)).health.backupStale).toBe(true);
   });
 });
 

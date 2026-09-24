@@ -5,13 +5,12 @@ A backup only counts once it has been restored.
 
 | Date | Who | What was restored | Restore time used | Checks done | Duration | Result |
 |---|---|---|---|---|---|---|
-| _not yet run_ | | | | Row counts for users, properties, compliance_records; sign in; open a document | | |
+| 2026-09-24 | Claude (local drill) | `pg_dump --format=custom` of a migrated and seeded PostgreSQL 16 database, restored with `pg_restore --clean --if-exists --no-owner` into a fresh PostgreSQL 16 container | n/a (latest) | Row counts matched: 1 user, 3 properties, 8 compliance records, 6 requirements, 7 migrations; dump size 42 KB | under 1 minute | Passed (production drill still to do after launch) |
 
 Checklist for each drill:
 
-1. Restore to a new instance (point in time, about 1 hour ago).
-2. Connect through the host (`aws ssm start-session`) and compare row counts with production.
-3. Point a temporary app container at it (`kamal app exec` with an overridden `DATABASE_URL`) and
-   sign in as a test user.
-4. Delete the restored instance (`aws rds delete-db-instance … --skip-final-snapshot`).
-5. Record the result above.
+1. Download the newest dump from the backups bucket.
+2. On the host, start a scratch container: `docker run -d --name restore-drill --network kamal -e POSTGRES_USER=rentcert -e POSTGRES_PASSWORD=drill -e POSTGRES_DB=rentcert postgres:16`.
+3. `docker exec -i restore-drill pg_restore -U rentcert -d rentcert --no-owner < dump`.
+4. Compare row counts (users, properties, compliance_records) with production.
+5. `docker rm -f restore-drill`, then record the result above.

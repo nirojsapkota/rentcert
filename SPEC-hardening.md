@@ -177,6 +177,11 @@ recorded after you run it).
 - **EC2 `t3.small` (x86)** instead of `t4g.small`, so images build natively on standard GitHub
   runners (about US$4/month more).
 - **Terraform state:** S3 bucket with native locking (`use_lockfile`), created by `infra/bootstrap`.
+- **Cost-first (owner decision):** PostgreSQL 16 runs on the EC2 host as a Kamal accessory instead of
+  RDS (saves about US$18/month). Data sits on a separate encrypted EBS volume, with hourly `pg_dump`
+  to a private S3 bucket (30 days), daily EBS snapshots (7 days), and an alert when the newest dump
+  is older than 2 hours. SSM Parameter Store (free) replaces Secrets Manager. `t3` standard CPU
+  credits (no surprise charges). Budget alert at US$30. RDS returns once there is revenue.
 - **AWS profile:** `rentcert` (IAM user `rentcert-terraform`), never root.
 - **Health checks:** kamal-proxy checks `/api/health?scope=web` (database only), so the first
   deploy can pass before any worker heartbeat exists. External monitoring uses `/api/health`

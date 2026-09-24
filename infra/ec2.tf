@@ -31,24 +31,15 @@ resource "aws_instance" "web" {
     encrypted   = true
   }
 
-  user_data = <<-EOT
-    #!/bin/bash
-    set -euo pipefail
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install -y ca-certificates curl unattended-upgrades
-    # Security updates install automatically; reboots happen at 03:30 Melbourne time if needed.
-    echo 'Unattended-Upgrade::Automatic-Reboot "true";' > /etc/apt/apt.conf.d/52rentcert-reboot
-    echo 'Unattended-Upgrade::Automatic-Reboot-Time "17:30";' >> /etc/apt/apt.conf.d/52rentcert-reboot
-    timedatectl set-timezone UTC
-    curl -fsSL https://get.docker.com | sh
-    usermod -aG docker ubuntu
-    systemctl enable --now docker
-    # Fixed subnet for Kamal's network, so the app can trust kamal-proxy (TRUSTED_PROXY_CIDRS).
-    docker network create --subnet 172.30.0.0/16 kamal || true
-    # The Systems Manager agent ships with Ubuntu AMIs; make sure it runs.
-    snap start amazon-ssm-agent || true
-  EOT
+  user_data = templatefile("${path.module}/templates/user-data.sh.tftpl", {
+    data_volume_id = aws_ebs_volume.data.id
+    backup_bucket  = aws_s3_bucket.backups.bucket
+  })
+
+  # Standard CPU credits: no surprise "unlimited" charges; the instance slows down instead.
+  credit_specification {
+    cpu_credits = "standard"
+  }
 
   lifecycle {
     ignore_changes = [ami, user_data] # AMI updates and user-data changes need a planned replacement

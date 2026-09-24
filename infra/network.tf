@@ -1,5 +1,5 @@
-# Small VPC: public subnets for the EC2 host, private subnets for RDS. No NAT gateway (cost);
-# the database needs no internet access.
+# Small VPC: public subnets for the EC2 host. No NAT gateway (cost). PostgreSQL runs on the host
+# (Kamal accessory) and is only reachable on the internal Docker network.
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, 2)
 }
@@ -22,14 +22,6 @@ resource "aws_subnet" "public" {
   cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
   map_public_ip_on_launch = false
   tags                    = { Name = "rentcert-public-${count.index}" }
-}
-
-resource "aws_subnet" "private" {
-  count             = 2
-  vpc_id            = aws_vpc.main.id
-  availability_zone = local.azs[count.index]
-  cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, 10 + count.index)
-  tags              = { Name = "rentcert-private-${count.index}" }
 }
 
 resource "aws_route_table" "public" {
@@ -75,16 +67,3 @@ resource "aws_security_group" "web" {
   }
 }
 
-resource "aws_security_group" "db" {
-  name        = "rentcert-db"
-  description = "RentCert database: PostgreSQL from the web host only"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    description     = "PostgreSQL from the web host"
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.web.id]
-  }
-}

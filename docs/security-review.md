@@ -1,7 +1,7 @@
 # Security review (Phase 8b)
 
-Date: 2026-09-24. Scope: the application code in this repository. Infrastructure (EC2, RDS, S3,
-SES, kamal-proxy) is reviewed in Phase 8c. This review is not a penetration test.
+Date: 2026-09-24. Scope: the application code in this repository. Infrastructure (EC2, S3, SES,
+kamal-proxy, PostgreSQL on the host) is in `infra/` and `config/deploy.yml`. This review is not a penetration test.
 
 ## Route inventory
 
@@ -27,7 +27,7 @@ unprotected route fails the build.
 | Risk | Status | Evidence |
 |---|---|---|
 | A01 Broken access control | Addressed | Owner-scoped data layer; the architecture test limits each user-owned table to its module; IDOR tests for properties, compliance, documents, packs, export and admin |
-| A02 Cryptographic failures | Addressed | Passwords hashed by Better Auth (scrypt); TLS at kamal-proxy; S3 SSE; RDS encryption (8c); HSTS in production |
+| A02 Cryptographic failures | Addressed | Passwords hashed by Better Auth (scrypt); TLS at kamal-proxy; S3 SSE; encrypted EBS volumes (PostgreSQL data on its own volume, never exposed outside the host's Docker network); HSTS in production |
 | A03 Injection | Addressed | Prisma parameterised queries; raw SQL uses tagged templates only; Zod validation on every input; no `dangerouslySetInnerHTML` |
 | A04 Insecure design | Addressed | Specs per phase; plan limits and read-only mode enforced on the server; idempotent reminders and webhooks |
 | A05 Security misconfiguration | Addressed | Nonce CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`; no `X-Powered-By`; dev-only adapters refuse to run in production |
@@ -56,3 +56,5 @@ unprotected route fails the build.
 3. A second reminder email is possible if the database fails straight after SES accepts a send.
 4. Legal pages are drafts pending legal review and business details.
 5. An external penetration test is recommended before handling significant numbers of customers.
+6. PostgreSQL shares the host with the app (cost-first). Worst-case data loss is about 1 hour (hourly
+   dumps). Move to RDS once there is revenue (runbook section 6).

@@ -17,8 +17,8 @@ output "documents_bucket" {
   value = aws_s3_bucket.documents.bucket
 }
 
-output "database_endpoint" {
-  value = aws_db_instance.main.address
+output "backups_bucket" {
+  value = aws_s3_bucket.backups.bucket
 }
 
 output "deploy_role_arn" {
@@ -26,9 +26,9 @@ output "deploy_role_arn" {
   value       = var.github_repository != "" ? aws_iam_role.deploy[0].arn : null
 }
 
-output "app_secret_name" {
-  description = "Fill in these values in AWS Secrets Manager before the first deploy."
-  value       = aws_secretsmanager_secret.app.name
+output "app_parameters_to_set" {
+  description = "Set these SSM parameters before the first deploy (docs/runbook.md section 1.5)."
+  value       = [for name in local.app_parameters : "${local.parameter_prefix}/${name}"]
 }
 
 output "dns_records_to_add" {

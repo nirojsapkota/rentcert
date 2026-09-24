@@ -44,12 +44,19 @@ resource "aws_iam_role_policy" "deploy" {
         Resource = aws_ecr_repository.app.arn
       },
       {
-        Sid      = "ReadDeploySecrets"
+        Sid      = "ReadDeployParameters"
         Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue", "secretsmanager:BatchGetSecretValue"]
-        Resource = [aws_secretsmanager_secret.infra.arn, aws_secretsmanager_secret.app.arn]
+        Action   = ["ssm:GetParametersByPath"]
+        Resource = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter${local.parameter_prefix}"
       },
-      { Sid = "BatchGetSecrets", Effect = "Allow", Action = ["secretsmanager:BatchGetSecretValue"], Resource = "*" },
+      {
+        # SecureString parameters use the AWS-managed aws/ssm key.
+        Sid       = "DecryptParameters"
+        Effect    = "Allow"
+        Action    = ["kms:Decrypt"]
+        Resource  = "*"
+        Condition = { StringEquals = { "kms:ViaService" = "ssm.${var.region}.amazonaws.com" } }
+      },
       {
         Sid      = "SshThroughSsm"
         Effect   = "Allow"

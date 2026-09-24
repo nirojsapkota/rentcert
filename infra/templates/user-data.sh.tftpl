@@ -1,0 +1,72 @@
+#!/bin/bash
+# First-boot setup for the RentCert host. Rendered by Terraform (infra/ec2.tf).
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -y ca-certificates curl unattended-upgrades
+# Security updates install automatically; reboots, if needed, happen at 03:30 Melbourne (17:30 UTC).
+cat > /etc/apt/apt.conf.d/52rentcert-reboot <<'CONF'
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "17:30";
+CONF
+timedatectl set-timezone UTC
+snap install aws-cli --classic
+
+# 2 GB swap: headroom for web, worker and PostgreSQL on a 2 GB instance.
+if [ ! -f /swapfile ]; then
+  fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  sysctl -w vm.swappiness=10 && echo 'vm.swappiness=10' > /etc/sysctl.d/60-rentcert.conf
+fi
+
+# PostgreSQL data volume (separate encrypted EBS volume). Wait for the attachment, format it
+# only if it is blank, and mount it by UUID.
+DEVICE=/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${replace(data_volume_id, "-", "")}
+for _ in $(seq 1 60); do [ -e "$DEVICE" ] && break; sleep 5; done
+[ -e "$DEVICE" ] || { echo "data volume not attached" >&2; exit 1; }
+if ! blkid "$DEVICE" >/dev/null 2>&1; then mkfs.ext4 -L rentcert-data "$DEVICE"; fi
+mkdir -p /mnt/rentcert-data
+UUID=$(blkid -s UUID -o value "$DEVICE")
+grep -q "$UUID" /etc/fstab || echo "UUID=$UUID /mnt/rentcert-data ext4 defaults,nofail 0 2" >> /etc/fstab
+mount -a
+mkdir -p /mnt/rentcert-data/postgres
+
+curl -fsSL https://get.docker.com | sh
+usermod -aG docker ubuntu
+systemctl enable --now docker
+# Fixed subnet for Kamal's network, so the app can trust kamal-proxy (TRUSTED_PROXY_CIDRS).
+docker network create --subnet 172.30.0.0/16 kamal || true
+# The Systems Manager agent ships with Ubuntu AMIs; make sure it runs.
+snap start amazon-ssm-agent || true
+
+# Hourly database dump to S3 (kept 30 days by the bucket lifecycle).
+cat > /usr/local/bin/rentcert-backup <<'SCRIPT'
+#!/bin/bash
+set -euo pipefail
+STAMP=$(date -u +%Y-%m-%dT%H%M%SZ)
+docker exec rentcert-postgres pg_dump -U rentcert -d rentcert --format=custom \
+  | /snap/bin/aws s3 cp - "s3://${backup_bucket}/postgres/rentcert-$STAMP.dump" --sse AES256 --only-show-errors
+SCRIPT
+chmod 755 /usr/local/bin/rentcert-backup
+
+cat > /etc/systemd/system/rentcert-backup.service <<'UNIT'
+[Unit]
+Description=RentCert database dump to S3
+After=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/rentcert-backup
+UNIT
+cat > /etc/systemd/system/rentcert-backup.timer <<'UNIT'
+[Unit]
+Description=Hourly RentCert database dump
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=300
+Persistent=true
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now rentcert-backup.timer

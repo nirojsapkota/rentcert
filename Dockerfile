@@ -21,8 +21,6 @@ RUN npm run build && npm prune --omit=dev
 
 FROM base AS runtime
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
-# Amazon RDS certificate authorities, so database TLS is fully verified (sslmode=verify-full).
-RUN mkdir -p /app/certs && node -e "fetch('https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem').then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }).then(t => require('fs').writeFileSync('/app/certs/rds-global-bundle.pem', t))"
 COPY --from=build --chown=node:node /app/package.json /app/package-lock.json /app/tsconfig.json /app/next.config.ts /app/prisma.config.ts ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/.next ./.next

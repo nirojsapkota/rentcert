@@ -10,13 +10,39 @@ servers:
   web:
     hosts:
       - <%= ENV.fetch("RENTCERT_HOST") %>
+    options:
+      memory: 768m
   worker:
     hosts:
       - <%= ENV.fetch("RENTCERT_HOST") %>
     cmd: npm run worker
+    options:
+      memory: 384m
     env:
       clear:
         SERVICE_NAME: worker
+
+# PostgreSQL on the same host (cost-first; move to RDS once there is revenue). Data lives on the
+# encrypted EBS volume mounted at /mnt/rentcert-data. No published port: it is reachable only as
+# rentcert-postgres on the private "kamal" Docker network. Backups: see docs/runbook.md.
+accessories:
+  postgres:
+    image: postgres:16
+    host: <%= ENV.fetch("RENTCERT_HOST") %>
+    cmd: >-
+      postgres -c shared_buffers=128MB -c effective_cache_size=384MB -c work_mem=4MB
+      -c max_connections=40 -c log_min_duration_statement=1000
+    env:
+      clear:
+        POSTGRES_USER: rentcert
+        POSTGRES_DB: rentcert
+      secret:
+        - POSTGRES_PASSWORD
+    volumes:
+      - /mnt/rentcert-data/postgres:/var/lib/postgresql/data
+    options:
+      memory: 512m
+      shm-size: 128m
 
 proxy:
   ssl: true
@@ -62,6 +88,7 @@ env:
   secret:
     - DATABASE_URL
     - AWS_S3_BUCKET
+    - AWS_BACKUP_BUCKET
     - MAILER_FROM
     - BETTER_AUTH_URL
     - BETTER_AUTH_SECRET

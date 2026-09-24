@@ -43,18 +43,19 @@ variable "instance_type" {
   default = "t3.small"
 }
 
-variable "db_instance_class" {
-  type    = string
-  default = "db.t4g.micro"
-}
-
 variable "budget_email" {
   description = "Receives AWS budget alerts."
   type        = string
 }
 
 variable "monthly_budget_usd" {
-  description = "Monthly cost alert threshold in USD (about A$60)."
+  description = "Monthly cost alert threshold in USD (about A$45)."
   type        = number
-  default     = 40
+  default     = 30
+}
+
+variable "data_volume_size_gb" {
+  description = "Encrypted EBS volume for PostgreSQL data. Small: the database grows slowly."
+  type        = number
+  default     = 10
 }

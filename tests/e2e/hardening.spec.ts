@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { unzipSync } from "fflate";
 import { Client } from "pg";
 import { E2E_DATABASE_URL } from "../../playwright.config";
-import { expect, test } from "./fixtures";
+import { expect, newUserPage, test } from "./fixtures";
 import { expectNoHorizontalOverflow, signUpAndVerify } from "./helpers";
 
 async function grantAdmin(email: string) {
@@ -27,7 +27,7 @@ test("public pages load, link together and fit on a phone", async ({ page }) => 
   await expect(page.getByText("Draft – requires legal review before launch.")).toBeVisible();
 });
 
-test("admin pages are hidden from users and work for admins", async ({ page }, testInfo) => {
+test("admin pages are hidden from users and work for admins", async ({ page, browser }, testInfo) => {
   const email = await signUpAndVerify(page, `admin-${testInfo.project.name}@example.com`);
 
   const hidden = await page.goto("/admin");
@@ -44,6 +44,22 @@ test("admin pages are hidden from users and work for admins", async ({ page }, t
   await page.getByLabel("Search by email").fill(email);
   await page.getByRole("button", { name: "Search" }).click();
   await expect(page.getByRole("cell", { name: `${email} (admin)` })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Admin (you)" })).toBeVisible();
+
+  const otherEmail = await signUpAndVerify(await newUserPage(browser, testInfo, "other"), `admin-other-${testInfo.project.name}@example.com`);
+  await page.getByLabel("Search by email").fill(otherEmail);
+  await page.getByRole("button", { name: "Search" }).click();
+  const otherRow = page.getByRole("row").filter({ hasText: otherEmail });
+  page.once("dialog", (dialog) => dialog.accept());
+  await otherRow.getByRole("button", { name: "Make admin" }).click();
+  await expect(page.getByRole("cell", { name: `${otherEmail} (admin)` })).toBeVisible();
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await otherRow.getByRole("button", { name: "Remove admin" }).click();
+  await expect(page.getByRole("cell", { name: `${otherEmail} (admin)` })).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await otherRow.getByRole("button", { name: "Remove admin" }).click();
+  await expect(otherRow.getByRole("button", { name: "Make admin" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: otherEmail, exact: true })).toBeVisible();
 
   await page.getByRole("navigation", { name: "Admin" }).getByRole("link", { name: "Settings" }).click();
   await expect(page.getByLabel("Free trial length (days)")).toHaveValue("365");

@@ -26,6 +26,7 @@ export type AuditAction =
   | "admin.requirement_updated"
   | "admin.requirement_verified"
   | "admin.setting_updated"
+  | "admin.role_changed"
   | "account.exported";
 
 type AuditInput = {

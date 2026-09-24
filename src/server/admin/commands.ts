@@ -1,4 +1,5 @@
 import "server-only";
+import type { Role } from "@/generated/prisma/client";
 import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
 
@@ -60,4 +61,22 @@ export async function setTrialDays(adminId: string, days: number) {
 
 export async function recordAdminView(adminId: string, page: string) {
   await recordAuditEvent({ userId: adminId, resourceType: "admin_page", resourceId: page, action: "admin.viewed" });
+}
+
+export type RoleChange = "ok" | "not_found" | "self";
+
+// Admins cannot change their own role, so at least one admin always remains.
+export async function setUserRole(adminId: string, userId: string, role: Role): Promise<RoleChange> {
+  if (userId === adminId) return "self";
+  return db.$transaction(async (tx) => {
+    const before = await tx.user.findUnique({ where: { id: userId }, select: { role: true } });
+    if (!before) return "not_found";
+    if (before.role === role) return "ok";
+    await tx.user.update({ where: { id: userId }, data: { role } });
+    await recordAuditEvent(
+      { userId: adminId, resourceType: "user", resourceId: userId, action: "admin.role_changed", metadata: { from: before.role, to: role } },
+      tx,
+    );
+    return "ok";
+  });
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { markRequirementVerified, setTrialDays, updateRequirement } from "@/server/admin/commands";
+import { markRequirementVerified, setTrialDays, setUserRole, updateRequirement } from "@/server/admin/commands";
 import { getMetrics, listPropertiesForAdmin, listUsers } from "@/server/admin/queries";
 import { trialDays } from "@/server/billing/settings";
 import { recordCompletion } from "@/server/compliance/commands";
@@ -27,6 +27,44 @@ describe("roles", () => {
     });
     const user = await db.user.findUnique({ where: { email: "sneaky-admin@example.com" } });
     if (user) expect(user.role).toBe("USER");
+  });
+});
+
+describe("admin role changes", () => {
+  it("grants and removes admin access with audit events", async () => {
+    const adminUser = await admin();
+    const other = await createUser("other@example.com");
+
+    expect(await setUserRole(adminUser.id, other.id, "ADMIN")).toBe("ok");
+    expect((await db.user.findUniqueOrThrow({ where: { id: other.id } })).role).toBe("ADMIN");
+    expect(await setUserRole(adminUser.id, other.id, "USER")).toBe("ok");
+    expect((await db.user.findUniqueOrThrow({ where: { id: other.id } })).role).toBe("USER");
+
+    const events = await db.auditEvent.findMany({ where: { userId: adminUser.id, action: "admin.role_changed" }, orderBy: { createdAt: "asc" } });
+    expect(events.map((event) => [event.resourceId, event.metadata])).toEqual([
+      [other.id, { from: "USER", to: "ADMIN" }],
+      [other.id, { from: "ADMIN", to: "USER" }],
+    ]);
+  });
+
+  it("does not audit a role that is already set", async () => {
+    const adminUser = await admin();
+    const other = await createUser("other@example.com");
+
+    expect(await setUserRole(adminUser.id, other.id, "USER")).toBe("ok");
+    expect(await db.auditEvent.count({ where: { action: "admin.role_changed" } })).toBe(0);
+  });
+
+  it("refuses an admin's own role, so an admin always remains", async () => {
+    const adminUser = await admin();
+
+    expect(await setUserRole(adminUser.id, adminUser.id, "USER")).toBe("self");
+    expect((await db.user.findUniqueOrThrow({ where: { id: adminUser.id } })).role).toBe("ADMIN");
+  });
+
+  it("reports an unknown user as not found", async () => {
+    const adminUser = await admin();
+    expect(await setUserRole(adminUser.id, "no-such-user", "ADMIN")).toBe("not_found");
   });
 });
 

@@ -3,6 +3,7 @@ import { recordAdminView } from "@/server/admin/commands";
 import { listUsers } from "@/server/admin/queries";
 import { requireAdmin } from "@/server/session";
 import { AdminNav, Pager, pageParam, tableWrap, td, th } from "../admin-nav";
+import { RoleForm } from "./role-form";
 
 export const metadata: Metadata = { title: "Admin · Users" };
 
@@ -24,7 +25,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
         <button type="submit" className="rounded-md border border-line bg-surface px-3 py-2 text-sm font-medium">Search</button>
       </form>
       <div className={tableWrap}>
-        <table className="w-full min-w-[44rem] text-sm">
+        <table className="w-full min-w-[52rem] text-sm">
           <thead className="border-b border-line bg-canvas text-ink-muted">
             <tr>
               <th scope="col" className={th}>Email</th>
@@ -32,6 +33,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
               <th scope="col" className={th}>Verified</th>
               <th scope="col" className={th}>Plan</th>
               <th scope="col" className={th}>Active properties</th>
+              <th scope="col" className={th}>Role</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
@@ -46,6 +48,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                     {subscription ? `${subscription.plan} (${subscription.status})` : user.trialEndsAt > new Date() ? "Trial" : "Trial ended"}
                   </td>
                   <td className={td}>{user._count.properties}</td>
+                  <td className={td}>
+                    {user.id === admin.id ? "Admin (you)" : <RoleForm userId={user.id} email={user.email} isAdmin={user.role === "ADMIN"} />}
+                  </td>
                 </tr>
               );
             })}

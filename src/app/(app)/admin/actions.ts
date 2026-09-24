@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
-import { markRequirementVerified, setTrialDays, updateRequirement } from "@/server/admin/commands";
+import { markRequirementVerified, setTrialDays, setUserRole, updateRequirement } from "@/server/admin/commands";
 import { requireAdmin } from "@/server/session";
 
 const requirementSchema = z.object({
@@ -44,4 +44,13 @@ export async function setTrialDaysAction(_prev: AdminFormState, formData: FormDa
   await setTrialDays(admin.id, parsed.data);
   revalidatePath("/admin/settings");
   return { status: "saved" };
+}
+
+export async function setUserRoleAction(userId: string, formData: FormData) {
+  const admin = await requireAdmin();
+  const role = z.enum(["USER", "ADMIN"]).safeParse(formData.get("role"));
+  if (!role.success) notFound();
+  const result = await setUserRole(admin.id, userId, role.data);
+  if (result === "not_found") notFound();
+  revalidatePath("/admin/users");
 }

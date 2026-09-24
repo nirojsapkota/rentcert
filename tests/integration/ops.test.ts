@@ -31,6 +31,12 @@ describe("health", () => {
     await recordWorkerHeartbeat();
     expect((await health()).status).toBe(200);
   });
+
+  it("lets the proxy check only the web process with ?scope=web", async () => {
+    vi.stubEnv("HEALTH_CHECK_WORKER", "true");
+    expect((await health(new Request("http://localhost/api/health?scope=web"))).status).toBe(200);
+    expect((await health(new Request("http://localhost/api/health"))).status).toBe(503);
+  });
 });
 
 describe("job health alerts", () => {

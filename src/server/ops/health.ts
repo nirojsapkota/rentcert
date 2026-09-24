@@ -21,9 +21,11 @@ export async function workerHeartbeatAge(now: Date = new Date()): Promise<number
 
 // Health for the load balancer and uptime checks. Returns no detail beyond ok/degraded.
 // The worker check applies only where a worker is expected (HEALTH_CHECK_WORKER=true in production).
-export async function checkHealth(now: Date = new Date()): Promise<"ok" | "degraded"> {
+// scope "web" checks only the database; kamal-proxy uses it so a first deploy can pass before any
+// worker heartbeat exists.
+export async function checkHealth(now: Date = new Date(), scope: "all" | "web" = "all"): Promise<"ok" | "degraded"> {
   await db.$queryRaw`SELECT 1`;
-  if (process.env.HEALTH_CHECK_WORKER === "true") {
+  if (scope === "all" && process.env.HEALTH_CHECK_WORKER === "true") {
     const age = await workerHeartbeatAge(now);
     if (age === null || age > HEARTBEAT_MAX_AGE_MS) return "degraded";
   }

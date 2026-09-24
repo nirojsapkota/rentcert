@@ -1,0 +1,59 @@
+name: Deploy
+
+# Deploys main after CI passes. Stays inactive until the production environment is configured
+# (see docs/runbook.md): it needs a domain before HTTPS and email can work.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      vars.RENTCERT_DOMAIN != '' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 30
+    permissions:
+      id-token: write # GitHub OIDC token for the AWS deploy role
+      contents: read
+    env:
+      RENTCERT_HOST: ${{ vars.RENTCERT_HOST }}
+      RENTCERT_DOMAIN: ${{ vars.RENTCERT_DOMAIN }}
+      RENTCERT_REGISTRY: ${{ vars.RENTCERT_REGISTRY }}
+      NEXT_PUBLIC_SENTRY_DSN: ${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - run: gem install kamal -v 2.9.0
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-southeast-2
+
+      - name: Install the Session Manager plugin (SSH over Systems Manager)
+        run: |
+          curl -fsSLo /tmp/session-manager-plugin.deb https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
+          sudo dpkg -i /tmp/session-manager-plugin.deb
+
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Deploy
+        run: kamal deploy --version="${{ github.event.workflow_run.head_sha || github.sha }}"

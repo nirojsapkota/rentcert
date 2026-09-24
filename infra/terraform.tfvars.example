@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+github_repository     = "nirojsapkota/rentcert"
+deploy_ssh_public_key = "ssh-ed25519 AAAA... rentcert-deploy"
+budget_email          = "you@example.com"
+
+# Leave empty until you have a domain.
+domain           = ""
+mail_from_domain = ""
+route53_zone_id  = ""

@@ -1,0 +1,76 @@
+# Kamal deployment: one EC2 host (Terraform: infra/) running the web and worker roles.
+# Values from the environment are set by .github/workflows/deploy.yml or your shell:
+#   RENTCERT_HOST          EC2 instance id (SSH goes through AWS Systems Manager, not port 22)
+#   RENTCERT_DOMAIN        public domain, for example app.rentcert.com.au
+#   RENTCERT_REGISTRY      ECR registry host, for example 123456789012.dkr.ecr.ap-southeast-2.amazonaws.com
+service: rentcert
+image: rentcert
+
+servers:
+  web:
+    hosts:
+      - <%= ENV.fetch("RENTCERT_HOST") %>
+  worker:
+    hosts:
+      - <%= ENV.fetch("RENTCERT_HOST") %>
+    cmd: npm run worker
+    env:
+      clear:
+        SERVICE_NAME: worker
+
+proxy:
+  ssl: true
+  host: <%= ENV.fetch("RENTCERT_DOMAIN") %>
+  app_port: 3000
+  # Database only: the first deploy must pass before any worker heartbeat exists.
+  healthcheck:
+    path: /api/health?scope=web
+    interval: 3
+    timeout: 5
+  # Document uploads are up to 10 MB.
+  buffering:
+    max_request_body: 12_000_000
+
+registry:
+  server: <%= ENV.fetch("RENTCERT_REGISTRY") %>
+  username: AWS
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  args:
+    NEXT_PUBLIC_SENTRY_DSN: <%= ENV.fetch("NEXT_PUBLIC_SENTRY_DSN", "") %>
+
+ssh:
+  user: ubuntu
+  # SSH is tunnelled through AWS Systems Manager, so port 22 stays closed to the internet.
+  proxy_command: "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p --region ap-southeast-2"
+
+env:
+  clear:
+    NODE_ENV: production
+    AWS_REGION: ap-southeast-2
+    STORAGE_DRIVER: s3
+    EMAIL_PROVIDER: ses
+    QUEUE_DRIVER: pgboss
+    HEALTH_CHECK_WORKER: "true"
+    # kamal-proxy reaches the app over the "kamal" Docker network, created with this subnet
+    # by the instance user-data (infra/ec2.tf).
+    TRUSTED_PROXY_CIDRS: 172.30.0.0/16
+    LOG_LEVEL: info
+  secret:
+    - DATABASE_URL
+    - AWS_S3_BUCKET
+    - MAILER_FROM
+    - BETTER_AUTH_URL
+    - BETTER_AUTH_SECRET
+    - STRIPE_SECRET_KEY
+    - STRIPE_WEBHOOK_SECRET
+    - STRIPE_PRICE_PROPERTY
+    - STRIPE_PRICE_PORTFOLIO
+    - SENTRY_DSN
+    - ALERT_EMAIL
+
+# Keep a few old images for `kamal rollback`.
+retain_containers: 3

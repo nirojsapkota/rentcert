@@ -51,3 +51,13 @@ next-env.d.ts
 # generated Prisma client (run: npx prisma generate)
 /src/generated/
 /tmp/
+
+# Terraform
+infra/**/.terraform/
+infra/**/*.tfstate
+infra/**/*.tfstate.*
+infra/**/terraform.tfvars
+infra/**/.terraform.lock.hcl.bak
+
+# Kamal
+.kamal/secrets.*

@@ -14,7 +14,7 @@ section 57.
 | 5 (done) | reminders | `ComplianceReminder`, daily scheduler (pg-boss), idempotent reminder emails, welcome email | compliance |
 | 6 (done) | compliance-pack | `CompliancePackGenerator` PDF: cover, details, summary, history, document index | compliance, vault |
 | 7 (done) | billing | Stripe Checkout, idempotent signed webhooks, `BillingAccount`, `Subscription`, plan limits, admin-configurable trial length | foundation, properties |
-| 8 | hardening | Admin (read-only), data export, legal pages, landing, pricing, FAQ, analytics events, observability, CI/CD, deploy | all |
+| 8 (done in code; deploy pending a domain) | hardening | Admin (read-only), data export, legal pages, landing, pricing, FAQ, analytics events, observability, CI/CD, deploy | all |
 
 Notes:
 

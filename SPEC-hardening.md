@@ -1,6 +1,6 @@
 # Spec: hardening (Phase 8)
 
-Status: 8a IMPLEMENTED (2026-09-23); 8b IMPLEMENTED (2026-09-24); 8c scoped. Module id: `hardening`. Depends on: all earlier modules.
+Status: 8a IMPLEMENTED (2026-09-23); 8b IMPLEMENTED (2026-09-24); 8c IMPLEMENTED as code (2026-09-24); not applied or deployed. Module id: `hardening`. Depends on: all earlier modules.
 Source: PLAN.md sections 31–36, 38, 42, 46, 47, 50–55, 60, 61, 65.
 
 Phase 8 is too large for one review, so it is split into three sub-phases, each with its own
@@ -123,20 +123,79 @@ auth check, cross-checked against the IDOR tests; secrets kept only in the envir
   `SENTRY_DSN` is set.
 - An address for `ALERT_EMAIL`.
 
-## 8c. Deployment (scope; detailed spec after 8b)
+## 8c. Deployment (DRAFT, awaiting review)
 
-- Dockerfile (one image, `web` and `worker` commands), GitHub Actions deploy on `main`.
-- **Owner decision: one EC2 instance deployed with Kamal, plus RDS** (about A$40/month). Kamal
-  runs the `web` and `worker` roles from one image. kamal-proxy terminates TLS (Let's Encrypt) and
-  sets `X-Forwarded-For`, which 8b trusts as the only proxy hop. The owner patches the OS
-  (unattended security upgrades enabled).
-- **Owner decision: Terraform** for EC2, security groups, RDS, S3, SES, IAM instance role and SSM parameters.
-- AWS in Sydney (`ap-southeast-2`). RDS PostgreSQL with automated
-  backups and point-in-time recovery; S3 with Block Public Access, TLS-only, versioning, and a lifecycle rule
-  that expires old versions after 30 days; SES with a verified domain; secrets in SSM or Secrets Manager.
-- Infrastructure as code (see question 6), a runbook, and a documented restore test.
+Owner decisions: one EC2 instance with Kamal, plus RDS (about A$40–50/month); Terraform.
 
----
+### What gets built (code only)
+
+I write and validate everything locally (`terraform validate`, `terraform plan` only when you ask,
+`docker build`). **I do not run `terraform apply` or `kamal deploy`**: those create billable AWS
+resources and publish the app, so you run them, following the runbook.
+
+**Container image** (`Dockerfile`, multi-stage, `node:24-slim`, ARM64):
+- One image with two commands: `web` (`next start -p 3000`) and `worker` (`npm run worker`).
+- Runs as a non-root user. `prisma` moves to runtime dependencies so migrations can run from the image.
+
+**Kamal** (`config/deploy.yml`, `.kamal/secrets`):
+- Roles `web` and `worker` on the same host. kamal-proxy terminates TLS (Let's Encrypt) for your
+  domain, with its health check on `/api/health`.
+- A pre-deploy hook runs `prisma migrate deploy` from the new image before the switch.
+- Secrets come from one AWS Secrets Manager secret through Kamal's `aws_secrets_manager` adapter.
+  Nothing secret is in the repo.
+- `TRUSTED_PROXY_CIDRS` is set to the Kamal Docker network, and `HEALTH_CHECK_WORKER=true`.
+
+**Terraform** (`infra/`, region `ap-southeast-2`):
+
+| Resource | Settings |
+|---|---|
+| VPC | 2 public subnets (EC2), 2 private subnets (RDS), no NAT gateway (cost) |
+| EC2 | `t4g.small` (2 vCPU, 2 GB, ARM), Ubuntu 24.04, Docker via user-data, unattended security upgrades, Elastic IP, encrypted 30 GB gp3, IMDSv2 only |
+| Security groups | 80/443 from anywhere; 22 as decided in question 2; the app port is never exposed |
+| RDS | PostgreSQL 16 `db.t4g.micro`, private, encrypted, automated backups 7 days (point-in-time recovery), deletion protection, access from the EC2 security group only |
+| S3 (documents) | Private, Block Public Access, SSE-S3, TLS-only bucket policy, versioning, old versions expire after 30 days |
+| SES | Domain identity with DKIM, MAIL FROM domain; production access requested manually |
+| ECR | Private repository, scan on push, keep the last 20 images |
+| IAM | Instance role limited to that bucket, SES send from the domain, reading that one secret, ECR pull. A GitHub OIDC role for CI to push images |
+| Secrets Manager | One JSON secret with the app's environment (values filled in by you) |
+| Budget | AWS Budgets alert at A$60/month |
+
+**CI/CD** (`.github/workflows/deploy.yml`): on `main`, after the existing checks pass, build the
+ARM image, push to ECR with the OIDC role, then deploy (see question 2).
+
+**Docs:** `docs/runbook.md` (first deploy, deploy, rollback `kamal rollback`, logs, secrets
+rotation, DB restore to a point in time), and `docs/restore-test.md` (a restore drill with its result
+recorded after you run it).
+
+### Decisions (2026-09-24)
+
+- **No domain yet:** `domain` is a Terraform variable and a Kamal environment value. SES,
+  DNS records and HTTPS are created only once it is set. First deploy waits for a domain.
+- **Deploys from GitHub Actions** over SSH **tunnelled through AWS Systems Manager**
+  (`AWS-StartSSHSession`), using GitHub OIDC credentials. Port 22 is closed to the internet, and
+  there are no long-lived AWS keys in GitHub.
+- **EC2 `t3.small` (x86)** instead of `t4g.small`, so images build natively on standard GitHub
+  runners (about US$4/month more).
+- **Terraform state:** S3 bucket with native locking (`use_lockfile`), created by `infra/bootstrap`.
+- **AWS profile:** `rentcert` (IAM user `rentcert-terraform`), never root.
+- **Health checks:** kamal-proxy checks `/api/health?scope=web` (database only), so the first
+  deploy can pass before any worker heartbeat exists. External monitoring uses `/api/health`
+  (database plus worker).
+
+### Needs from you (8c)
+
+1. **Domain and DNS:** which domain (for example `app.rentcert.com.au`), and is DNS in Route 53?
+   If yes, Terraform creates the A, DKIM and MAIL FROM records. If not, it prints them for you to add.
+2. **How deploys reach the server (SSH for Kamal):**
+   (a) Deploy from your laptop only: port 22 open to your IP. Simple and tight, but no automatic deploys.
+   (b) Deploy from GitHub Actions: port 22 open to the internet with key-only SSH and fail2ban.
+   (c) GitHub Actions through Tailscale: port 22 closed to the internet; needs a free Tailscale account.
+   (Proposed: (a) now, and (c) once you want automatic deploys.)
+3. **Terraform state:** an S3 bucket with state locking (created by a small bootstrap step). (Proposed: yes.)
+4. **AWS credentials (security):** the AWS CLI on this machine is signed in with the **root
+   account's access keys**. Please create an IAM user or IAM Identity Center user with admin
+   rights for Terraform, turn on MFA, and delete the root access keys. The Terraform code assumes a
+   non-root profile named `rentcert`.
 
 ## Decisions (2026-09-23)
 

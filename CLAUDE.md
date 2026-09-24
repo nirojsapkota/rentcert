@@ -99,6 +99,10 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - Log with `logger` from `src/server/logger.ts` or `reportError()` from `src/server/observability.ts`, never `console.*` (the dev-only console mail adapter is the exception). Log error names, not messages.
   - Better Auth reads the client IP from `x-forwarded-for` with `TRUSTED_PROXY_CIDRS`. Tests set `172.18.0.0/16` and send "spoofed, real" chains.
   - `tests/integration/architecture.test.ts` requires `requireUser()`/`requireAdmin()` in every `(app)` page and action, and every `/api` route to be on its reviewed list (mirrored in `docs/security-review.md`).
+- Deployment (8c): `Dockerfile` (one image; `web` = `next start`, `worker` = `npm run worker`), Kamal (`config/deploy.yml`, `.kamal/secrets`, `.kamal/hooks/pre-deploy` runs migrations), Terraform in `infra/` (state bucket in `infra/bootstrap`), deploys from `.github/workflows/deploy.yml` over SSH tunnelled through AWS Systems Manager. See `docs/runbook.md`.
+  - AWS: always the `rentcert` profile (IAM user `rentcert-terraform`). Never `default` (root keys) or `fiftyup_prod`. Never run `terraform apply` or `kamal deploy`/`setup` without the user asking; they create billable resources and publish the site.
+  - `DATABASE_URL` in production uses `sslmode=verify-full` with the RDS CA bundle baked into the image (`/app/certs`). `prisma` is a runtime dependency so migrations run from the image.
+  - kamal-proxy checks `/api/health?scope=web` (database only); `/api/health` also requires the worker heartbeat when `HEALTH_CHECK_WORKER=true`.
 - On this Mac the machine can sleep during long runs, which shows up as tests taking many minutes or the web server "timing out". Run `caffeinate -dims npm run test:e2e` for long suites.
 - Next.js 16 allows only one `next dev` per folder. If the user's `bin/dev` is running, `npm run test:e2e` cannot start its server on :3100. Ask before stopping their server.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.

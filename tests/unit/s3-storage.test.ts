@@ -1,4 +1,5 @@
 import {
+  CopyObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
   ListObjectsV2Command,
@@ -27,6 +28,17 @@ function fakeClient(pages: { keys: string[]; next?: string }[] = []) {
 }
 
 describe("S3Storage", () => {
+  it("copies objects inside the bucket with server-side encryption", async () => {
+    const { client, sent } = fakeClient();
+    const target = "documents/user_2/0192f0a4-5b6c-7d8e-9f00-112233445566";
+    await new S3Storage(client, "bucket").copy(KEY, target);
+
+    const copy = sent[0] as CopyObjectCommand;
+    expect(copy).toBeInstanceOf(CopyObjectCommand);
+    expect(copy.input).toMatchObject({ Bucket: "bucket", CopySource: `bucket/${KEY}`, Key: target, ServerSideEncryption: "AES256" });
+    await expect(new S3Storage(client, "bucket").copy(KEY, "documents/../x")).rejects.toThrow("Invalid storage key");
+  });
+
   it("stores objects with server-side encryption", async () => {
     const { client, sent } = fakeClient();
     await new S3Storage(client, "bucket").put(KEY, new Uint8Array([1, 2, 3]), "application/pdf");

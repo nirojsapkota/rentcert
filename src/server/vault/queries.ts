@@ -1,15 +1,17 @@
 import "server-only";
 import { isUuid } from "@/lib/ids";
 import { db } from "@/server/db";
+import { accessibleBy } from "@/server/properties/access";
 
-// Owner-scoped reads. A document is reached only through record → property → userId.
+// Member-scoped reads. A document is reached only through record → property the user owns or
+// collaborates on. The export covers owned properties only.
 
 export const DOCUMENTS_PAGE_SIZE = 20;
 
 export async function findDocumentForUser(userId: string, documentId: string) {
   if (!isUuid(documentId)) return null;
   return db.complianceDocument.findFirst({
-    where: { id: documentId, complianceRecord: { property: { userId } } },
+    where: { id: documentId, complianceRecord: { property: accessibleBy(userId) } },
     include: { complianceRecord: { select: { id: true, propertyId: true } } },
   });
 }
@@ -17,7 +19,7 @@ export async function findDocumentForUser(userId: string, documentId: string) {
 export async function listDocumentsForRecord(userId: string, propertyId: string, recordId: string) {
   if (!isUuid(propertyId) || !isUuid(recordId)) return [];
   return db.complianceDocument.findMany({
-    where: { complianceRecordId: recordId, complianceRecord: { propertyId, property: { userId } } },
+    where: { complianceRecordId: recordId, complianceRecord: { propertyId, property: accessibleBy(userId) } },
     orderBy: { uploadedAt: "asc" },
   });
 }
@@ -27,7 +29,7 @@ export async function countDocumentsForRecord(recordId: string) {
 }
 
 export async function listDocumentsForUser(userId: string, page: number) {
-  const where = { complianceRecord: { property: { userId } } };
+  const where = { complianceRecord: { property: accessibleBy(userId) } };
   const currentPage = Math.max(page, 1);
   const [total, documents] = await db.$transaction([
     db.complianceDocument.count({ where }),
@@ -40,7 +42,17 @@ export async function listDocumentsForUser(userId: string, page: number) {
             completedOn: true,
             requirement: { select: { name: true } },
             property: {
-              select: { id: true, nickname: true, addressLine1: true, addressLine2: true, suburb: true, state: true, postcode: true },
+              select: {
+                id: true,
+                userId: true,
+                nickname: true,
+                addressLine1: true,
+                addressLine2: true,
+                suburb: true,
+                state: true,
+                postcode: true,
+                user: { select: { firstName: true } },
+              },
             },
           },
         },
@@ -57,7 +69,7 @@ export async function listDocumentsForUser(userId: string, page: number) {
 export async function listDocumentsForProperty(userId: string, propertyId: string) {
   if (!isUuid(propertyId)) return [];
   return db.complianceDocument.findMany({
-    where: { complianceRecord: { propertyId, property: { userId } } },
+    where: { complianceRecord: { propertyId, property: accessibleBy(userId) } },
     include: { complianceRecord: { select: { completedOn: true, requirement: { select: { name: true } } } } },
     orderBy: [{ uploadedAt: "asc" }, { id: "asc" }],
   });

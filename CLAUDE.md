@@ -36,7 +36,7 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - Client auth forms use `method="post"` and stay disabled until hydrated (`useHydrated`). This stops a pre-hydration click from putting credentials in the URL.
   - A `databaseHooks.user.create.before` hook validates names and builds `name` from `firstName` and `lastName`.
 - Session checks go through `src/server/session.ts` (`getSession`, `requireUser`). Every `(app)` page and every server action calls `requireUser()` itself. The layout check is not enough, because layouts do not re-run on client navigation.
-- Tenant isolation: data access functions take `userId` and filter by it (`findFirst({ where: { id, userId } })`). Never look up user data by record id alone. Ids that are not valid UUIDs are treated as not found. Pages call `notFound()` for both "missing" and "someone else's", so the two cases look the same.
+- Tenant isolation: data access functions take `userId` and filter by it (`findFirst({ where: { id, userId } })`). Never look up user data by record id alone. Reads and compliance work on properties go through `accessibleBy(userId)` (`src/server/properties/access.ts`: owner or collaborator); owner-only actions filter by `userId`. Ids that are not valid UUIDs are treated as not found. Pages call `notFound()` for both "missing" and "someone else's", so the two cases look the same.
 - `AuditEvent` rows (`src/server/audit.ts`) record changes to user data. Pass `tx` to write them inside the same transaction. Metadata holds field names only, never secrets or document contents.
 - Account deletion is a hard delete. Every user-owned table needs `onDelete: Cascade` to `User`. `AccountDeletion` keeps only a timestamp.
 - Mail: `src/server/mail/deliver.ts` picks the adapter from `EMAIL_PROVIDER`. Tests read `testOutbox` (Vitest) or `tmp/mail/*.json` (Playwright).
@@ -47,7 +47,7 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
 - Vitest aliases `server-only` to an empty module and truncates every table before each test (`tests/support/setup.ts`). Add new tables to that list and to `tests/e2e/global-setup.ts`.
 - Auth integration tests call `auth.handler` with real `Request` objects (`tests/support/auth-http.ts`), so rate limiting and cookies are exercised.
 - Playwright specs import `test`/`expect` from `tests/e2e/fixtures.ts`, which gives each test its own `x-forwarded-for` IP; use `newUserPage()` for extra users. Without it, auth rate limits (3 sign-ups per minute) make tests flaky. After a client-side navigation, wait for the new page's heading before you fill fields.
-- `tests/integration/architecture.test.ts` fails if a user-owned model is touched outside its module (`property` → `properties`; `complianceRecord`, `propertyRequirementExclusion` → `compliance`; `complianceDocument` → `vault`; `complianceReminder` → `reminders`). Add each new user-owned model to that list.
+- `tests/integration/architecture.test.ts` fails if a user-owned model is touched outside its module (`property` → `properties`; `complianceRecord`, `propertyRequirementExclusion` → `compliance`; `complianceDocument` → `vault`; `complianceReminder` → `reminders`; `accountCollaborator`, `sharingInvite` → `sharing`). Add each new user-owned model to that list.
 - Reminder integration tests pin `NOW` to midnight UTC on Melbourne's current date (10:00 or 11:00 local), and backdate `createdAt` on records so reminders are eligible.
 - Vitest truncates user tables but never `compliance_requirements`: that is configuration seeded by migration, so tests rely on its rows.
 - Mobile layout: every `<main>` has `min-w-0` (the body is a flex column), and every `overflow-x-auto` table wrapper is `relative` (otherwise `sr-only` cells escape the scroll clip and widen the page). `expectNoHorizontalOverflow()` in `tests/e2e/helpers.ts` guards this.
@@ -106,5 +106,11 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - kamal-proxy checks `/api/health?scope=web` (database only); `/api/health` also requires the worker heartbeat when `HEALTH_CHECK_WORKER=true`.
 - On this Mac the machine can sleep during long runs, which shows up as tests taking many minutes or the web server "timing out". Run `caffeinate -dims npm run test:e2e` for long suites.
 - Next.js 16 allows only one `next dev` per folder. If the user's `bin/dev` is running, `npm run test:e2e` cannot start its server on :3100. Ask before stopping their server.
+- Sharing (`src/server/sharing/`, SPEC-coowner-access.md):
+  - Account-level: an `AccountCollaborator` row gives the member every property of the owner. `Property.userId` stays the one owner (billing, limits, storage prefix).
+  - Write entitlement comes from the property owner (`canWrite(property.userId)`), never the acting user.
+  - Invites store only the SHA-256 of the token. Accepting needs a verified account with the invited email. Every unusable link shows the same message. `?invite=` on sign-in and sign-up only returns to `/invites/<token>` (`inviteReturnPath`).
+  - Reminders go to each recipient (`compliance_reminders.user_id`); the unique key is (record, type, user).
+  - Files always live under the owner's prefix. `moveDocumentsToOwner()` fixes keys after a transfer, and account deletion runs it before deleting the prefix.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

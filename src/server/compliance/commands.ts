@@ -10,8 +10,9 @@ import { requirementsFor } from "@/server/compliance/requirements";
 import { db } from "@/server/db";
 import { findPropertyForUser } from "@/server/properties/queries";
 
-// Owner-scoped writes. A property or record that is missing or belongs to someone else returns
-// "not_found", and callers show the same response for both.
+// Member-scoped writes: the owner and their collaborators. A property or record the user cannot
+// reach returns "not_found", and callers show the same response for both. Write access follows the
+// property owner's plan, because the property counts against the owner's plan.
 
 type NotFound = { ok: false; reason: "not_found" };
 const NOT_FOUND: NotFound = { ok: false, reason: "not_found" };
@@ -48,7 +49,7 @@ export async function setUpChecks(
 ): Promise<{ ok: true } | NotFound | ReadOnly> {
   const owned = await loadOwnedProperty(userId, propertyId);
   if (!owned) return NOT_FOUND;
-  if (!(await canWrite(userId))) return READ_ONLY;
+  if (!(await canWrite(owned.property.userId))) return READ_ONLY;
   const done = await codesAlreadySetUp(owned.property.id);
 
   await db.$transaction(async (tx) => {
@@ -96,7 +97,7 @@ export async function recordCompletion(
   const owned = await loadOwnedProperty(userId, propertyId);
   const requirement = owned?.requirements.find((row) => row.code === code);
   if (!owned || !requirement) return NOT_FOUND;
-  if (!(await canWrite(userId))) return READ_ONLY;
+  if (!(await canWrite(owned.property.userId))) return READ_ONLY;
 
   const due = nextDueOn(input.completedOn, requirement.recurrenceMonths);
   const record = await db.$transaction(async (tx) => {

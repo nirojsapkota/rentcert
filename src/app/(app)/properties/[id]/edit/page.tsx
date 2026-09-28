@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { propertyTitle } from "@/components/property-address";
 import { toCalendarDateString } from "@/lib/calendar-date";
-import { findPropertyForUser } from "@/server/properties/queries";
+import { findOwnedProperty } from "@/server/properties/queries";
 import { requireUser } from "@/server/session";
 import { updatePropertyAction } from "../../actions";
 import { PropertyForm } from "../../property-form";
@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Edit property" };
 export default async function EditPropertyPage({ params }: PageProps<"/properties/[id]/edit">) {
   const { id } = await params;
   const user = await requireUser();
-  const property = await findPropertyForUser(user.id, id);
+  const property = await findOwnedProperty(user.id, id);
   if (!property) notFound();
 
   return (

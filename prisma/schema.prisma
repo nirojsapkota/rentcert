@@ -36,6 +36,10 @@ model User {
   properties     Property[]
   billingAccount BillingAccount?
   productEvents  ProductEvent[]
+  collaborators  AccountCollaborator[] @relation("owner")
+  sharedWithMe   AccountCollaborator[] @relation("member")
+  sharingInvites SharingInvite[]
+  reminders      ComplianceReminder[]
 
   @@map("users")
 }
@@ -260,12 +264,15 @@ enum ReminderStatus {
   SKIPPED
 }
 
-// One row per reminder email for a record. The unique (record, type) pair is the idempotency
+// One row per reminder email for a record and recipient. The unique (record, type, user) triple is the idempotency
 // guarantee: a reminder is claimed by inserting its row, so it can never be sent twice.
 model ComplianceReminder {
   id                 String           @id @default(uuid(7)) @db.Uuid
   complianceRecordId String           @map("compliance_record_id") @db.Uuid
   complianceRecord   ComplianceRecord @relation(fields: [complianceRecordId], references: [id], onDelete: Cascade)
+  // The person this email goes to: the property owner or one of the owner's collaborators.
+  userId             String           @map("user_id")
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   reminderType       ReminderType     @map("reminder_type")
   scheduledFor       DateTime         @map("scheduled_for") @db.Date
   status             ReminderStatus   @default(PENDING)
@@ -275,8 +282,9 @@ model ComplianceReminder {
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
 
-  @@unique([complianceRecordId, reminderType])
+  @@unique([complianceRecordId, reminderType, userId])
   @@index([status, scheduledFor])
+  @@index([userId])
   @@map("compliance_reminders")
 }
 
@@ -359,4 +367,34 @@ model LandingVisit {
   count Int      @default(0)
 
   @@map("landing_visits")
+}
+
+// Account-level sharing: the member works on every property the owner has.
+// Migration adds CHECK (owner_id <> member_id).
+model AccountCollaborator {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  ownerId   String   @map("owner_id")
+  owner     User     @relation("owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  memberId  String   @map("member_id")
+  member    User     @relation("member", fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([ownerId, memberId])
+  @@index([memberId])
+  @@map("account_collaborators")
+}
+
+// A pending invitation to become a collaborator. Only the SHA-256 of the token is stored.
+model SharingInvite {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  ownerId    String    @map("owner_id")
+  owner      User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  email      String
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@unique([ownerId, email])
+  @@map("sharing_invites")
 }

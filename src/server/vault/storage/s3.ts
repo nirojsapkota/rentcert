@@ -1,5 +1,6 @@
 import "server-only";
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
@@ -58,6 +59,19 @@ export class S3Storage implements DocumentStorage {
     const object = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
     if (!object.Body) throw new Error("Empty object body");
     return object.Body.transformToByteArray();
+  }
+
+  async copy(fromKey: string, toKey: string) {
+    assertValidKey(fromKey);
+    assertValidKey(toKey);
+    await this.client.send(
+      new CopyObjectCommand({
+        Bucket: this.bucket,
+        CopySource: `${this.bucket}/${fromKey}`,
+        Key: toKey,
+        ServerSideEncryption: "AES256",
+      }),
+    );
   }
 
   async delete(key: string) {

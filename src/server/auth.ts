@@ -15,7 +15,8 @@ import {
 import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
-import { sendPasswordResetEmail, sendVerificationEmail } from "@/server/mail/messages";
+import { sendPasswordResetEmail, sendSharingEndedEmail, sendVerificationEmail } from "@/server/mail/messages";
+import { listCollaboratorsToNotify } from "@/server/sharing/queries";
 import { deleteAllDocumentsForUser } from "@/server/vault/commands";
 import { cancelSubscriptionsForUser } from "@/server/billing/checkout";
 import { trialDays } from "@/server/billing/settings";
@@ -23,6 +24,10 @@ import { enqueue } from "@/server/jobs/queue";
 import { JOBS } from "@/server/jobs/names";
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;
+
+// Collaborators to email once an owner's account is really gone. Filled in beforeDelete and read
+// in afterDelete of the same request, so nobody is emailed if the deletion fails.
+const closureNotices = new Map<string, { ownerFirstName: string; recipients: { email: string; firstName: string }[] }>();
 
 function recipient(user: { email: string; name: string; firstName?: unknown }) {
   return { email: user.email, name: typeof user.firstName === "string" ? user.firstName : user.name };
@@ -93,11 +98,22 @@ export const auth = betterAuth({
           reportError("auth", "could not cancel subscriptions before account deletion", error);
           throw new APIError("SERVICE_UNAVAILABLE", { message: "We couldn't cancel your subscription. Please try again in a few minutes." });
         }
+        const recipients = await listCollaboratorsToNotify(user.id);
+        if (recipients.length > 0) closureNotices.set(user.id, { ownerFirstName: recipient(user).name, recipients });
       },
       // Dependent rows are removed by ON DELETE CASCADE. Stored files are removed here.
       // Keep only a timestamp.
       afterDelete: async (user) => {
         await db.accountDeletion.create({ data: {} });
+        const notice = closureNotices.get(user.id);
+        closureNotices.delete(user.id);
+        for (const member of notice?.recipients ?? []) {
+          try {
+            await sendSharingEndedEmail({ email: member.email, name: member.firstName }, notice!.ownerFirstName);
+          } catch (error) {
+            reportError("auth", "could not email a collaborator after account deletion", error);
+          }
+        }
         try {
           await deleteAllDocumentsForUser(user.id);
         } catch (error) {

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { Alert } from "@/components/ui/alert";
 import { findProfile } from "@/server/account";
+import { countOwnedProperties } from "@/server/properties/queries";
+import { getSharingOverview } from "@/server/sharing/queries";
 import { requireUser } from "@/server/session";
 import { DeleteAccountForm } from "./delete-account-form";
 import { ProfileForm } from "./profile-form";
@@ -10,7 +13,8 @@ const AUSTRALIAN_TIMEZONES = Intl.supportedValuesOf("timeZone").filter((zone) =>
 
 export default async function AccountPage() {
   const user = await requireUser();
-  const profile = await findProfile(user.id);
+  const [profile, sharing, ownedCount] = await Promise.all([findProfile(user.id), getSharingOverview(user.id), countOwnedProperties(user.id)]);
+  const people = sharing.collaborators.length;
   const timezones = AUSTRALIAN_TIMEZONES.includes(profile.timezone)
     ? AUSTRALIAN_TIMEZONES
     : [profile.timezone, ...AUSTRALIAN_TIMEZONES];
@@ -49,6 +53,15 @@ export default async function AccountPage() {
           This permanently deletes your account, properties, compliance records and uploaded documents. It
           cannot be undone.
         </p>
+        {people > 0 && ownedCount > 0 && (
+          <div className="mt-4">
+            <Alert tone="error">
+              {people === 1 ? "1 person you share with" : `${people} people you share with`} will lose access to your{" "}
+              {ownedCount === 1 ? "property" : `${ownedCount} properties`} and its records. We&apos;ll email them once your
+              account is deleted. To keep a property for them, transfer it from the property page first.
+            </Alert>
+          </div>
+        )}
         <div className="mt-4">
           <DeleteAccountForm />
         </div>

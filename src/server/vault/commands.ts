@@ -24,7 +24,7 @@ export type UploadResult =
   | { ok: false; reason: "not_found" }
   | { ok: false; reason: "invalid"; message: string };
 
-const READ_ONLY_MESSAGE = "Your free trial has ended. Choose a plan in Billing to add documents.";
+const READ_ONLY_MESSAGE = "The free trial for this property has ended. Its owner can choose a plan in Billing to add documents.";
 
 export const UPLOAD_MESSAGES = {
   empty: "Choose a file to upload.",
@@ -52,7 +52,7 @@ export async function uploadDocument(
   const record = await findRecordForUser(userId, propertyId, recordId);
   if (!record) return { ok: false, reason: "not_found" };
   if (record.property.archivedAt) return { ok: false, reason: "invalid", message: UPLOAD_MESSAGES.archived };
-  if (!(await canWrite(userId))) return { ok: false, reason: "invalid", message: READ_ONLY_MESSAGE };
+  if (!(await canWrite(record.property.userId))) return { ok: false, reason: "invalid", message: READ_ONLY_MESSAGE };
 
   const checked = checkFile(file);
   if (!checked.ok) return { ok: false, reason: "invalid", message: checked.message };
@@ -61,7 +61,9 @@ export async function uploadDocument(
   }
 
   const id = randomUUID();
-  const storageKey = documentKey(userId, id);
+  // Files live under the property owner's prefix, whoever uploads them, so account deletion and
+  // property transfer can find them.
+  const storageKey = documentKey(record.property.userId, id);
   const storage = getStorage();
   await storage.put(storageKey, file.bytes, checked.type.contentType);
 
@@ -127,7 +129,35 @@ export async function deleteDocument(
   return { ok: true, propertyId: document.complianceRecord.propertyId, recordId: document.complianceRecordId };
 }
 
-// Called after the user row (and, by cascade, every document row) has been deleted.
+// Moves files stored under a prefix other than their property owner's to the owner's prefix.
+// Needed after a property transfer, and for an upload that raced one. Safe to run again after a
+// partial failure: rows keep pointing at the old object until its copy exists.
+export async function moveDocumentsToOwner(where: { propertyId: string } | { storagePrefix: string }) {
+  const storage = getStorage();
+  const documents = await db.complianceDocument.findMany({
+    where:
+      "propertyId" in where
+        ? { complianceRecord: { propertyId: where.propertyId } }
+        : { storageKey: { startsWith: where.storagePrefix } },
+    select: { id: true, storageKey: true, complianceRecord: { select: { property: { select: { userId: true } } } } },
+  });
+  for (const document of documents) {
+    const ownerId = document.complianceRecord.property.userId;
+    if (document.storageKey.startsWith(userPrefix(ownerId))) continue;
+    const target = documentKey(ownerId, document.id);
+    await storage.copy(document.storageKey, target);
+    const { count } = await db.complianceDocument.updateMany({
+      where: { id: document.id, storageKey: document.storageKey },
+      data: { storageKey: target },
+    });
+    // The old object is unreachable once the row moved; the orphan cleanup covers a failed delete.
+    await storage.delete(count > 0 ? document.storageKey : target).catch((error) => reportError("vault", "failed to delete moved object", error));
+  }
+}
+
+// Called after the user row (and, by cascade, every document row of their properties) has been
+// deleted. Files of properties the user transferred away are moved to the new owner first.
 export async function deleteAllDocumentsForUser(userId: string) {
+  await moveDocumentsToOwner({ storagePrefix: userPrefix(userId) });
   await getStorage().deletePrefix(userPrefix(userId));
 }

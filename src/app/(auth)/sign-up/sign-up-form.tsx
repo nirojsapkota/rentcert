@@ -12,7 +12,8 @@ import { useHydrated } from "@/lib/use-hydrated";
 
 type FieldErrors = Partial<Record<"firstName" | "lastName" | "email" | "password", string>>;
 
-export function SignUpForm() {
+// returnTo is an already-validated invite path (see inviteReturnPath).
+export function SignUpForm({ returnTo }: { returnTo?: string }) {
   const router = useRouter();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string>();
@@ -43,7 +44,7 @@ export function SignUpForm() {
       firstName,
       lastName,
       name: fullName(firstName, lastName),
-      callbackURL: "/verify-email/done",
+      callbackURL: returnTo ?? "/verify-email/done",
     });
     setPending(false);
 

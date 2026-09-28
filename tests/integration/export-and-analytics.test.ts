@@ -46,6 +46,7 @@ describe("account data export", () => {
       "not-applicable.json",
       "properties.json",
       "reminders.json",
+      "sharing.json",
     ]);
     const all = Object.entries(files).filter(([name]) => name.endsWith(".json")).map(([, bytes]) => strFromU8(bytes)).join("\n");
     expect(all).toContain("alice@example.com");

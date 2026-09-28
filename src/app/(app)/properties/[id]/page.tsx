@@ -6,8 +6,10 @@ import { Alert } from "@/components/ui/alert";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { formatCalendarDate, todayIn } from "@/lib/calendar-date";
 import { getPropertySchedule, listPropertyHistory } from "@/server/compliance/queries";
+import { getSharingOverview } from "@/server/sharing/queries";
 import { requireUser } from "@/server/session";
-import { archivePropertyAction, deletePropertyAction, restorePropertyAction } from "../actions";
+import { archivePropertyAction, deletePropertyAction, restorePropertyAction, transferPropertyAction } from "../actions";
+import { TransferForm } from "../transfer-form";
 import { ComplianceSection } from "../compliance-section";
 import { HistoryTable } from "../history-table";
 
@@ -27,6 +29,8 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
   const completedItem = schedule.items.find((item) => item.requirement.code === query.completed);
 
   const archived = property.archivedAt !== null;
+  const isOwner = property.userId === user.id;
+  const collaborators = isOwner ? (await getSharingOverview(user.id)).collaborators : [];
 
   return (
     <article className="space-y-6">
@@ -59,6 +63,11 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
           <Link href="/billing" className="font-medium underline">Billing</Link>, or archive another property first.
         </Alert>
       )}
+      {query.transfer === "no_slot" && (
+        <Alert tone="error">
+          They need a plan with room for another property first. They can choose one in Billing, then you can try again.
+        </Alert>
+      )}
       {query.delete === "blocked" && (
         <Alert tone="error">This property has compliance history, so it can&apos;t be deleted. Archive it instead.</Alert>
       )}
@@ -71,23 +80,28 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{propertyTitle(property)}</h1>
+          {!isOwner && <p className="mt-1 text-sm font-medium text-brand">Shared by {property.user.firstName}</p>}
           <p className="mt-1 text-ink-muted">
             {property.nickname && <>{streetLine(property)}, </>}
             {localityLine(property)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/properties/${property.id}/edit`} className={buttonClasses("secondary")}>
-            Edit
-          </Link>
+          {isOwner && (
+            <Link href={`/properties/${property.id}/edit`} className={buttonClasses("secondary")}>
+              Edit
+            </Link>
+          )}
           <a href={`/api/properties/${property.id}/compliance-pack`} className={buttonClasses("secondary")}>
             Download Compliance Pack
           </a>
-          <form action={(archived ? restorePropertyAction : archivePropertyAction).bind(null, property.id)}>
-            <Button type="submit" variant="secondary">
-              {archived ? "Restore" : "Archive"}
-            </Button>
-          </form>
+          {isOwner && (
+            <form action={(archived ? restorePropertyAction : archivePropertyAction).bind(null, property.id)}>
+              <Button type="submit" variant="secondary">
+                {archived ? "Restore" : "Archive"}
+              </Button>
+            </form>
+          )}
         </div>
       </header>
 
@@ -127,23 +141,44 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
 
       <HistoryTable propertyId={property.id} history={history} />
 
-      <section aria-labelledby="delete-heading" className="rounded-lg border border-danger/40 bg-surface p-6">
-        <h2 id="delete-heading" className="text-lg font-semibold text-danger">
-          Delete property
-        </h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          Deletes this property permanently. Use this for a property added by mistake. A property with compliance
-          history can&apos;t be deleted. To stop tracking a property you no longer rent out, archive it instead.
-        </p>
-        <details className="mt-4">
-          <summary className="cursor-pointer text-sm font-medium text-danger">Delete this property…</summary>
-          <form action={deletePropertyAction.bind(null, property.id)} className="mt-3">
-            <Button type="submit" variant="danger">
-              Yes, delete {propertyTitle(property)}
-            </Button>
-          </form>
-        </details>
-      </section>
+      {isOwner && collaborators.length > 0 && (
+        <section aria-labelledby="transfer-heading" className="rounded-lg border border-line bg-surface p-6">
+          <h2 id="transfer-heading" className="text-lg font-semibold">
+            Transfer property
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            Move this property, its history and certificates to someone you share with. It then counts against their
+            plan. You and the other people you share with lose access unless they share their properties with you.
+          </p>
+          <div className="mt-4">
+            <TransferForm
+              action={transferPropertyAction.bind(null, property.id)}
+              propertyTitle={propertyTitle(property)}
+              people={collaborators.map(({ member }) => ({ id: member.id, name: `${member.firstName} ${member.lastName}` }))}
+            />
+          </div>
+        </section>
+      )}
+
+      {isOwner && (
+        <section aria-labelledby="delete-heading" className="rounded-lg border border-danger/40 bg-surface p-6">
+          <h2 id="delete-heading" className="text-lg font-semibold text-danger">
+            Delete property
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            Deletes this property permanently. Use this for a property added by mistake. A property with compliance
+            history can&apos;t be deleted. To stop tracking a property you no longer rent out, archive it instead.
+          </p>
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-medium text-danger">Delete this property…</summary>
+            <form action={deletePropertyAction.bind(null, property.id)} className="mt-3">
+              <Button type="submit" variant="danger">
+                Yes, delete {propertyTitle(property)}
+              </Button>
+            </form>
+          </details>
+        </section>
+      )}
     </article>
   );
 }

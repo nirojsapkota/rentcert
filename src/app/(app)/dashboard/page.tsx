@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { localityLine, propertyTitle } from "@/components/property-address";
 import { StatusBadge } from "@/components/status-badge";
+import { Alert } from "@/components/ui/alert";
 import { buttonClasses } from "@/components/ui/button";
 import { formatCalendarDate, parseCalendarDate, todayIn } from "@/lib/calendar-date";
 import { greetingFor } from "@/lib/greeting";
@@ -29,7 +30,8 @@ function parseFilter(value: unknown): DashboardFilter {
 
 export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   const user = await requireUser();
-  const filter = parseFilter((await searchParams).filter);
+  const query = await searchParams;
+  const filter = parseFilter(query.filter);
   const timezone = user.timezone ?? "Australia/Melbourne";
   const today = todayIn(timezone);
   const dashboard = await getDashboard(user.id, today);
@@ -41,6 +43,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         {greetingFor(new Date(), timezone)}, {user.firstName}
       </h1>
       <p className="mt-1 text-ink-muted">Your compliance overview</p>
+      {query.shared === "1" && (
+        <div className="mt-4">
+          <Alert tone="success">Invite accepted. Properties shared with you now appear here.</Alert>
+        </div>
+      )}
     </div>
   );
 
@@ -159,7 +166,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                       <Link href={`/properties/${row.propertyId}`} className="font-medium text-brand hover:underline">
                         {propertyTitle(row.property)}
                       </Link>
-                      <span className="block text-xs text-ink-muted">{localityLine(row.property)}</span>
+                      <span className="block text-xs text-ink-muted">
+                        {localityLine(row.property)}
+                        {row.property.userId !== user.id && <> · Shared by {row.property.user.firstName}</>}
+                      </span>
                     </td>
                     <td className="px-4 py-2">{row.item.requirement.name}</td>
                     <td className="px-4 py-2">{formatCalendarDate(parseCalendarDate(row.item.nextDueOn!)!)}</td>

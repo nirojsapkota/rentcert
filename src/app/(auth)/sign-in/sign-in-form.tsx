@@ -9,7 +9,8 @@ import { authClient } from "@/lib/auth-client";
 import { authErrorMessage } from "@/lib/auth-errors";
 import { useHydrated } from "@/lib/use-hydrated";
 
-export function SignInForm() {
+// returnTo is an already-validated invite path (see inviteReturnPath).
+export function SignInForm({ returnTo }: { returnTo?: string }) {
   const router = useRouter();
   const [formError, setFormError] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -25,7 +26,7 @@ export function SignInForm() {
       email: String(form.get("email") ?? "").trim(),
       password: String(form.get("password") ?? ""),
       // Used by the verification email that Better Auth resends to unverified users.
-      callbackURL: "/verify-email/done",
+      callbackURL: returnTo ?? "/verify-email/done",
     });
     setPending(false);
 
@@ -33,7 +34,7 @@ export function SignInForm() {
       setFormError(authErrorMessage(error));
       return;
     }
-    router.push("/dashboard");
+    router.push(returnTo ?? "/dashboard");
     router.refresh();
   }
 

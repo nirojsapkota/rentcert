@@ -1,6 +1,6 @@
 import "server-only";
 import { createReadStream } from "node:fs";
-import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { downloadHeaders } from "@/server/vault/file-type";
@@ -32,6 +32,14 @@ export class LocalStorage implements DocumentStorage {
   async read(key: string) {
     assertValidKey(key);
     return new Uint8Array(await readFile(this.pathFor(key)));
+  }
+
+  async copy(fromKey: string, toKey: string) {
+    assertValidKey(fromKey);
+    assertValidKey(toKey);
+    const target = this.pathFor(toKey);
+    await mkdir(path.dirname(target), { recursive: true });
+    await copyFile(this.pathFor(fromKey), target);
   }
 
   async delete(key: string) {

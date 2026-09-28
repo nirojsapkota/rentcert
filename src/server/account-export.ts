@@ -5,6 +5,7 @@ import { db } from "@/server/db";
 import { listComplianceForExport } from "@/server/compliance/queries";
 import { listPropertiesForExport } from "@/server/properties/queries";
 import { listRemindersForExport } from "@/server/reminders/queries";
+import { listSharingForExport } from "@/server/sharing/queries";
 import { listDocumentsForExport } from "@/server/vault/queries";
 import { getStorage } from "@/server/vault/storage";
 
@@ -12,7 +13,7 @@ const encoder = new TextEncoder();
 
 // Everything RentCert holds about one user, as a ZIP stream: JSON files plus the original documents.
 export async function exportAccountData(userId: string): Promise<ReadableStream<Uint8Array>> {
-  const [user, properties, compliance, reminders, documents, auditEvents] = await Promise.all([
+  const [user, properties, compliance, reminders, documents, auditEvents, sharing] = await Promise.all([
     db.user.findUniqueOrThrow({
       where: { id: userId },
       select: { email: true, firstName: true, lastName: true, timezone: true, notificationEmail: true, reminderEmailsEnabled: true, createdAt: true, trialEndsAt: true },
@@ -22,6 +23,8 @@ export async function exportAccountData(userId: string): Promise<ReadableStream<
     listRemindersForExport(userId),
     listDocumentsForExport(userId),
     db.auditEvent.findMany({ where: { userId }, orderBy: { createdAt: "asc" }, select: { action: true, resourceType: true, resourceId: true, metadata: true, createdAt: true } }),
+    // Shared accounts are listed only; another owner's records and files belong to their export.
+    listSharingForExport(userId),
   ]);
   await recordAuditEvent({ userId, resourceType: "user", resourceId: userId, action: "account.exported" });
 
@@ -56,6 +59,7 @@ export async function exportAccountData(userId: string): Promise<ReadableStream<
         documents.map(({ storageKey: _key, ...document }) => ({ ...document, file: documentPath(document.id, document.filename) })),
       );
       addJson("audit-events.json", auditEvents);
+      addJson("sharing.json", sharing);
 
       usedNames.clear();
       for (const document of documents) {

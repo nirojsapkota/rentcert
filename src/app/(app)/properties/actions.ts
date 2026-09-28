@@ -11,6 +11,7 @@ import {
   restoreProperty,
   updateProperty,
 } from "@/server/properties/commands";
+import { transferProperty } from "@/server/properties/transfer";
 import { requireUser } from "@/server/session";
 
 const FIELDS: PropertyField[] = [
@@ -96,4 +97,13 @@ export async function deletePropertyAction(propertyId: string) {
   if (result === "has_history") redirect(`/properties/${propertyId}?delete=blocked`);
   revalidatePath("/properties", "layout");
   redirect("/properties?deleted=1");
+}
+
+export async function transferPropertyAction(propertyId: string, formData: FormData) {
+  const user = await requireUser();
+  const result = await transferProperty(user.id, propertyId, String(formData.get("newOwnerId") ?? ""));
+  if (result === "not_found") notFound();
+  if (result === "no_slot") redirect(`/properties/${propertyId}?transfer=no_slot`);
+  revalidatePath("/", "layout");
+  redirect("/properties?transferred=1");
 }

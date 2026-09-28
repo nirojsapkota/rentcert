@@ -15,6 +15,7 @@ export type AuditAction =
   | "property.checks_set_up"
   | "property.requirement_excluded"
   | "property.requirement_included"
+  | "property.transferred"
   | "compliance_record.created"
   | "compliance_record.updated"
   | "document.uploaded"
@@ -27,7 +28,12 @@ export type AuditAction =
   | "admin.requirement_verified"
   | "admin.setting_updated"
   | "admin.role_changed"
-  | "account.exported";
+  | "account.exported"
+  | "sharing.invite_sent"
+  | "sharing.invite_revoked"
+  | "sharing.invite_accepted"
+  | "sharing.collaborator_removed"
+  | "sharing.collaborator_left";
 
 type AuditInput = {
   userId: string;

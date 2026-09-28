@@ -18,7 +18,7 @@ function pageHref(view: PropertyView, page: number) {
 }
 
 export default async function PropertiesPage({ searchParams }: PageProps<"/properties">) {
-  const { view: viewParam, page: pageParam, deleted } = await searchParams;
+  const { view: viewParam, page: pageParam, deleted, transferred } = await searchParams;
   const user = await requireUser();
   const view: PropertyView = viewParam === "archived" ? "archived" : "active";
   const requestedPage = Number.parseInt(String(pageParam ?? "1"), 10);
@@ -37,6 +37,7 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
       </div>
 
       {deleted === "1" && <Alert tone="success">The property has been deleted.</Alert>}
+      {transferred === "1" && <Alert tone="success">The property has been transferred.</Alert>}
 
       <nav aria-label="Property views" className="flex gap-1 border-b border-line">
         {(["active", "archived"] as const).map((option) => (
@@ -73,6 +74,9 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
               <li key={property.id}>
                 <Link href={`/properties/${property.id}`} className="block px-4 py-4 hover:bg-canvas">
                   <span className="block font-semibold">{propertyTitle(property)}</span>
+                  {property.userId !== user.id && (
+                    <span className="block text-sm font-medium text-brand">Shared by {property.user.firstName}</span>
+                  )}
                   <span className="block text-sm text-ink-muted">
                     {property.nickname && <>{streetLine(property)}, </>}
                     {localityLine(property)}

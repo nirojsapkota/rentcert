@@ -2,6 +2,8 @@ export interface DocumentStorage {
   put(key: string, body: Uint8Array, contentType: string): Promise<void>;
   // Returns the HTTP response for an already-authorised download.
   download(key: string, filename: string, contentType: string): Promise<Response>;
+  // Server-side copy, used when a property moves to another owner's prefix.
+  copy(fromKey: string, toKey: string): Promise<void>;
   delete(key: string): Promise<void>;
   // Whole file contents, for the account data export.
   read(key: string): Promise<Uint8Array>;

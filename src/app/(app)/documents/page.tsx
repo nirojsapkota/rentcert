@@ -45,6 +45,7 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/docume
                       <Link href={`/properties/${record.property.id}`} className="text-brand hover:underline">
                         {propertyTitle(record.property)}
                       </Link>
+                      {record.property.userId !== user.id && <> · Shared by {record.property.user.firstName}</>}
                     </p>
                     <p className="text-sm text-ink-muted">
                       Uploaded {document.uploadedAt.toLocaleDateString("en-AU", { timeZone })} · {formatBytes(document.byteSize)}

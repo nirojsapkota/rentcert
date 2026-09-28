@@ -56,6 +56,39 @@ export async function sendWelcomeEmail(user: Recipient) {
   );
 }
 
+// Invite emails name the owner only: no addresses, because the recipient has not accepted yet.
+export async function sendSharingInviteEmail(to: string, ownerFirstName: string, url: string) {
+  await send(
+    to,
+    `${ownerFirstName} shared their properties with you on RentCert`,
+    <ActionEmail
+      preview={`${ownerFirstName} invited you to help keep track of their rental property checks.`}
+      heading="You've been invited"
+      greetingName="there"
+      body={`${ownerFirstName} invited you to see and manage their properties on RentCert: compliance check dates, certificates and reminders. Accept with the email address this message was sent to.`}
+      actionLabel="View the invite"
+      actionUrl={url}
+      footnote="This invite expires in 7 days. If you don't know this person, ignore this email."
+    />,
+  );
+}
+
+export async function sendSharingEndedEmail(user: Recipient, ownerFirstName: string) {
+  await send(
+    user.email,
+    `${ownerFirstName} closed their RentCert account`,
+    <ActionEmail
+      preview="You no longer have access to their properties."
+      heading="Shared properties removed"
+      greetingName={user.name}
+      body={`${ownerFirstName} closed their RentCert account, so you no longer have access to their properties. Your own account and properties are not affected.`}
+      actionLabel="Open RentCert"
+      actionUrl={appUrl("/dashboard")}
+      footnote="You received this because you were a collaborator on their account."
+    />,
+  );
+}
+
 export type ReminderDetails = {
   type: ReminderType;
   checkName: string; // for example "Gas safety check"

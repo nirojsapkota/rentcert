@@ -993,7 +993,10 @@ Relationship:
 
 ```text
 User 1 ─* Property
-(Property.userId references User.id)
+(Property.userId references User.id: the property's one owner)
+
+User (owner) 1 ─* AccountCollaborator *─ 1 User (collaborator)
+(an owner may share all their properties with collaborators; see SPEC-coowner-access.md)
 ```
 
 Then:
@@ -1003,7 +1006,8 @@ Property 1 ─* ComplianceRecord
 ComplianceRecord 1 ─* ComplianceDocument
 ```
 
-Every query must be scoped through the authenticated user where applicable.
+Every query must be scoped through the authenticated user where applicable. Reads and compliance
+work use `accessibleBy(userId)` (owner or collaborator); owner-only actions filter by `userId`.
 
 Never do:
 
@@ -1031,18 +1035,23 @@ Plain TypeScript policy functions (for example `canViewProperty(user, property)`
 
 Rules:
 
-User can only:
+An owner can:
 
-* view own properties
-* edit own properties
-* archive own properties
-* view own compliance records
-* create own compliance records
-* view own documents
-* download own documents
-* delete own documents
+* view, edit, archive, restore, delete and transfer own properties
+* view and create compliance records on own properties
+* view, download and delete documents on own properties
+* invite and remove collaborators, and revoke invites
 
-No user can access another user's data.
+A collaborator (someone the owner shared their account with) can, on that owner's properties:
+
+* view properties, compliance records and documents, and download files and compliance packs
+* create and edit compliance records, and upload and delete documents
+* leave the shared account
+
+A collaborator cannot edit, archive, delete or transfer the owner's properties, invite others, or
+see the owner's billing. Writes follow the owner's plan.
+
+No user can access data of an account that has not shared with them.
 
 ---
 

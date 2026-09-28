@@ -12,9 +12,10 @@ import {
 } from "@/server/compliance/schedule";
 import { entitledUserWhere } from "@/server/billing/entitlements";
 import { db } from "@/server/db";
+import { accessibleBy } from "@/server/properties/access";
 import { findPropertyForUser, listActivePropertiesForUser } from "@/server/properties/queries";
 
-// Owner-scoped reads. Every function checks the property belongs to `userId` first.
+// Member-scoped reads. Every function checks `userId` owns or collaborates on the property first.
 
 export const HISTORY_PAGE_SIZE = 20;
 
@@ -78,8 +79,8 @@ export async function listPropertyHistory(userId: string, propertyId: string, pa
 export async function findRecordForUser(userId: string, propertyId: string, recordId: string) {
   if (!isUuid(recordId) || !isUuid(propertyId)) return null;
   return db.complianceRecord.findFirst({
-    where: { id: recordId, propertyId, property: { userId } },
-    include: { requirement: true, property: { select: { archivedAt: true } } },
+    where: { id: recordId, propertyId, property: accessibleBy(userId) },
+    include: { requirement: true, property: { select: { archivedAt: true, userId: true } } },
   });
 }
 
@@ -87,7 +88,16 @@ export type DashboardFilter = "all" | "overdue" | "due_soon" | "upcoming" | "com
 
 export type DashboardRow = {
   propertyId: string;
-  property: { nickname: string | null; addressLine1: string; addressLine2: string | null; suburb: string; state: string; postcode: string };
+  property: {
+    userId: string;
+    user: { firstName: string };
+    nickname: string | null;
+    addressLine1: string;
+    addressLine2: string | null;
+    suburb: string;
+    state: string;
+    postcode: string;
+  };
   item: ScheduleItem;
 };
 
@@ -136,7 +146,7 @@ export async function listRecentCompletions(userId: string, today: string, limit
     where: {
       kind: "COMPLETED",
       completedOn: { gte: new Date(`${since}T00:00:00Z`) },
-      property: { userId, archivedAt: null },
+      property: { ...accessibleBy(userId), archivedAt: null },
     },
     include: {
       requirement: { select: { name: true } },
@@ -151,30 +161,30 @@ export async function listRecentCompletions(userId: string, today: string, limit
 export type ReminderCandidate = {
   recordId: string;
   propertyId: string;
-  userId: string;
-  timezone: string;
+  userId: string; // the recipient: the owner or one of the owner's collaborators
+  timezone: string; // the recipient's
   nextDueOn: string;
   recordCreatedAt: Date;
 };
 
-// Current records on active properties, for applicable requirements, owned by verified users who
-// want reminder emails. Used by the reminder scan (with a due-date horizon) and to re-check a
-// single record just before sending (with recordIds).
+type Recipient = { id: string; timezone: string; emailVerified: boolean; reminderEmailsEnabled: boolean };
+const recipientSelect = { id: true, timezone: true, emailVerified: true, reminderEmailsEnabled: true } as const;
+
+// One candidate per current record and recipient, on active properties whose owner is entitled,
+// for applicable requirements. Recipients are the owner and the owner's collaborators, each with a
+// verified email who wants reminder emails. Used by the reminder scan (with a due-date horizon) and
+// to re-check a single record just before sending (with recordIds).
 export async function listReminderCandidates(options: {
   nextDueOnOrBefore?: Date;
   recordIds?: string[];
-  skipFinished?: boolean; // skip records whose final (overdue) reminder already exists
-  now?: Date; // accounts must be entitled (trial or paid) at this time
+  skipFinished?: boolean; // skip recipients whose final (overdue) reminder for the record already exists
+  now?: Date; // the owner must be entitled (trial or paid) at this time
 }): Promise<ReminderCandidate[]> {
   const candidates = await db.complianceRecord.findMany({
     where: {
       ...(options.recordIds ? { id: { in: options.recordIds } } : {}),
       ...(options.nextDueOnOrBefore ? { nextDueOn: { lte: options.nextDueOnOrBefore } } : {}),
-      ...(options.skipFinished ? { reminders: { none: { reminderType: "OVERDUE_7" } } } : {}),
-      property: {
-        archivedAt: null,
-        user: { emailVerified: true, reminderEmailsEnabled: true, ...entitledUserWhere(options.now ?? new Date()) },
-      },
+      property: { archivedAt: null, user: entitledUserWhere(options.now ?? new Date()) },
     },
     select: {
       id: true,
@@ -182,7 +192,13 @@ export async function listReminderCandidates(options: {
       createdAt: true,
       nextDueOn: true,
       requirement: { select: { code: true } },
-      property: { select: { state: true, userId: true, user: { select: { timezone: true } } } },
+      reminders: options.skipFinished ? { where: { reminderType: "OVERDUE_7" }, select: { userId: true } } : false,
+      property: {
+        select: {
+          state: true,
+          user: { select: { ...recipientSelect, collaborators: { select: { member: { select: recipientSelect } } } } },
+        },
+      },
     },
   });
   if (candidates.length === 0) return [];
@@ -209,16 +225,19 @@ export async function listReminderCandidates(options: {
       codesFor(row.property.state).has(code) &&
       !exclusions.some((exclusion) => exclusion.propertyId === row.propertyId && exclusion.requirementCode === code);
     if (!isCurrent || !applicable) return [];
-    return [
-      {
+    const owner = row.property.user;
+    const finished = new Set((row.reminders || []).map((reminder) => reminder.userId));
+    const recipients: Recipient[] = [owner, ...owner.collaborators.map((collaborator) => collaborator.member)];
+    return recipients
+      .filter((recipient) => recipient.emailVerified && recipient.reminderEmailsEnabled && !finished.has(recipient.id))
+      .map((recipient) => ({
         recordId: row.id,
         propertyId: row.propertyId,
-        userId: row.property.userId,
-        timezone: row.property.user.timezone,
+        userId: recipient.id,
+        timezone: recipient.timezone,
         nextDueOn: row.nextDueOn.toISOString().slice(0, 10),
         recordCreatedAt: row.createdAt,
-      },
-    ];
+      }));
   });
 }
 

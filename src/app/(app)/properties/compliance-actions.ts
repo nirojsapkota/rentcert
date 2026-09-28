@@ -16,7 +16,8 @@ import { readUpload } from "./document-actions";
 
 const DEFAULT_TIMEZONE = "Australia/Melbourne";
 
-const READ_ONLY_MESSAGE = "Your free trial has ended. Choose a plan in Billing to add compliance records.";
+// Write access follows the property owner's plan, so the wording fits owners and collaborators.
+const READ_ONLY_MESSAGE = "The free trial for this property has ended. Its owner can choose a plan in Billing to add compliance records.";
 
 export type SetupFormState = { status: "idle" | "invalid"; errors?: Record<string, string>; values?: Record<string, string>; message?: string };
 

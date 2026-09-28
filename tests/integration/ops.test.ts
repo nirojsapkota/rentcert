@@ -54,7 +54,7 @@ describe("job health alerts", () => {
         nextDueOn: new Date("2027-01-01T00:00:00Z"),
       },
     });
-    await db.complianceReminder.create({ data: { complianceRecordId: record.id, reminderType: "DAYS_30", scheduledFor: new Date("2026-12-02T00:00:00Z"), status: "FAILED", attempts: 5 } });
+    await db.complianceReminder.create({ data: { complianceRecordId: record.id, userId: user.id, reminderType: "DAYS_30", scheduledFor: new Date("2026-12-02T00:00:00Z"), status: "FAILED", attempts: 5 } });
 
     const first = await checkJobHealth();
     expect(first).toMatchObject({ alerted: true, health: { failedReminders: 1, heartbeatStale: false } });

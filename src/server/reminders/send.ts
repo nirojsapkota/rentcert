@@ -22,6 +22,7 @@ export async function sendReminder(reminderId: string): Promise<SendOutcome> {
   const reminder = await db.complianceReminder.findUnique({
     where: { id: reminderId },
     include: {
+      user: { select: { email: true, notificationEmail: true, firstName: true, timezone: true } },
       complianceRecord: {
         select: {
           id: true,
@@ -36,7 +37,6 @@ export async function sendReminder(reminderId: string): Promise<SendOutcome> {
               suburb: true,
               state: true,
               postcode: true,
-              user: { select: { email: true, notificationEmail: true, firstName: true, timezone: true } },
             },
           },
         },
@@ -45,14 +45,17 @@ export async function sendReminder(reminderId: string): Promise<SendOutcome> {
   });
   if (!reminder || reminder.status !== "PENDING") return "already_done";
 
-  const [stillApplies] = await listReminderCandidates({ recordIds: [reminder.complianceRecordId] });
+  // Also stops emails to someone who lost access or turned reminders off since the claim.
+  const stillApplies = (await listReminderCandidates({ recordIds: [reminder.complianceRecordId] })).find(
+    (candidate) => candidate.userId === reminder.userId,
+  );
   if (!stillApplies) {
     await db.complianceReminder.updateMany({ where: { id: reminder.id, status: "PENDING" }, data: { status: "SKIPPED" } });
     return "skipped";
   }
 
   const { complianceRecord: record } = reminder;
-  const user = record.property.user;
+  const { user } = reminder;
   try {
     await sendReminderEmail(user.notificationEmail ?? user.email, user.firstName, {
       type: reminder.reminderType,

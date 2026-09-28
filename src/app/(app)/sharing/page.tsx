@@ -17,7 +17,7 @@ export default async function SharingPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Sharing</h1>
+        <h1 className="text-3xl font-bold text-deep">Sharing</h1>
         <p className="mt-1 text-ink-muted">
           Invite a co-owner or family member to help keep track of your properties with their own login. They can
           record checks, upload certificates and get reminder emails. Your plan covers them; they don&apos;t see
@@ -26,7 +26,7 @@ export default async function SharingPage() {
       </div>
 
       <section aria-labelledby="invite-heading" className="rounded-lg border border-line bg-surface p-6">
-        <h2 id="invite-heading" className="text-lg font-semibold">
+        <h2 id="invite-heading" className="text-xl font-bold">
           Invite someone
         </h2>
         <p className="mt-1 text-sm text-ink-muted">You can share with up to {MAX_COLLABORATORS} people, including pending invites.</p>
@@ -36,7 +36,7 @@ export default async function SharingPage() {
       </section>
 
       <section aria-labelledby="people-heading" className="rounded-lg border border-line bg-surface p-6">
-        <h2 id="people-heading" className="text-lg font-semibold">
+        <h2 id="people-heading" className="text-xl font-bold">
           People with access
         </h2>
         {collaborators.length === 0 && invites.length === 0 ? (
@@ -79,7 +79,7 @@ export default async function SharingPage() {
 
       {sharedWithMe.length > 0 && (
         <section aria-labelledby="shared-heading" className="rounded-lg border border-line bg-surface p-6">
-          <h2 id="shared-heading" className="text-lg font-semibold">
+          <h2 id="shared-heading" className="text-xl font-bold">
             Shared with you
           </h2>
           <ul className="mt-4 divide-y divide-line">

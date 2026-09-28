@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Verify your email" };
 export default function VerifyEmailPage() {
   return (
     <>
-      <h1 className="text-2xl font-bold">Check your inbox</h1>
+      <h1 className="text-3xl font-bold text-deep">Check your inbox</h1>
       <p className="mt-2 text-sm text-ink-muted">
         We have sent a verification link to your email. Open it to finish setting up your account. The link
         expires in 1 hour.

@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-/* Calm, high-contrast palette. Text colours meet WCAG AA on the surface colours. */
+/* Harbour theme: deep teal with a warm amber accent on a soft green-grey canvas.
+   Text colours meet WCAG AA on the surfaces they sit on. */
 @theme {
-  --color-canvas: #f6f7f9;
+  --color-canvas: #f3f6f2;
   --color-surface: #ffffff;
-  --color-ink: #1f2933;
-  --color-ink-muted: #52606d;
-  --color-line: #d9dee4;
-  --color-brand: #1d4ed8;
-  --color-brand-strong: #1e40af;
-  --color-danger: #b42318;
-  --color-danger-soft: #fef3f2;
-  --color-success: #067647;
-  --color-success-soft: #ecfdf3;
-  --color-warning: #b54708;
-  --color-warning-soft: #fffaeb;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-ink: #17312f;
+  --color-ink-muted: #4f6461;
+  --color-line: #dde7e2;
+  --color-brand: #0a5c5c;
+  --color-brand-strong: #074646;
+  --color-brand-soft: #e3efeb;
+  --color-deep: #0d3b3a;
+  --color-accent: #e8a33d;
+  --color-accent-soft: #fcecd0;
+  --color-accent-ink: #7a4a06;
+  --color-danger: #b3261e;
+  --color-danger-soft: #fdeeee;
+  --color-success: #1f5c46;
+  --color-success-soft: #e6f2ed;
+  --color-warning: #7a4a06;
+  --color-warning-soft: #fdf3e1;
+
+  /* Softer corners than Tailwind's defaults: inputs and alerts 10px, cards 16px. */
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+}
+
+/* Fonts come from next/font in the root layout. */
+@theme inline {
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
 }
 
 /* Visible focus for keyboard users on every interactive element. */

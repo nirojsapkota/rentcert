@@ -17,12 +17,12 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/docume
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Documents</h1>
+      <h1 className="text-3xl font-bold text-deep">Documents</h1>
       {query.deleted === "1" && <Alert tone="success">The document has been deleted.</Alert>}
 
       {total === 0 ? (
         <div className="rounded-lg border border-line bg-surface p-8 text-center">
-          <h2 className="text-lg font-semibold">No certificates uploaded yet.</h2>
+          <h2 className="text-xl font-bold">No certificates uploaded yet.</h2>
           <p className="mt-1 text-ink-muted">Upload your first compliance certificate from a property&apos;s compliance history.</p>
           <Link href="/properties" className="mt-4 inline-block font-medium text-brand hover:underline">
             Go to your properties

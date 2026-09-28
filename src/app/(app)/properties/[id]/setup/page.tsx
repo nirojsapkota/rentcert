@@ -23,7 +23,7 @@ export default async function SetupPage({ params }: PageProps<"/properties/[id]/
   return (
     <section className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Review compliance dates</h1>
+        <h1 className="text-3xl font-bold text-deep">Review compliance dates</h1>
         <p className="mt-1 text-ink-muted">{propertyTitle(schedule.property)}</p>
       </div>
       <p className="text-sm text-ink-muted">
@@ -31,7 +31,7 @@ export default async function SetupPage({ params }: PageProps<"/properties/[id]/
         applicable compliance date with your licensed provider or the official guidance for your state or territory.
       </p>
       {schedule.isGeneric && (
-        <p className="rounded-md border border-line bg-canvas px-4 py-3 text-sm">
+        <p className="rounded-md border border-brand/20 bg-brand-soft px-4 py-3 text-sm">
           RentCert has not yet researched the rules for {schedule.property.state}. These checks use a general reminder
           schedule. Mark any that don&apos;t apply as not applicable.
         </p>

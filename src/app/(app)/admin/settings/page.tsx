@@ -12,7 +12,7 @@ export default async function AdminSettingsPage() {
   await recordAdminView(admin.id, "settings");
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-3xl font-bold text-deep">Settings</h1>
       <AdminNav current="/admin/settings" />
       <SettingsForm trialDays={await trialDays()} />
     </section>

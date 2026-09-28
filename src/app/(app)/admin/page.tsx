@@ -25,7 +25,7 @@ export default async function AdminPage() {
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Admin</h1>
+      <h1 className="text-3xl font-bold text-deep">Admin</h1>
       <AdminNav current="/admin" />
       <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <li className="rounded-lg border border-line bg-surface p-4">

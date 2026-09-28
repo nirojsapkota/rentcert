@@ -10,7 +10,8 @@ const FONT_DIR = path.join(process.cwd(), "assets", "fonts");
 const REGULAR = "NotoSans";
 const BOLD = "NotoSans-Bold";
 
-const COLOURS = { ink: "#1f2933", muted: "#52606d", line: "#d9dee4", band: "#f6f7f9" };
+// Harbour theme colours, matching src/app/globals.css.
+const COLOURS = { ink: "#17312f", muted: "#4f6461", line: "#dde7e2", band: "#f3f6f2" };
 const MARGIN = 50;
 const FOOTER_SPACE = 48;
 

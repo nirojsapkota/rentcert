@@ -17,7 +17,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Users</h1>
+      <h1 className="text-3xl font-bold text-deep">Users</h1>
       <AdminNav current="/admin/users" />
       <form className="flex gap-2" role="search">
         <label htmlFor="q" className="sr-only">Search by email</label>

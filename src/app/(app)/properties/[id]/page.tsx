@@ -79,22 +79,26 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
 
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{propertyTitle(property)}</h1>
-          {!isOwner && <p className="mt-1 text-sm font-medium text-brand">Shared by {property.user.firstName}</p>}
+          <h1 className="text-3xl font-bold text-deep">{propertyTitle(property)}</h1>
+          {!isOwner && (
+            <p className="mt-2 inline-block rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-ink">
+              Shared by {property.user.firstName}
+            </p>
+          )}
           <p className="mt-1 text-ink-muted">
             {property.nickname && <>{streetLine(property)}, </>}
             {localityLine(property)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <a href={`/api/properties/${property.id}/compliance-pack`} className={buttonClasses("primary")}>
+            Download Compliance Pack
+          </a>
           {isOwner && (
             <Link href={`/properties/${property.id}/edit`} className={buttonClasses("secondary")}>
               Edit
             </Link>
           )}
-          <a href={`/api/properties/${property.id}/compliance-pack`} className={buttonClasses("secondary")}>
-            Download Compliance Pack
-          </a>
           {isOwner && (
             <form action={(archived ? restorePropertyAction : archivePropertyAction).bind(null, property.id)}>
               <Button type="submit" variant="secondary">
@@ -106,7 +110,7 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
       </header>
 
       <section aria-labelledby="details-heading" className="rounded-lg border border-line bg-surface p-6">
-        <h2 id="details-heading" className="text-lg font-semibold">
+        <h2 id="details-heading" className="text-xl font-bold">
           Details
         </h2>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -143,7 +147,7 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
 
       {isOwner && collaborators.length > 0 && (
         <section aria-labelledby="transfer-heading" className="rounded-lg border border-line bg-surface p-6">
-          <h2 id="transfer-heading" className="text-lg font-semibold">
+          <h2 id="transfer-heading" className="text-xl font-bold">
             Transfer property
           </h2>
           <p className="mt-1 text-sm text-ink-muted">
@@ -161,8 +165,8 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
       )}
 
       {isOwner && (
-        <section aria-labelledby="delete-heading" className="rounded-lg border border-danger/40 bg-surface p-6">
-          <h2 id="delete-heading" className="text-lg font-semibold text-danger">
+        <section aria-labelledby="delete-heading" className="rounded-lg border border-line bg-surface p-6">
+          <h2 id="delete-heading" className="text-base font-bold">
             Delete property
           </h2>
           <p className="mt-1 text-sm text-ink-muted">

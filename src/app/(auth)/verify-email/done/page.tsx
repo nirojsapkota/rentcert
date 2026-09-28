@@ -14,7 +14,7 @@ export default async function VerifyEmailDonePage({ searchParams }: PageProps<"/
 
   return (
     <>
-      <h1 className="text-2xl font-bold">Email verification</h1>
+      <h1 className="text-3xl font-bold text-deep">Email verification</h1>
       <div className="mt-6">
         {error ? (
           <Alert tone="error">

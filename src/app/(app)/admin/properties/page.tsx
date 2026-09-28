@@ -14,7 +14,7 @@ export default async function AdminPropertiesPage({ searchParams }: PageProps<"/
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Properties</h1>
+      <h1 className="text-3xl font-bold text-deep">Properties</h1>
       <AdminNav current="/admin/properties" />
       <div className={tableWrap}>
         <table className="w-full min-w-[40rem] text-sm">

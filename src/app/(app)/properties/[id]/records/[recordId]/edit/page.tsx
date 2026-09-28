@@ -18,7 +18,7 @@ export default async function EditRecordPage({ params }: PageProps<"/properties/
   return (
     <section className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Edit {record.requirement.name.toLowerCase()} record</h1>
+        <h1 className="text-3xl font-bold text-deep">Edit {record.requirement.name.toLowerCase()} record</h1>
         <p className="mt-1 text-sm text-ink-muted">
           Changes are kept in your account history. The next due date is recalculated from the completed date.
         </p>

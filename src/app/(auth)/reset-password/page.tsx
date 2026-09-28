@@ -11,7 +11,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps<"/re
 
   return (
     <>
-      <h1 className="text-2xl font-bold">Choose a new password</h1>
+      <h1 className="text-3xl font-bold text-deep">Choose a new password</h1>
       <div className="mt-6">
         {validToken ? (
           <ResetPasswordForm token={token} />

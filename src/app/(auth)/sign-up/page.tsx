@@ -11,7 +11,7 @@ export default async function SignUpPage({ searchParams }: PageProps<"/sign-up">
   const returnTo = inviteReturnPath(invite);
   return (
     <>
-      <h1 className="text-2xl font-bold">Create your account</h1>
+      <h1 className="text-3xl font-bold text-deep">Create your account</h1>
       <p className="mt-1 text-sm text-ink-muted">Start tracking your property compliance dates.</p>
       <div className="mt-6 space-y-4">
         {returnTo && <Alert tone="info">Create your account with the email address the invite was sent to, then verify it to accept.</Alert>}

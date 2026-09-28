@@ -33,7 +33,7 @@ export function ComplianceSection({
   return (
     <section aria-labelledby="compliance-heading" className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 id="compliance-heading" className="text-lg font-semibold">
+        <h2 id="compliance-heading" className="text-xl font-bold">
           Compliance
         </h2>
         {needsSetup && !archived && (
@@ -47,7 +47,7 @@ export function ComplianceSection({
         licensed provider or the official guidance for your state or territory.
       </p>
       {isGeneric && (
-        <p className="rounded-md border border-line bg-canvas px-4 py-3 text-sm">
+        <p className="rounded-md border border-brand/20 bg-brand-soft px-4 py-3 text-sm">
           General reminder schedule. RentCert has not yet researched {state} rules. Confirm what applies to your property.
         </p>
       )}
@@ -55,7 +55,7 @@ export function ComplianceSection({
       <ul className="grid gap-4 md:grid-cols-3">
         {items.map((item) => (
           <li key={item.requirement.code} className="flex flex-col rounded-lg border border-line bg-surface p-5">
-            <h3 className="font-semibold">{item.requirement.name}</h3>
+            <h3 className="text-lg font-bold">{item.requirement.name}</h3>
             <div className="mt-2">
               <StatusBadge status={item.status} label={item.label} />
             </div>
@@ -96,7 +96,7 @@ export function ComplianceSection({
                 <form action={setApplicableAction.bind(null, propertyId, item.requirement.code, false)}>
                   <button
                     type="submit"
-                    className="text-sm text-ink-muted hover:underline"
+                    className="text-sm font-medium text-ink-muted underline decoration-line underline-offset-4 hover:text-ink"
                     aria-label={`Mark ${item.requirement.name.toLowerCase()} not applicable`}
                   >
                     Not applicable

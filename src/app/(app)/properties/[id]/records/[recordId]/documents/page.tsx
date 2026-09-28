@@ -33,7 +33,7 @@ export default async function RecordDocumentsPage({ params, searchParams }: Page
         </Link>
       </p>
       <div>
-        <h1 className="text-2xl font-bold">{record.requirement.name} documents</h1>
+        <h1 className="text-3xl font-bold text-deep">{record.requirement.name} documents</h1>
         <p className="mt-1 text-ink-muted">
           {record.completedOn ? `Completed ${formatCalendarDate(record.completedOn)}` : "Last check unknown"}
         </p>

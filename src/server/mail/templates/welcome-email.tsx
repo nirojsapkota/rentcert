@@ -18,7 +18,7 @@ export function WelcomeEmail({ greetingName, addPropertyUrl }: { greetingName: s
       </Text>
       <Button
         href={addPropertyUrl}
-        style={{ backgroundColor: "#1d4ed8", color: "#ffffff", padding: "12px 20px", borderRadius: "6px" }}
+        style={{ backgroundColor: "#0a5c5c", color: "#ffffff", padding: "12px 22px", borderRadius: "999px", fontWeight: 600 }}
       >
         Add your first property
       </Button>

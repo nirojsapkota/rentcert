@@ -18,7 +18,7 @@ export default async function AdminRequirementsPage({ searchParams }: PageProps<
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Compliance requirements</h1>
+      <h1 className="text-3xl font-bold text-deep">Compliance requirements</h1>
       <AdminNav current="/admin/requirements" />
       <p className="text-sm text-ink-muted">
         Changing an interval affects next due dates for new completions only. Mark a requirement verified only after

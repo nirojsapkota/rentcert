@@ -17,7 +17,7 @@ export default async function EditPropertyPage({ params }: PageProps<"/propertie
 
   return (
     <section className="max-w-2xl">
-      <h1 className="text-2xl font-bold">Edit {propertyTitle(property)}</h1>
+      <h1 className="text-3xl font-bold text-deep">Edit {propertyTitle(property)}</h1>
       <div className="mt-6 rounded-lg border border-line bg-surface p-6">
         <PropertyForm
           action={updatePropertyAction.bind(null, property.id)}

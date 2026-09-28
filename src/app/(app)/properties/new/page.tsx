@@ -15,7 +15,7 @@ export default async function NewPropertyPage() {
   const atLimit = activeCount >= entitlement.propertyLimit;
   return (
     <section className="max-w-2xl">
-      <h1 className="text-2xl font-bold">{isFirst ? "Tell us about your first property" : "Add property"}</h1>
+      <h1 className="text-3xl font-bold text-deep">{isFirst ? "Tell us about your first property" : "Add property"}</h1>
       <div className="mt-6 rounded-lg border border-line bg-surface p-6">
         {atLimit ? (
           <p>

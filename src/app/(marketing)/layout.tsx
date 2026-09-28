@@ -5,7 +5,7 @@ export default function MarketingLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       <MarketingHeader />
-      <main className="min-w-0 mx-auto w-full max-w-5xl flex-1 px-4 py-12">{children}</main>
+      <main className="min-w-0 mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-16">{children}</main>
       <SiteFooter />
     </>
   );

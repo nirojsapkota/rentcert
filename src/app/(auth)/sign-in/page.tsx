@@ -11,14 +11,14 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
   const returnTo = inviteReturnPath(invite);
   return (
     <>
-      <h1 className="text-2xl font-bold">Sign in</h1>
+      <h1 className="text-3xl font-bold text-deep">Sign in</h1>
       <div className="mt-6 space-y-4">
         {reset === "1" && <Alert tone="success">Your password has been reset. Sign in with your new password.</Alert>}
         {deleted === "1" && <Alert tone="success">Your account and its data have been deleted.</Alert>}
         {returnTo && <Alert tone="info">Sign in to accept your invite.</Alert>}
         <SignInForm returnTo={returnTo} />
       </div>
-      <div className="mt-6 flex flex-col gap-2 text-sm text-ink-muted sm:flex-row sm:justify-between">
+      <div className="mt-6 flex flex-col gap-2 text-sm text-ink-muted">
         <Link href="/forgot-password" className="font-medium text-brand hover:underline">
           Forgot your password?
         </Link>

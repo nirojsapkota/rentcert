@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { SiteFooter } from "@/components/site-footer";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
@@ -6,10 +6,10 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
     <>
       <main className="min-w-0 flex flex-1 items-start justify-center px-4 py-12 sm:items-center">
         <div className="w-full max-w-md">
-          <Link href="/" className="mb-6 block text-center text-xl font-bold">
-            RentCert
-          </Link>
-          <div className="rounded-lg border border-line bg-surface p-6 shadow-sm sm:p-8">{children}</div>
+          <div className="mb-6 flex justify-center">
+            <Logo />
+          </div>
+          <div className="rounded-lg border border-line bg-surface p-6 shadow-[0_24px_48px_-32px_rgba(13,59,58,0.35)] sm:p-8">{children}</div>
         </div>
       </main>
       <SiteFooter />

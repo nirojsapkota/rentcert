@@ -16,7 +16,7 @@ type History = { records: HistoryRecord[]; total: number; page: number; pageCoun
 export function HistoryTable({ propertyId, history }: { propertyId: string; history: History }) {
   return (
     <section aria-labelledby="history-heading" className="space-y-3">
-      <h2 id="history-heading" className="text-lg font-semibold">
+      <h2 id="history-heading" className="text-xl font-bold">
         Compliance history
       </h2>
       {history.total === 0 ? (

@@ -18,7 +18,7 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/i
   if (!invite || result === "invalid") {
     return (
       <>
-        <h1 className="text-2xl font-bold">Invite</h1>
+        <h1 className="text-3xl font-bold text-deep">Invite</h1>
         <div className="mt-6">
           <Alert tone="error">{INVALID}</Alert>
         </div>
@@ -31,7 +31,7 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/i
 
   return (
     <>
-      <h1 className="text-2xl font-bold">{invite.ownerFirstName} shared their properties with you</h1>
+      <h1 className="text-3xl font-bold text-deep">{invite.ownerFirstName} shared their properties with you</h1>
       <p className="mt-2 text-sm text-ink-muted">
         As a collaborator you can see and update {invite.ownerFirstName}&apos;s properties, compliance checks and
         certificates, and you get their reminder emails. You don&apos;t see their billing.

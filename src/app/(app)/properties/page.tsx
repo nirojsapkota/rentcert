@@ -30,7 +30,7 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Properties</h1>
+        <h1 className="text-3xl font-bold text-deep">Properties</h1>
         <Link href="/properties/new" className={buttonClasses("primary")}>
           Add property
         </Link>
@@ -55,7 +55,7 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
       {items.length === 0 ? (
         view === "active" ? (
           <div className="rounded-lg border border-line bg-surface p-8 text-center">
-            <h2 className="text-lg font-semibold">Add your first property</h2>
+            <h2 className="text-xl font-bold">Add your first property</h2>
             <p className="mt-1 text-ink-muted">Start tracking your compliance deadlines and certificates.</p>
             <Link href="/properties/new" className={`${buttonClasses("primary")} mt-4`}>
               Add property

@@ -20,7 +20,7 @@ export default async function CompleteCheckPage({ params }: PageProps<"/properti
   return (
     <section className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Mark {item.requirement.name.toLowerCase()} completed</h1>
+        <h1 className="text-3xl font-bold text-deep">Mark {item.requirement.name.toLowerCase()} completed</h1>
         <p className="mt-1 text-ink-muted">{propertyTitle(schedule.property)}</p>
       </div>
       <div className="rounded-lg border border-line bg-surface p-6">

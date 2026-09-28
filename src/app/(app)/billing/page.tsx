@@ -21,7 +21,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Billing</h1>
+      <h1 className="text-3xl font-bold text-deep">Billing</h1>
 
       {query.checkout === "success" && !subscription && (
         <Alert tone="success">Payment received. Your plan updates in a moment. Refresh this page if it doesn&apos;t.</Alert>
@@ -30,7 +30,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
       {query.error && <Alert tone="error">We couldn&apos;t reach our payment provider. Please try again in a few minutes.</Alert>}
 
       <div className="rounded-lg border border-line bg-surface p-6">
-        <h2 className="text-lg font-semibold">Current plan</h2>
+        <h2 className="text-xl font-bold">Current plan</h2>
         <p className="mt-2 text-2xl font-bold">{PLAN_NAMES[entitlement.plan]}</p>
         <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
           <div>
@@ -79,7 +79,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         <ul className="grid gap-4 md:grid-cols-2">
           {(["PROPERTY", "PORTFOLIO"] as const).map((plan) => (
             <li key={plan} className="flex flex-col rounded-lg border border-line bg-surface p-6">
-              <h2 className="text-lg font-semibold">{PLAN_DETAILS[plan].name}</h2>
+              <h2 className="text-xl font-bold">{PLAN_DETAILS[plan].name}</h2>
               <p className="mt-2">
                 <span className="text-3xl font-bold">{PLAN_DETAILS[plan].price}</span>
                 <span className="text-ink-muted"> AUD / month, incl. GST</span>

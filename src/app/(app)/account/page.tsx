@@ -21,10 +21,10 @@ export default async function AccountPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Account</h1>
+      <h1 className="text-3xl font-bold text-deep">Account</h1>
 
       <section aria-labelledby="profile-heading" className="rounded-lg border border-line bg-surface p-6">
-        <h2 id="profile-heading" className="text-lg font-semibold">
+        <h2 id="profile-heading" className="text-xl font-bold">
           Your details
         </h2>
         <div className="mt-4">
@@ -33,7 +33,7 @@ export default async function AccountPage() {
       </section>
 
       <section aria-labelledby="export-heading" className="rounded-lg border border-line bg-surface p-6">
-        <h2 id="export-heading" className="text-lg font-semibold">
+        <h2 id="export-heading" className="text-xl font-bold">
           Export your data
         </h2>
         <p className="mt-1 text-sm text-ink-muted">

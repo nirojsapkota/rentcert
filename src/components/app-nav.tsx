@@ -15,8 +15,9 @@ const LINKS = [
 export function AppNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Primary" className="-mx-4 overflow-x-auto px-4">
-      <ul className="flex gap-1">
+    // Wraps on narrow screens so every section stays visible (no hidden sideways scroll).
+    <nav aria-label="Primary" className="w-full lg:w-auto">
+      <ul className="flex flex-wrap gap-1 rounded-3xl bg-canvas p-1 lg:rounded-full">
         {[...LINKS, ...(isAdmin ? [{ href: "/admin", label: "Admin" } as const] : [])].map(({ href, label }) => {
           const current = pathname === href || pathname.startsWith(`${href}/`);
           return (
@@ -24,7 +25,7 @@ export function AppNav({ isAdmin = false }: { isAdmin?: boolean }) {
               <Link
                 href={href}
                 aria-current={current ? "page" : undefined}
-                className="block whitespace-nowrap border-b-2 border-transparent px-3 py-3 text-sm font-medium text-ink-muted hover:text-ink aria-[current=page]:border-brand aria-[current=page]:text-ink"
+                className="block whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold text-ink-muted hover:bg-surface hover:text-ink aria-[current=page]:bg-brand aria-[current=page]:text-white"
               >
                 {label}
               </Link>

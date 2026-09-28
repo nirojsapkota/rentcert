@@ -14,7 +14,7 @@ export default async function AdminSubscriptionsPage({ searchParams }: PageProps
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Subscriptions</h1>
+      <h1 className="text-3xl font-bold text-deep">Subscriptions</h1>
       <AdminNav current="/admin/subscriptions" />
       <div className={tableWrap}>
         <table className="w-full min-w-[40rem] text-sm">

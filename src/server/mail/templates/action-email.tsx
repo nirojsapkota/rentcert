@@ -22,11 +22,11 @@ export function ActionEmail(props: Props) {
       <Text>{props.body}</Text>
       <Button
         href={props.actionUrl}
-        style={{ backgroundColor: "#1d4ed8", color: "#ffffff", padding: "12px 20px", borderRadius: "6px" }}
+        style={{ backgroundColor: "#0a5c5c", color: "#ffffff", padding: "12px 22px", borderRadius: "999px", fontWeight: 600 }}
       >
         {props.actionLabel}
       </Button>
-      <Text style={{ fontSize: "14px", color: "#616e7c" }}>{props.footnote}</Text>
+      <Text style={{ fontSize: "14px", color: "#4f6461" }}>{props.footnote}</Text>
     </EmailLayout>
   );
 }

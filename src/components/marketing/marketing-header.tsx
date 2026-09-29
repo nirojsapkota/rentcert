@@ -4,7 +4,7 @@ import { buttonClasses } from "@/components/ui/button";
 
 export function MarketingHeader() {
   return (
-    <header>
+    <header className="pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5">
         <Logo />
         <nav aria-label="Main" className="flex items-center gap-5 text-sm font-semibold">

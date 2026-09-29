@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
     <>
-      <main className="min-w-0 flex flex-1 items-start justify-center px-4 py-12 sm:items-center">
+      <main className="min-w-0 flex flex-1 items-start justify-center px-4 pt-[calc(3rem+env(safe-area-inset-top))] pb-12 sm:items-center">
         <div className="w-full max-w-md">
           <div className="mb-6 flex justify-center">
             <Logo />

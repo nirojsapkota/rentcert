@@ -16,7 +16,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const showReadOnly = entitlement.plan === "READ_ONLY" && ownedCount > 0;
   return (
     <>
-      <header className="border-b border-line bg-surface">
+      <header className="border-b border-line bg-surface pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
           <Logo href="/dashboard" />
           <div className="flex items-center gap-3 lg:order-last">

@@ -25,6 +25,7 @@ export type AuditAction =
   | "billing.subscription_changed"
   | "admin.viewed"
   | "admin.requirement_updated"
+  | "admin.requirement_created"
   | "admin.requirement_verified"
   | "admin.setting_updated"
   | "admin.role_changed"

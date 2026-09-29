@@ -2,6 +2,7 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/status-badge";
 import { buttonClasses } from "@/components/ui/button";
 import { formatCalendarDate, parseCalendarDate } from "@/lib/calendar-date";
+import { basisLine } from "@/lib/requirement-basis";
 import type { ScheduleItem } from "@/server/compliance/schedule";
 import { setApplicableAction } from "./compliance-actions";
 
@@ -56,7 +57,10 @@ export function ComplianceSection({
         {items.map((item) => (
           <li key={item.requirement.code} className="flex flex-col rounded-lg border border-line bg-surface p-5">
             <h3 className="text-lg font-bold">{item.requirement.name}</h3>
-            <div className="mt-2">
+            <p className="mt-1 text-sm text-ink-muted">
+              {basisLine(item.requirement.basis, item.requirement.jurisdiction, item.requirement.recurrenceMonths)}
+            </p>
+            <div className="mt-3">
               <StatusBadge status={item.status} label={item.label} />
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
@@ -67,13 +71,18 @@ export function ComplianceSection({
               <dt className="text-ink-muted">Days remaining</dt>
               <dd>{daysText(item)}</dd>
             </dl>
-            {!isGeneric && item.requirement.sourceUrl && (
+            {!isGeneric && (
               <p className="mt-3 text-xs text-ink-muted">
-                Interval based on{" "}
-                <a href={item.requirement.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">
-                  {item.requirement.sourceName}
-                </a>
-                . {item.requirement.lastVerifiedAt ? `Checked ${item.requirement.lastVerifiedAt.toLocaleDateString("en-AU")}.` : "Not yet verified."}
+                {item.requirement.sourceUrl && (
+                  <>
+                    Source:{" "}
+                    <a href={item.requirement.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                      {item.requirement.sourceName}
+                    </a>
+                    .{" "}
+                  </>
+                )}
+                {item.requirement.lastVerifiedAt ? `Checked ${item.requirement.lastVerifiedAt.toLocaleDateString("en-AU")}.` : "Not yet verified."}
               </p>
             )}
             <div className="mt-auto flex flex-wrap items-center gap-3 pt-4">

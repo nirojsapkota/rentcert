@@ -38,9 +38,8 @@ async function vicPropertyWithSetup(userId: string) {
 }
 
 describe("requirementsFor", () => {
-  it("uses Victorian rules for VIC and the general schedule elsewhere", async () => {
+  it("gives every state its own unverified, sourced schedule", async () => {
     const vic = await requirementsFor("VIC");
-    const nsw = await requirementsFor("NSW");
 
     expect(vic.jurisdiction).toBe("VIC");
     expect(vic.requirements.map((row) => [row.code, row.recurrenceMonths])).toEqual([
@@ -48,9 +47,37 @@ describe("requirementsFor", () => {
       ["electrical", 24],
       ["gas", 24],
     ]);
-    expect(vic.requirements.every((row) => row.lastVerifiedAt === null)).toBe(true);
-    expect(nsw.jurisdiction).toBe("GENERIC");
-    expect(nsw.requirements.every((row) => row.sourceUrl === null)).toBe(true);
+    expect(vic.requirements.every((row) => row.lastVerifiedAt === null && row.basis === "REQUIRED_INTERVAL")).toBe(true);
+
+    const expected = {
+      NSW: "REQUIRED_INTERVAL",
+      QLD: "BEFORE_EACH_TENANCY",
+      SA: "RECOMMENDED",
+      WA: "BEFORE_EACH_TENANCY",
+      TAS: "BEFORE_EACH_TENANCY",
+      ACT: "BEFORE_EACH_TENANCY",
+      NT: "BEFORE_EACH_TENANCY",
+    } as const;
+    for (const [state, smokeBasis] of Object.entries(expected)) {
+      const { jurisdiction, requirements } = await requirementsFor(state);
+      expect(jurisdiction).toBe(state);
+      expect(requirements.map((row) => [row.code, row.recurrenceMonths, row.basis])).toEqual([
+        ["smoke_alarm", 12, smokeBasis],
+        ["electrical", 24, "RECOMMENDED"],
+        ["gas", 24, "RECOMMENDED"],
+      ]);
+      expect(requirements[0].sourceUrl).toMatch(/^https:\/\/[a-z.]*(gov\.au)\//);
+      expect(requirements.every((row) => row.lastVerifiedAt === null)).toBe(true);
+    }
+  });
+
+  it("falls back to the general schedule when a state has no active requirements", async () => {
+    await db.complianceRequirement.updateMany({ where: { jurisdiction: "NT" }, data: { active: false } });
+    try {
+      expect((await requirementsFor("NT")).jurisdiction).toBe("GENERIC");
+    } finally {
+      await db.complianceRequirement.updateMany({ where: { jurisdiction: "NT" }, data: { active: true } });
+    }
   });
 });
 
@@ -78,13 +105,25 @@ describe("setting up checks (scenario 2)", () => {
     expect(await db.complianceRecord.count({ where: { propertyId: property.id } })).toBe(2);
   });
 
-  it("gives an NSW property the general schedule", async () => {
+  it("gives an NSW property the NSW schedule", async () => {
     const user = await createUser();
     const property = await insertProperty(user.id, { state: "NSW", postcode: "2150", suburb: "Parramatta" });
 
     const schedule = await getPropertySchedule(user.id, property.id, TODAY);
-    expect(schedule).toMatchObject({ isGeneric: true, jurisdiction: "GENERIC" });
+    expect(schedule).toMatchObject({ isGeneric: false, jurisdiction: "NSW" });
     expect(schedule!.items.every((item) => item.status === "not_set_up")).toBe(true);
+  });
+
+  it("keeps history recorded under the general schedule when a state gets its own", async () => {
+    const user = await createUser();
+    const property = await insertProperty(user.id, { state: "QLD", postcode: "4000", suburb: "Brisbane" });
+    const genericSmoke = await db.complianceRequirement.findUniqueOrThrow({ where: { jurisdiction_code: { jurisdiction: "GENERIC", code: "smoke_alarm" } } });
+    await db.complianceRecord.create({
+      data: { propertyId: property.id, requirementId: genericSmoke.id, kind: "COMPLETED", completedOn: new Date("2026-01-10T00:00:00Z"), nextDueOn: new Date("2027-01-10T00:00:00Z") },
+    });
+
+    const smoke = (await getPropertySchedule(user.id, property.id, TODAY))!.items.find((item) => item.requirement.code === "smoke_alarm");
+    expect(smoke).toMatchObject({ requirement: { jurisdiction: "QLD" }, lastCompletedOn: "2026-01-10", nextDueOn: "2027-01-10" });
   });
 });
 

@@ -1,4 +1,4 @@
-# Victorian Compliance Sources (research notes)
+# Compliance Sources (research notes)
 
 Researched: 2026-09-23. These notes are the basis for the seeded `ComplianceRequirement` rows.
 They are NOT legal advice. A human must review each row before production launch and set
@@ -30,3 +30,29 @@ Open verification items:
 - Read the regulation text on legislation.vic.gov.au and confirm the regulation numbers.
 - Confirm whether a smoke alarm check has a qualification requirement since 25 November 2025.
 - Confirm the exact trigger date wording for the first check of a new rental agreement.
+
+
+## Other states and territories (Phase 10)
+
+Researched: 2026-09-28 (see `SPEC-jurisdictions.md`). Seeded by migration
+`20260928100000_add_state_requirements` with `last_verified_at` NULL. Several findings came from
+secondary sources (tenant unions, industry sites); each row must be checked against the official page
+before it is marked verified.
+
+| State | `smoke_alarm` (12 months) | `electrical`, `gas` (24 months) | Official source |
+|---|---|---|---|
+| NSW | REQUIRED_INTERVAL: landlord checks alarms every year; repair or replace within 2 business days; replace within 10 years (RT Regulation 2019, standard agreement cl. 42). | RECOMMENDED: no periodic check mandated. | [NSW Government: Smoke alarms](https://www.nsw.gov.au/housing-and-construction/rules/smoke-alarms-a-rental-property), [Electrical safety](https://www.nsw.gov.au/housing-and-construction/rules/electrical-safety-a-rental-property) |
+| QLD | BEFORE_EACH_TENANCY: test, clean and replace flat batteries within 30 days before each new or renewed tenancy. Interconnected photoelectric alarms required in all rentals by 1 January 2027 (not tracked). | RECOMMENDED: safety switches required on power circuits (installation, not tracked); no periodic check. | [RTA: Smoke alarms](https://www.rta.qld.gov.au/during-a-tenancy/maintenance/smoke-alarms), [RTA: Electrical safety](https://www.rta.qld.gov.au/during-a-tenancy/maintenance/electrical-safety) |
+| SA | RECOMMENDED: owner installs and maintains working alarms; official advice is to clean and check batteries at least yearly. | RECOMMENDED | [SA.GOV.AU: Smoke alarms](https://www.sa.gov.au/topics/housing/keeping-your-property-safe/smoke-alarms), [MFS](https://www.mfs.sa.gov.au/community-safety/safety-and-education/fact-sheets/smoke-alarm-quick-guide) |
+| WA | BEFORE_EACH_TENANCY: compliant hard-wired alarms installed and working before each tenancy; replace every 10 years. At least two RCDs required (installation, not tracked). | RECOMMENDED | [WA Building and Energy](https://www.wa.gov.au/organisation/building-and-energy/smoke-alarm-laws-homes-being-sold-rented-and-hired) |
+| TAS | BEFORE_EACH_TENANCY: tested and cleaned before each new tenancy; alarms and batteries not expiring within 30 days. | RECOMMENDED | [CBOS Tasmania](https://cbos.tas.gov.au/topics/housing/renting/beginning-tenancy/smoke-alarms) |
+| ACT | BEFORE_EACH_TENANCY: AS 3786 alarms installed and working before any tenancy; replace at 10 years. | RECOMMENDED | [ACT ESA](https://esa.act.gov.au/sites/default/files/wp-content/uploads/smoke-alarms-ver2.pdf) |
+| NT | BEFORE_EACH_TENANCY: test each alarm within 30 days before a tenancy begins; replace any that fail. | RECOMMENDED | [NT Government](https://nt.gov.au/emergency/community-safety/fire-safety-at-home/smoke-alarms) |
+
+`BEFORE_EACH_TENANCY` rows remind yearly, because RentCert does not know renewal dates; the owner is
+told to also check before each new tenancy. `RECOMMENDED` electrical and gas rows keep reminders for
+owners outside Victoria and say plainly that no fixed legal interval applies.
+
+Not modelled (not recurring checks): RCD / safety switch installation, 10-year alarm replacement,
+QLD's 2027 interconnection deadline, pool barrier certificates. Admins can add a requirement to any
+state from Admin → Requirements if one of these should become a reminder.

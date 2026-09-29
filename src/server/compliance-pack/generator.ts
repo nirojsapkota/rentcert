@@ -109,6 +109,7 @@ export class CompliancePackGenerator {
       ],
       data.summary.map((row) => [row.name, row.lastCompleted, row.nextDue, row.status]),
     );
+    for (const row of data.summary) this.note(`${row.name}: ${row.basis}`);
     const sources = [...new Set(data.summary.flatMap((row) => (row.source ? [row.source] : [])))];
     if (sources.length > 0) this.note(`Intervals based on: ${sources.join("; ")}.`);
   }

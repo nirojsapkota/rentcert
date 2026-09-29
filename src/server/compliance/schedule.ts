@@ -1,4 +1,5 @@
 import "server-only";
+import type { RequirementBasis } from "@/lib/requirement-basis";
 import { toCalendarDateString } from "@/lib/calendar-date";
 import { complianceStatus, daysRemaining, statusLabel, type ScheduleStatus } from "@/server/compliance/status";
 
@@ -11,6 +12,7 @@ export type RequirementInfo = {
   name: string;
   description: string;
   recurrenceMonths: number;
+  basis: RequirementBasis;
   sourceName: string | null;
   sourceUrl: string | null;
   lastVerifiedAt: Date | null;

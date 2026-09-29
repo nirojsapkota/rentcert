@@ -8,6 +8,7 @@ const requirement = (code: string, months: number): RequirementInfo => ({
   name: code,
   description: "",
   recurrenceMonths: months,
+  basis: "REQUIRED_INTERVAL",
   sourceName: null,
   sourceUrl: null,
   lastVerifiedAt: null,

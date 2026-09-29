@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { markRequirementVerified, setTrialDays, setUserRole, updateRequirement } from "@/server/admin/commands";
+import { createRequirement, markRequirementVerified, setTrialDays, setUserRole, updateRequirement } from "@/server/admin/commands";
+import { requirementsFor } from "@/server/compliance/requirements";
 import { getMetrics, listPropertiesForAdmin, listUsers } from "@/server/admin/queries";
 import { trialDays } from "@/server/billing/settings";
 import { recordCompletion } from "@/server/compliance/commands";
@@ -69,6 +70,33 @@ describe("admin role changes", () => {
 });
 
 describe("admin requirement changes", () => {
+  it("adds a requirement to a state, unverified and audited, and refuses a duplicate code", async () => {
+    const adminUser = await admin();
+    const input = {
+      jurisdiction: "NSW",
+      code: "pool_barrier",
+      name: "Pool barrier check",
+      description: "Pool barrier checked and in good repair.",
+      recurrenceMonths: 36,
+      basis: "REQUIRED_INTERVAL" as const,
+      sourceName: null,
+      sourceUrl: null,
+      active: true,
+    };
+    try {
+      expect(await createRequirement(adminUser.id, input)).toBe("created");
+      const nsw = await requirementsFor("NSW");
+      expect(nsw.requirements.map((row) => row.code)).toEqual(["smoke_alarm", "electrical", "gas", "pool_barrier"]);
+      expect(nsw.requirements.at(-1)).toMatchObject({ recurrenceMonths: 36, lastVerifiedAt: null });
+      const event = await db.auditEvent.findFirstOrThrow({ where: { action: "admin.requirement_created" } });
+      expect(event.metadata).toEqual({ jurisdiction: "NSW", code: "pool_barrier", recurrenceMonths: 36, basis: "REQUIRED_INTERVAL" });
+
+      expect(await createRequirement(adminUser.id, { ...input, name: "Again" })).toBe("duplicate");
+    } finally {
+      await db.complianceRequirement.deleteMany({ where: { code: "pool_barrier" } });
+    }
+  });
+
   it("updates a requirement, audits old and new values, and new completions use it", async () => {
     const adminUser = await admin();
     const gas = await db.complianceRequirement.findUniqueOrThrow({ where: { jurisdiction_code: { jurisdiction: "VIC", code: "gas" } } });
@@ -77,6 +105,7 @@ describe("admin requirement changes", () => {
         name: gas.name,
         description: gas.description,
         recurrenceMonths: 12,
+        basis: gas.basis,
         sourceName: gas.sourceName,
         sourceUrl: gas.sourceUrl,
         active: true,
@@ -97,7 +126,7 @@ describe("admin requirement changes", () => {
     const adminUser = await admin();
     const smoke = await db.complianceRequirement.findUniqueOrThrow({ where: { jurisdiction_code: { jurisdiction: "VIC", code: "smoke_alarm" } } });
     try {
-      expect(await markRequirementVerified(adminUser.id, smoke.id)).toBe(true);
+      expect(await markRequirementVerified(adminUser.id, smoke.id)).toBe("VIC");
       expect((await db.complianceRequirement.findUniqueOrThrow({ where: { id: smoke.id } })).lastVerifiedAt).not.toBeNull();
       expect(await db.auditEvent.count({ where: { userId: adminUser.id, action: "admin.requirement_verified" } })).toBe(1);
     } finally {

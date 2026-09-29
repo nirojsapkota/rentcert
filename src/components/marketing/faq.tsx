@@ -6,7 +6,7 @@ const FAQ = [
   ["Can RentCert guarantee legal compliance?", "No. RentCert reminds you about the dates you enter. Confirm the rules that apply to your property with a licensed provider or the official guidance for your state or territory."],
   ["Who performs safety checks?", "Appropriately qualified or licensed professionals, as required by the rules in your state or territory."],
   ["Can I store certificates?", "Yes. Upload PDF, JPG or PNG files up to 10 MB. They are stored privately. Only you, and anyone you choose to share your properties with, can download them."],
-  ["Which states does RentCert support?", "You can add properties anywhere in Australia. RentCert's reminder intervals are based on Victorian guidance; other states use a general schedule, clearly labelled, until their rules are added."],
+  ["Which states does RentCert support?", "All of them. You can add properties anywhere in Australia, and each property gets its own state or territory's checks. Every check says where its timing comes from: a fixed interval set by law, a check required before each tenancy, or a recommendation. Confirm what applies to your property with a licensed provider or the official guidance."],
 ] as const;
 
 export function Faq() {

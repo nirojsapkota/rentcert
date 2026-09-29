@@ -160,6 +160,14 @@ model Property {
   @@map("properties")
 }
 
+// Where a requirement's timing comes from. Due dates always use recurrence_months; the basis only
+// changes how the check is explained (RentCert cannot know tenancy renewal dates).
+enum RequirementBasis {
+  REQUIRED_INTERVAL
+  BEFORE_EACH_TENANCY
+  RECOMMENDED
+}
+
 // Configuration: what must happen and how often, per jurisdiction ("VIC", or "GENERIC" for the
 // unresearched fallback). Rows are seeded by migration; last_verified_at stays null until a person verifies them.
 model ComplianceRequirement {
@@ -169,6 +177,7 @@ model ComplianceRequirement {
   name             String
   description      String
   recurrenceMonths Int       @map("recurrence_months")
+  basis            RequirementBasis @default(REQUIRED_INTERVAL)
   sortOrder        Int       @map("sort_order")
   active           Boolean   @default(true)
   sourceName       String?   @map("source_name")

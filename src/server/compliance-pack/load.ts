@@ -1,4 +1,5 @@
 import "server-only";
+import { basisLine } from "@/lib/requirement-basis";
 import { localityLine, streetLine } from "@/components/property-address";
 import { formatCalendarDate, parseCalendarDate, todayIn } from "@/lib/calendar-date";
 import { formatBytes } from "@/lib/format";
@@ -22,7 +23,7 @@ export type PackData = {
     archived: boolean;
   };
   isGeneric: boolean;
-  summary: { name: string; status: string; lastCompleted: string; nextDue: string; source: string | null }[];
+  summary: { name: string; status: string; lastCompleted: string; nextDue: string; basis: string; source: string | null }[];
   history: { requirement: string; completed: string; nextDue: string; provider: string; licence: string }[];
   documents: { filename: string; requirement: string; recordCompleted: string; uploaded: string; size: string; fingerprint: string }[];
 };
@@ -61,6 +62,7 @@ export async function loadCompliancePack(userId: string, propertyId: string, tim
           ? "Unknown"
           : dash,
       nextDue: item.nextDueOn ? formatCalendarDate(parseCalendarDate(item.nextDueOn)!) : dash,
+      basis: basisLine(item.requirement.basis, item.requirement.jurisdiction, item.requirement.recurrenceMonths),
       source:
         !schedule.isGeneric && item.requirement.sourceName
           ? `${item.requirement.sourceName}${item.requirement.lastVerifiedAt ? "" : " (interval not yet verified)"}`

@@ -3,13 +3,21 @@
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
-import { markRequirementVerified, setTrialDays, setUserRole, updateRequirement } from "@/server/admin/commands";
+import { JURISDICTIONS } from "@/lib/jurisdictions";
+import {
+  createRequirement,
+  markRequirementVerified,
+  setTrialDays,
+  setUserRole,
+  updateRequirement,
+} from "@/server/admin/commands";
 import { requireAdmin } from "@/server/session";
 
 const requirementSchema = z.object({
   name: z.string().trim().min(1, "Enter a name.").max(80),
   description: z.string().trim().min(1, "Enter a description.").max(300),
   recurrenceMonths: z.coerce.number().int().min(1, "Use 1 to 120 months.").max(120, "Use 1 to 120 months."),
+  basis: z.enum(["REQUIRED_INTERVAL", "BEFORE_EACH_TENANCY", "RECOMMENDED"], "Choose a basis."),
   sourceName: z.string().trim().max(200).transform((value) => value || null),
   sourceUrl: z
     .string()
@@ -30,11 +38,31 @@ export async function updateRequirementAction(requirementId: string, _prev: Admi
   return { status: "saved" };
 }
 
+const newRequirementSchema = requirementSchema.extend({
+  jurisdiction: z.enum(JURISDICTIONS, "Choose a state."),
+  code: z
+    .string()
+    .trim()
+    .regex(/^[a-z][a-z0-9_]{1,39}$/, "Use 2 to 40 lower-case letters, digits or underscores, starting with a letter."),
+});
+
+export async function createRequirementAction(_prev: AdminFormState, formData: FormData): Promise<AdminFormState> {
+  const admin = await requireAdmin();
+  const parsed = newRequirementSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "invalid", message: parsed.error.issues[0].message };
+  if ((await createRequirement(admin.id, parsed.data)) === "duplicate") {
+    return { status: "invalid", message: `${parsed.data.jurisdiction} already has a requirement with the code ${parsed.data.code}.` };
+  }
+  revalidatePath("/", "layout");
+  return { status: "saved", message: `Added ${parsed.data.name} to ${parsed.data.jurisdiction}.` };
+}
+
 export async function markVerifiedAction(requirementId: string) {
   const admin = await requireAdmin();
-  if (!(await markRequirementVerified(admin.id, requirementId))) notFound();
+  const jurisdiction = await markRequirementVerified(admin.id, requirementId);
+  if (!jurisdiction) notFound();
   revalidatePath("/", "layout");
-  redirect("/admin/requirements?verified=1");
+  redirect(`/admin/requirements?verified=1&state=${jurisdiction}`);
 }
 
 export async function setTrialDaysAction(_prev: AdminFormState, formData: FormData): Promise<AdminFormState> {

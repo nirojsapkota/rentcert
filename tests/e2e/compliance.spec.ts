@@ -76,7 +76,7 @@ test("landlord sets up checks, records a gas check and sees the dashboard (scena
   await expectNoHorizontalOverflow(page);
 });
 
-test("an NSW property uses the labelled general schedule", async ({ page }, testInfo) => {
+test("an NSW property uses the NSW schedule, labelled by basis", async ({ page }, testInfo) => {
   await signUpAndVerify(page, `nsw-${testInfo.project.name}@example.com`);
   await page.goto("/properties/new");
   await page.getByLabel("Street address").fill("8 Placeholder Avenue");
@@ -85,14 +85,39 @@ test("an NSW property uses the labelled general schedule", async ({ page }, test
   await page.getByLabel("Postcode").fill("2150");
   await page.getByRole("button", { name: "Add property" }).click();
 
-  await expect(page.getByText("RentCert has not yet researched the rules for NSW.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Review compliance dates" })).toBeVisible();
+  await expect(page.getByText("RentCert has not yet researched")).toHaveCount(0);
   await page.getByRole("group", { name: "Gas safety check" }).getByLabel("Not applicable to this property").check();
   await page.getByRole("group", { name: "Smoke alarm check" }).getByLabel(/I don't know/).check();
   await page.getByRole("group", { name: "Electrical safety check" }).getByLabel(/I don't know/).check();
   await page.getByRole("button", { name: "Save and review dates" }).click();
 
-  await expect(page.getByText("General reminder schedule. RentCert has not yet researched NSW rules.")).toBeVisible();
+  await expect(page.getByText("Required every year in NSW.")).toBeVisible();
+  await expect(page.getByText("Recommended every 2 years. Not a fixed legal interval in NSW.").first()).toBeVisible();
+  await expect(page.getByText("Not yet verified.").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "This check applies" })).toBeVisible();
   const body = await page.locator("main").innerText();
   expect(body).not.toMatch(/\bcompliant\b/i);
+});
+
+test("an owner with VIC and QLD properties sees each state's own checks", async ({ page }, testInfo) => {
+  await signUpAndVerify(page, `states-${testInfo.project.name}@example.com`);
+  await page.goto("/properties/new");
+  await page.getByLabel("Street address").fill("3 Queen Street");
+  await page.getByLabel("Suburb").fill("Brisbane");
+  await page.getByLabel("State or territory").selectOption("QLD");
+  await page.getByLabel("Postcode").fill("4000");
+  await page.getByRole("button", { name: "Add property" }).click();
+  await expect(page.getByRole("heading", { name: "Review compliance dates" })).toBeVisible();
+  await expect(page.getByText("within 30 days before each new or renewed tenancy")).toBeVisible();
+  for (const check of ["Smoke alarm check", "Electrical safety check", "Gas safety check"]) {
+    await page.getByRole("group", { name: check }).getByLabel(/I don't know/).check();
+  }
+  await page.getByRole("button", { name: "Save and review dates" }).click();
+
+  const cards = page.getByRole("region", { name: "Compliance" });
+  await expect(cards.getByText("Required before each new or renewed tenancy in QLD. RentCert reminds you every year.")).toBeVisible();
+  await expect(cards.getByText("Recommended every 2 years. Not a fixed legal interval in QLD.")).toHaveCount(2);
+  await expect(cards.getByRole("link", { name: "Residential Tenancies Authority (QLD): Smoke alarms" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
 });

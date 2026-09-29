@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `PLAN.md` holds the product requirements. `CAPABILITY_MAP.md` sets the phase order.
 - Each phase has a `SPEC-<module-id>.md`. Write it and get approval before coding that phase. Build only the current phase.
-- `docs/compliance-sources.md` holds the Victorian compliance research. The seeded intervals are not verified yet. Never state that a property is legally compliant.
+- `docs/compliance-sources.md` holds the compliance research for every state. The seeded intervals are not verified yet. Never state that a property is legally compliant.
 
 ## Commands
 
@@ -57,10 +57,11 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
 - Validation schemas shared by browser and server live in `src/lib/` (Zod 4) and must not import server code.
 - User-facing errors are plain sentences (`src/lib/auth-errors.ts`). Log technical detail on the server only.
 - Calendar dates are `@db.Date` columns and pass through the app as `YYYY-MM-DD` strings (`src/lib/calendar-date.ts`). Format them in UTC so no timezone shifts the day. Work out "today" with `todayIn(user.timezone)`. Due dates use month arithmetic, never `365` days.
-- Properties cover all Australian states (`AustralianState` enum). Postcodes are any 4 digits from 0200 up, with no state-postcode cross-check. Only Victoria has researched compliance rules.
+- Properties cover all Australian states (`AustralianState` enum). Postcodes are any 4 digits from 0200 up, with no state-postcode cross-check. Every state has its own seeded requirement set (Phase 10); only Victoria mandates periodic electrical and gas checks.
 - Compliance domain (`src/server/compliance/`):
   - `ComplianceRequirement` is configuration (per `jurisdiction`, with `GENERIC` as the fallback for unresearched states), seeded in a migration because production needs it. `ComplianceRecord` is an event. Keep the two separate.
-  - `requirementsFor(state)` picks the jurisdiction. Adding a state's rules is a data change.
+  - `requirementsFor(state)` picks the jurisdiction. Adding a state's rules is a data change (Admin → Requirements, or a migration for seeds).
+  - `basis` (REQUIRED_INTERVAL, BEFORE_EACH_TENANCY, RECOMMENDED) only changes wording, via `basisLine()` (`src/lib/requirement-basis.ts`); due dates always use `recurrenceMonths`.
   - `nextDueOn()` (`due-date.ts`) and `complianceStatus()` (`status.ts`) are the only places that do due-date and status logic. Views, jobs and emails call them; never re-derive status elsewhere.
   - The current record per requirement code is the one with the latest `nextDueOn` (`schedule.ts`). `UNKNOWN_LAST_CHECK` records are due on the setup day.
   - Exclusions ("not applicable") key on requirement `code`, not id, so they survive a state change.

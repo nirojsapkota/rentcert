@@ -18,9 +18,9 @@ function packData(overrides: Partial<PackData> = {}): PackData {
     },
     isGeneric: false,
     summary: [
-      { name: "Smoke alarm check", status: "Due in 18 days", lastCompleted: "11 October 2025", nextDue: "11 October 2026", source: "Consumer Affairs Victoria (interval not yet verified)" },
-      { name: "Electrical safety check", status: "Due in 92 days", lastCompleted: "24 December 2024", nextDue: "24 December 2026", source: null },
-      { name: "Gas safety check", status: "Overdue by 21 days", lastCompleted: "2 September 2024", nextDue: "2 September 2026", source: null },
+      { name: "Smoke alarm check", status: "Due in 18 days", lastCompleted: "11 October 2025", nextDue: "11 October 2026", basis: "Required every year in VIC.", source: "Consumer Affairs Victoria (interval not yet verified)" },
+      { name: "Electrical safety check", status: "Due in 92 days", lastCompleted: "24 December 2024", nextDue: "24 December 2026", basis: "Required every 2 years in VIC.", source: null },
+      { name: "Gas safety check", status: "Overdue by 21 days", lastCompleted: "2 September 2024", nextDue: "2 September 2026", basis: "Required every 2 years in VIC.", source: null },
     ],
     history: [
       { requirement: "Gas safety check", completed: "2 September 2024", nextDue: "2 September 2026", provider: "ABC Safety", licence: "GF-1234" },

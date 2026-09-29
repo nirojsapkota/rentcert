@@ -16,6 +16,7 @@ section 57.
 | 7 (done) | billing | Stripe Checkout, idempotent signed webhooks, `BillingAccount`, `Subscription`, plan limits, admin-configurable trial length | foundation, properties |
 | 8 (done in code; deploy pending a domain) | hardening | Admin (read-only), data export, legal pages, landing, pricing, FAQ, analytics events, observability, CI/CD, deploy | all |
 | 9 (done) | coowner-access | Account-level sharing with collaborators: invites, accept, remove, leave, property transfer, reminders to every member | properties, compliance, vault, reminders, billing |
+| 10 (done) | jurisdictions | Requirement sets for every state and territory with a basis label, admin create/edit per state, GENERIC fallback | compliance, hardening |
 
 Notes:
 

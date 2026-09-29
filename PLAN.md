@@ -1790,6 +1790,10 @@ Do not build a huge admin system.
 
 # 43. COMPLIANCE CONFIGURATION
 
+Implemented in Phase 10 (SPEC-jurisdictions.md): every state and territory has its own seeded,
+admin-editable requirement set, each with a basis (required interval, before each tenancy, or
+recommended). GENERIC remains the fallback.
+
 Do not hard-code:
 
 ```ts
@@ -2266,7 +2270,7 @@ Explicitly avoid:
 * Mobile native apps
 * AI assistant
 * Chatbot
-* State-specific compliance rules outside Victoria (generic schedule only)
+* Tenancy-date-driven reminders (rules that apply "before each tenancy" remind yearly; see SPEC-jurisdictions.md)
 * Provider marketplace
 * Automatic inspection booking
 * Advanced analytics

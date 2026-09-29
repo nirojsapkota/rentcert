@@ -5,6 +5,13 @@ import { E2E_DATABASE_URL } from "../../playwright.config";
 import { expect, newUserPage, test } from "./fixtures";
 import { expectNoHorizontalOverflow, signUpAndVerify } from "./helpers";
 
+async function deleteRequirement(code: string) {
+  const client = new Client({ connectionString: E2E_DATABASE_URL });
+  await client.connect();
+  await client.query("DELETE FROM compliance_requirements WHERE code = $1", [code]);
+  await client.end();
+}
+
 async function grantAdmin(email: string) {
   const client = new Client({ connectionString: E2E_DATABASE_URL });
   await client.connect();
@@ -68,8 +75,29 @@ test("admin pages are hidden from users and work for admins", async ({ page, bro
   await expect(page.getByText("Enter a whole number of days from 0 to 730.")).toBeVisible();
 
   await page.getByRole("navigation", { name: "Admin" }).getByRole("link", { name: "Requirements" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Compliance requirements" })).toBeVisible();
+  await page.locator("summary").filter({ hasText: /^VIC/ }).click();
   await expect(page.getByRole("heading", { name: "VIC · gas" })).toBeVisible();
+  await expect(page.getByText("Required every 2 years in VIC.").first()).toBeVisible();
   await expect(page.getByText("Not yet verified").first()).toBeVisible();
+
+  // Add a requirement to a state. Requirements are configuration, so the test removes its own row.
+  const code = `e2e_${testInfo.project.name}_${Math.random().toString(36).slice(2, 8)}`;
+  try {
+    const form = page.getByRole("region", { name: "Add a requirement" });
+    await form.getByLabel("State", { exact: true }).selectOption("NT");
+    await form.getByLabel("Code").fill(code);
+    await form.getByLabel("Name", { exact: true }).fill("Pool barrier check");
+    await form.getByLabel("Interval (months)", { exact: true }).fill("36");
+    await form.getByLabel("Description", { exact: true }).fill("Pool barrier checked and in good repair.");
+    await form.getByRole("button", { name: "Add requirement" }).click();
+    await expect(page.getByText("Added Pool barrier check to NT.")).toBeVisible();
+    await page.reload();
+    await page.locator("summary").filter({ hasText: /^NT/ }).click();
+    await expect(page.getByRole("heading", { name: `NT · ${code}` })).toBeVisible();
+  } finally {
+    await deleteRequirement(code);
+  }
 });
 
 test("a user exports their data as a ZIP", async ({ page }, testInfo) => {

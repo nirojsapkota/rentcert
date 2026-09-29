@@ -1,5 +1,6 @@
 import "server-only";
-import type { Role } from "@/generated/prisma/client";
+import { Prisma, type RequirementBasis, type Role } from "@/generated/prisma/client";
+import { isUuid } from "@/lib/ids";
 import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
 
@@ -9,10 +10,38 @@ export type RequirementEdit = {
   name: string;
   description: string;
   recurrenceMonths: number;
+  basis: RequirementBasis;
   sourceName: string | null;
   sourceUrl: string | null;
   active: boolean;
 };
+
+export type NewRequirement = RequirementEdit & { jurisdiction: string; code: string };
+
+// Adds a requirement to a state's schedule. It starts unverified. A code already used in that
+// state is refused; reusing a code from another state keeps records and exclusions attached.
+export async function createRequirement(adminId: string, input: NewRequirement): Promise<"created" | "duplicate"> {
+  try {
+    return await db.$transaction(async (tx) => {
+      const last = await tx.complianceRequirement.aggregate({ where: { jurisdiction: input.jurisdiction }, _max: { sortOrder: true } });
+      const created = await tx.complianceRequirement.create({ data: { ...input, sortOrder: (last._max.sortOrder ?? 0) + 1 } });
+      await recordAuditEvent(
+        {
+          userId: adminId,
+          resourceType: "compliance_requirement",
+          resourceId: created.id,
+          action: "admin.requirement_created",
+          metadata: { jurisdiction: input.jurisdiction, code: input.code, recurrenceMonths: input.recurrenceMonths, basis: input.basis },
+        },
+        tx,
+      );
+      return "created" as const;
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return "duplicate";
+    throw error;
+  }
+}
 
 export async function updateRequirement(adminId: string, requirementId: string, input: RequirementEdit) {
   return db.$transaction(async (tx) => {
@@ -36,15 +65,18 @@ export async function updateRequirement(adminId: string, requirementId: string, 
 }
 
 // Records that a person checked this requirement against current official sources today.
-export async function markRequirementVerified(adminId: string, requirementId: string) {
+// Returns the requirement's jurisdiction, or null when it does not exist.
+export async function markRequirementVerified(adminId: string, requirementId: string): Promise<string | null> {
+  if (!isUuid(requirementId)) return null;
   return db.$transaction(async (tx) => {
-    const { count } = await tx.complianceRequirement.updateMany({ where: { id: requirementId }, data: { lastVerifiedAt: new Date() } });
-    if (count === 0) return false;
+    const requirement = await tx.complianceRequirement.findUnique({ where: { id: requirementId }, select: { jurisdiction: true } });
+    if (!requirement) return null;
+    await tx.complianceRequirement.update({ where: { id: requirementId }, data: { lastVerifiedAt: new Date() } });
     await recordAuditEvent(
       { userId: adminId, resourceType: "compliance_requirement", resourceId: requirementId, action: "admin.requirement_verified" },
       tx,
     );
-    return true;
+    return requirement.jurisdiction;
   });
 }
 

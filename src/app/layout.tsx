@@ -7,12 +7,13 @@ import "./globals.css";
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree", display: "swap" });
 const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", display: "swap" });
 
-// White status bar area to match the headers, with dark clock and battery icons. The page never
-// asks to draw under the status bar (no viewport-fit=cover); the headers also pad by the safe-area
-// inset for browsers that extend content there anyway.
+// viewport-fit=cover makes the browser report the real safe-area insets (status bar, notch, home
+// indicator). Without it they read as 0 even on browsers that draw the page under the status bar.
+// The body and headers pad by those insets (globals.css), so nothing sits under the clock or icons.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
   themeColor: "#ffffff",
   colorScheme: "light",
 };

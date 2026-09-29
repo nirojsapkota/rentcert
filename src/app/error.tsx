@@ -13,7 +13,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
   const reference = error.digest;
 
   return (
-    <main className="min-w-0 mx-auto w-full max-w-5xl flex-1 px-4 py-16">
+    <main className="min-w-0 mx-auto w-full max-w-5xl flex-1 px-4 pt-[calc(4rem+env(safe-area-inset-top))] pb-16">
       <h1 className="text-3xl font-bold text-deep">Something went wrong</h1>
       <p className="mt-2 text-ink-muted">We couldn&apos;t load this page. Your data is safe. Please try again.</p>
       {reference && <p className="mt-2 text-sm text-ink-muted">Reference: {reference}</p>}

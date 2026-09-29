@@ -36,6 +36,11 @@
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
+  /* Keep content clear of notches and the home indicator (insets are 0 on desktop). The top inset
+     is handled by each header so its white background fills the status bar area. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 h1,

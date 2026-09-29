@@ -1,5 +1,5 @@
 import { expect, newUserPage, test } from "./fixtures";
-import { signUpAndVerify } from "./helpers";
+import { expectNoHorizontalOverflow, signUpAndVerify } from "./helpers";
 
 test("landlord adds, edits, archives, restores and deletes a property", async ({ page }, testInfo) => {
   await signUpAndVerify(page, `owner-${testInfo.project.name}@example.com`);
@@ -80,4 +80,41 @@ test("another user's property returns 404 with no data (scenario 5)", async ({ b
   }
   await intruder.goto("/properties");
   await expect(intruder.getByText("99 Private Lane")).toHaveCount(0);
+});
+
+test("address search fills the address fields, and typing by hand still works", async ({ page }, testInfo) => {
+  await signUpAndVerify(page, `address-${testInfo.project.name}@example.com`);
+  await page.route("**/api/address-search?**", (route) =>
+    route.fulfill({
+      json: {
+        suggestions: [
+          { label: "2 Charmouth Place, Narre Warren South VIC 3805, Australia", addressLine1: "2 Charmouth Place", suburb: "Narre Warren South", state: "VIC", postcode: "3805" },
+          { label: "2 Charmouth Road, Perth WA 6000, Australia", addressLine1: "2 Charmouth Road", suburb: "Perth", state: "WA", postcode: "6000" },
+        ],
+      },
+    }),
+  );
+  await page.goto("/properties/new");
+  const street = page.getByRole("combobox", { name: "Street address" });
+  await street.fill("2 Charmouth");
+  const options = page.getByRole("listbox", { name: "Address suggestions" }).getByRole("option");
+  await expect(options).toHaveCount(2);
+  await expectNoHorizontalOverflow(page);
+
+  // Keyboard: down, down, up, Enter picks the first suggestion.
+  await street.press("ArrowDown");
+  await street.press("ArrowDown");
+  await street.press("ArrowUp");
+  await street.press("Enter");
+  await expect(street).toHaveValue("2 Charmouth Place");
+  await expect(page.getByLabel("Suburb")).toHaveValue("Narre Warren South");
+  await expect(page.getByLabel("State or territory")).toHaveValue("VIC");
+  await expect(page.getByLabel("Postcode")).toHaveValue("3805");
+  await expect(page.getByText("Address search by")).toBeVisible();
+
+  // The fields stay editable: add a unit number and save.
+  await street.fill("Unit 4, 2 Charmouth Place");
+  await page.getByRole("button", { name: "Add property" }).click();
+  await expect(page.getByRole("heading", { name: "Review compliance dates" })).toBeVisible();
+  await expect(page.getByText("Unit 4, 2 Charmouth Place")).toBeVisible();
 });

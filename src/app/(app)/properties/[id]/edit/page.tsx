@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { propertyTitle } from "@/components/property-address";
 import { toCalendarDateString } from "@/lib/calendar-date";
+import { addressLookupEnabled } from "@/server/address/search";
 import { findOwnedProperty } from "@/server/properties/queries";
 import { requireUser } from "@/server/session";
 import { updatePropertyAction } from "../../actions";
@@ -33,6 +34,7 @@ export default async function EditPropertyPage({ params }: PageProps<"/propertie
           }}
           submitLabel="Save changes"
           cancelHref={`/properties/${property.id}`}
+          addressLookup={addressLookupEnabled()}
         />
       </div>
     </section>

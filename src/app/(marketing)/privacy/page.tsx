@@ -30,6 +30,7 @@ export default function PrivacyPage() {
       <ul>
         <li>Amazon Web Services (hosting, storage and email delivery).</li>
         <li>Stripe (payments).</li>
+        <li>Geoapify (address suggestions). When you use the address search, the text you type is sent to Geoapify to find matching Australian addresses. It is not linked to your name or email.</li>
         <li>[Error-monitoring provider, if used].</li>
       </ul>
       <h2>How long we keep it</h2>

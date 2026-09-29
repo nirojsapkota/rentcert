@@ -43,6 +43,9 @@ export default defineConfig({
       STRIPE_PRICE_PORTFOLIO: "price_portfolio",
       STORAGE_DRIVER: "local",
       STORAGE_LOCAL_PATH: "tmp/e2e-storage",
+      // Turns address search on. Browsers get /api/address-search from a route stub in
+      // tests/e2e/fixtures.ts, so no request reaches Geoapify.
+      GEOAPIFY_API_KEY: "e2e-fake-key",
     },
   },
 });

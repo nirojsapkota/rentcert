@@ -71,6 +71,7 @@ describe("route protection", () => {
     // Reviewed in docs/security-review.md. Add new routes there and here together.
     const REVIEWED: Record<string, RegExp> = {
       "api/account/export/route.ts": /auth\.api\.getSession/,
+      "api/address-search/route.ts": /auth\.api\.getSession/,
       "api/auth/[...all]/route.ts": /toNextJsHandler/,
       "api/documents/[id]/download/route.ts": /auth\.api\.getSession/,
       "api/health/route.ts": /checkHealth/,

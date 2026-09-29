@@ -113,5 +113,6 @@ npm run db:seed              # demo@rentcert.local / demo-password-123, 3 proper
   - Invites store only the SHA-256 of the token. Accepting needs a verified account with the invited email. Every unusable link shows the same message. `?invite=` on sign-in and sign-up only returns to `/invites/<token>` (`inviteReturnPath`).
   - Reminders go to each recipient (`compliance_reminders.user_id`); the unique key is (record, type, user).
   - Files always live under the owner's prefix. `moveDocumentsToOwner()` fixes keys after a transfer, and account deletion runs it before deleting the prefix.
+- Address search (`src/server/address/search.ts`, `/api/address-search`): Geoapify free plan behind our own route, so the key stays on the server and CSP keeps `connect-src 'self'`. Verified session, 30 requests a minute per user, Australian results only, query text never logged. Hidden when `GEOAPIFY_API_KEY` is empty or `unset`. The form must keep the Geoapify and OpenStreetMap attribution. Playwright stubs the route in `tests/e2e/fixtures.ts`.
 - Server actions that take an id use `.bind(null, id)`. They must still call `requireUser()` and pass `user.id` to the scoped command.
 - `package.json` overrides `mysql2` and `deepmerge-ts` to clear audit findings in Prisma and Better Auth transitive dependencies.

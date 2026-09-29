@@ -71,6 +71,7 @@ aws ssm put-parameter --profile rentcert --overwrite --type SecureString \
 | `STRIPE_PRICE_PROPERTY`, `STRIPE_PRICE_PORTFOLIO` | Price ids of the two monthly AUD prices |
 | `SENTRY_DSN` | Optional; from Sentry |
 | `ALERT_EMAIL` | Where job alerts go |
+| `GEOAPIFY_API_KEY` | Optional; address autocomplete from geoapify.com (free plan: 3,000 requests a day, attribution shown in the form). Leave `unset` to hide the feature |
 
 Parameters written by Terraform (`DATABASE_URL`, `POSTGRES_PASSWORD`, `AWS_S3_BUCKET`,
 `AWS_BACKUP_BUCKET`, `MAILER_FROM`, `BETTER_AUTH_URL`) must not be edited by hand.

@@ -45,7 +45,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       <p className="mt-1 text-ink-muted">Your compliance overview</p>
       {query.shared === "1" && (
         <div className="mt-4">
-          <Alert tone="success">Invite accepted. Properties shared with you now appear here.</Alert>
+          <Alert tone="success">
+            Invite accepted. You&apos;re signed in as {user.email}. Properties shared with you now appear here, marked
+            &ldquo;Shared by&rdquo;.
+          </Alert>
         </div>
       )}
     </div>

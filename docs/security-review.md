@@ -18,6 +18,7 @@ unprotected route fails the build.
 | `/api/documents/[id]/download` | Owner | Session plus owner-scoped lookup; 404 otherwise |
 | `/api/properties/[id]/compliance-pack` | Owner | Session plus owner-scoped lookup; 404 otherwise |
 | `/api/account/export` | Owner | Session; the user's own rows only |
+| `/api/address-search` | Signed-in user | Verified session; 30 requests a minute per user; proxies Geoapify with the key kept on the server; query text never logged |
 | `/api/webhooks/stripe` | Stripe | Signature on the raw body; idempotent by event id |
 | `/api/health` | Public | Returns only `ok` or `degraded` |
 | `/api/visit` | Public | Increments a daily counter; no input is read |

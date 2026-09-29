@@ -98,6 +98,7 @@ env:
     - STRIPE_PRICE_PORTFOLIO
     - SENTRY_DSN
     - ALERT_EMAIL
+    - GEOAPIFY_API_KEY
 
 # Keep a few old images for `kamal rollback`.
 retain_containers: 3

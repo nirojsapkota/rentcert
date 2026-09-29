@@ -21,6 +21,7 @@ locals {
     "STRIPE_PRICE_PORTFOLIO",
     "SENTRY_DSN",
     "ALERT_EMAIL",
+    "GEOAPIFY_API_KEY",
   ]
 }
 

@@ -7,15 +7,17 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { AUSTRALIAN_STATES, type PropertyField } from "@/lib/property-validation";
 import type { PropertyFormState } from "./actions";
+import { AddressAutocomplete } from "./address-autocomplete";
 
 type Props = {
   action: (state: PropertyFormState, formData: FormData) => Promise<PropertyFormState>;
   initialValues: Partial<Record<PropertyField, string>>;
   submitLabel: string;
   cancelHref: string;
+  addressLookup?: boolean; // show suggestions from /api/address-search (only when a provider key is set)
 };
 
-export function PropertyForm({ action, initialValues, submitLabel, cancelHref }: Props) {
+export function PropertyForm({ action, initialValues, submitLabel, cancelHref, addressLookup = false }: Props) {
   const [state, formAction, pending] = useActionState(action, { status: "idle" });
   const errors = state.fieldErrors ?? {};
   // React resets the form after each submission, so re-fill it from the submitted values.
@@ -38,7 +40,11 @@ export function PropertyForm({ action, initialValues, submitLabel, cancelHref }:
 
       <fieldset className="space-y-4">
         <legend className="text-base font-semibold">Address</legend>
-        <Field label="Street address" name="addressLine1" autoComplete="address-line1" defaultValue={value("addressLine1")} error={errors.addressLine1} />
+        {addressLookup ? (
+          <AddressAutocomplete defaultValue={value("addressLine1")} error={errors.addressLine1} />
+        ) : (
+          <Field label="Street address" name="addressLine1" autoComplete="address-line1" defaultValue={value("addressLine1")} error={errors.addressLine1} />
+        )}
         <Field label="Address line 2 (optional)" name="addressLine2" autoComplete="address-line2" defaultValue={value("addressLine2")} error={errors.addressLine2} />
         <div className="grid gap-4 sm:grid-cols-[2fr_1.5fr_1fr]">
           <Field label="Suburb" name="suburb" autoComplete="address-level2" defaultValue={value("suburb")} error={errors.suburb} />

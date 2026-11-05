@@ -22,7 +22,7 @@ export function UploadForm({ action }: { action: (state: UploadFormState, formDa
           type="file"
           accept={DOCUMENT_ACCEPT}
           aria-describedby="document-hint"
-          className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-line file:bg-surface file:px-3 file:py-2 file:text-sm file:font-medium"
+          className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-surface file:px-3 file:py-2 file:text-sm file:font-medium"
         />
         <p id="document-hint" className="text-sm text-ink-muted">
           PDF, JPG or PNG, up to 10 MB.

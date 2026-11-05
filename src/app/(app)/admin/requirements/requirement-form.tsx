@@ -13,7 +13,7 @@ export function BasisSelect({ id, defaultValue }: { id: string; defaultValue?: R
       <label htmlFor={id} className="block text-sm font-medium">
         Basis
       </label>
-      <select id={id} name="basis" defaultValue={defaultValue ?? "REQUIRED_INTERVAL"} className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base">
+      <select id={id} name="basis" defaultValue={defaultValue ?? "REQUIRED_INTERVAL"} className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base">
         {BASIS_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

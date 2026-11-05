@@ -46,7 +46,7 @@ export default async function InspectionPage({ params, searchParams }: PageProps
 
       <LodgePanel council={inspection.pool.council} />
 
-      <dl className="grid gap-3 rounded-lg border border-line bg-surface p-5 sm:grid-cols-2">
+      <dl className="grid gap-3 border-y border-line py-4 sm:grid-cols-2">
         <div>
           <dt className="text-sm text-ink-muted">Next recall (based on the date you entered)</dt>
           <dd className="font-medium">{inspection.nextRecallOn ? formatCalendarDate(inspection.nextRecallOn) : "None until a pass is recorded"}</dd>
@@ -67,7 +67,7 @@ export default async function InspectionPage({ params, searchParams }: PageProps
         )}
       </dl>
 
-      <div className="space-y-4 rounded-lg border border-line bg-surface p-5">
+      <div className="space-y-4">
         <h2 className="text-xl font-bold">Photos</h2>
         {inspection.photos.length === 0 ? (
           <p className="text-ink-muted">No photos yet.</p>

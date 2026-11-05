@@ -35,7 +35,7 @@ export function TransferForm({
         <label htmlFor="newOwnerId" className="block text-sm font-medium">
           New owner
         </label>
-        <select id="newOwnerId" name="newOwnerId" required className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base">
+        <select id="newOwnerId" name="newOwnerId" required className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base">
           {people.map((person) => (
             <option key={person.id} value={person.id}>
               {person.name}

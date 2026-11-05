@@ -31,7 +31,7 @@ export function CouncilForm({ council, action }: { council: Council; action: (st
         <label htmlFor={id("method")} className="block text-sm font-medium">
           Lodgement method
         </label>
-        <select id={id("method")} name="lodgementMethod" defaultValue={council.lodgementMethod} className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base">
+        <select id={id("method")} name="lodgementMethod" defaultValue={council.lodgementMethod} className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base">
           {LODGEMENT_METHODS.map((method) => (
             <option key={method.code} value={method.code}>
               {method.name}

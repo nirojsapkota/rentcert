@@ -42,7 +42,7 @@ export function CompletionForm({ action, initialValues, today, submitLabel, canc
           defaultValue={values.notes ?? ""}
           aria-invalid={errors.notes ? true : undefined}
           aria-describedby={errors.notes ? "notes-error" : undefined}
-          className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base"
+          className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base"
         />
         {errors.notes && (
           <p id="notes-error" className="text-sm text-danger">
@@ -62,7 +62,7 @@ export function CompletionForm({ action, initialValues, today, submitLabel, canc
             accept={DOCUMENT_ACCEPT}
             aria-describedby={errors.document ? "document-hint document-error" : "document-hint"}
             aria-invalid={errors.document ? true : undefined}
-            className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-line file:bg-surface file:px-3 file:py-2 file:text-sm file:font-medium"
+            className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-surface file:px-3 file:py-2 file:text-sm file:font-medium"
           />
           <p id="document-hint" className="text-sm text-ink-muted">
             PDF, JPG or PNG, up to 10 MB.

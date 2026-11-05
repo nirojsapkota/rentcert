@@ -111,7 +111,7 @@ export function AddressAutocomplete({ defaultValue, error }: Props) {
         }}
         onKeyDown={onKeyDown}
         onBlur={() => setOpen(false)}
-        className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base aria-invalid:border-danger"
+        className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base aria-invalid:border-danger"
       />
       <ul
         id={listId}

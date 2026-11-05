@@ -58,7 +58,7 @@ export function PropertyForm({ action, initialValues, submitLabel, cancelHref, a
               defaultValue={value("state")}
               aria-invalid={errors.state ? true : undefined}
               aria-describedby={errors.state ? "state-error" : undefined}
-              className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base aria-invalid:border-danger"
+              className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base aria-invalid:border-danger"
             >
               <option value="">Choose…</option>
               {AUSTRALIAN_STATES.map((state) => (
@@ -105,7 +105,7 @@ export function PropertyForm({ action, initialValues, submitLabel, cancelHref, a
             defaultValue={value("notes")}
             aria-invalid={errors.notes ? true : undefined}
             aria-describedby={errors.notes ? "notes-error" : undefined}
-            className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base aria-invalid:border-danger"
+            className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base aria-invalid:border-danger"
           />
           {errors.notes && (
             <p id="notes-error" className="text-sm text-danger">

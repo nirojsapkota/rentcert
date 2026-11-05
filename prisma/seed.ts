@@ -7,6 +7,7 @@ import { addMonths, parseCalendarDate, todayIn } from "../src/lib/calendar-date"
 
 const DEMO_EMAIL = "demo@rentcert.local";
 const DEMO_PASSWORD = "demo-password-123";
+const INSPECTOR_EMAIL = "inspector@rentcert.local";
 
 async function main() {
   if (process.env.NODE_ENV === "production") throw new Error("Refusing to seed a production database.");
@@ -81,6 +82,40 @@ async function main() {
     });
 
     console.info(`Seeded ${DEMO_EMAIL} (password: ${DEMO_PASSWORD}) with 3 properties and sample compliance records.`);
+
+    // Demo pool inspector (BarrierTrack): two clients, three pools, a pass, a fail and a pending inspection.
+    await db.user.deleteMany({ where: { email: INSPECTOR_EMAIL } });
+    const inspectorId = randomUUID();
+    await db.user.create({
+      data: {
+        id: inspectorId,
+        email: INSPECTOR_EMAIL,
+        emailVerified: true,
+        firstName: "Demo",
+        lastName: "Inspector",
+        name: "Demo Inspector",
+        accountType: "INSPECTOR",
+        accounts: {
+          create: { id: randomUUID(), accountId: inspectorId, providerId: "credential", password: await hashPassword(DEMO_PASSWORD) },
+        },
+      },
+    });
+    const sam = await db.client.create({ data: { userId: inspectorId, name: "Sam Pool Owner", email: "sam@example.com" } });
+    const lee = await db.client.create({ data: { userId: inspectorId, name: "Lee Spa Owner" } });
+    const [water, reef, harbour] = await Promise.all([
+      db.pool.create({ data: { userId: inspectorId, clientId: sam.id, addressLine1: "5 Water Street", suburb: "Brighton", postcode: "3186" } }),
+      db.pool.create({ data: { userId: inspectorId, clientId: sam.id, kind: "SPA", addressLine1: "5 Water Street", addressLine2: "Rear courtyard", suburb: "Brighton", postcode: "3186" } }),
+      db.pool.create({ data: { userId: inspectorId, clientId: lee.id, addressLine1: "21 Example Parade", suburb: "Frankston", postcode: "3199" } }),
+    ]);
+    const day = (months: number) => parseCalendarDate(addMonths(today, months))!;
+    await db.inspection.createMany({
+      data: [
+        { userId: inspectorId, poolId: water.id, kind: "PERIODIC", inspectedOn: day(-46), outcome: "PASS", nextRecallOn: day(2) },
+        { userId: inspectorId, poolId: reef.id, kind: "INITIAL", inspectedOn: day(-1), outcome: "FAIL" },
+        { userId: inspectorId, poolId: harbour.id, kind: "PERIODIC", inspectedOn: day(0), outcome: "PENDING" },
+      ],
+    });
+    console.info(`Seeded ${INSPECTOR_EMAIL} (password: ${DEMO_PASSWORD}) with 2 clients, 3 pools and 3 inspections.`);
   } finally {
     await db.$disconnect();
   }

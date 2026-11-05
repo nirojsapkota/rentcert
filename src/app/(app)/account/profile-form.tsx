@@ -64,7 +64,7 @@ export function ProfileForm({ profile, timezones }: { profile: Profile; timezone
           name="timezone"
           defaultValue={profile.timezone}
           aria-describedby="timezone-hint"
-          className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base"
+          className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base"
         >
           {timezones.map((zone) => (
             <option key={zone} value={zone}>

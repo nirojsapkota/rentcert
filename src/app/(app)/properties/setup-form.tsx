@@ -43,7 +43,7 @@ export function SetupForm({ action, requirements, today }: Props) {
                     aria-label={`${requirement.name}: last check date`}
                     max={today}
                     defaultValue={values[`date_${requirement.code}`] ?? ""}
-                    className="mt-1 block w-full max-w-xs rounded-md border border-line bg-surface px-3 py-2 text-base"
+                    className="mt-1 block w-full max-w-xs rounded-md border border-line-strong bg-surface px-3 py-2 text-base"
                   />
                 </span>
               </label>

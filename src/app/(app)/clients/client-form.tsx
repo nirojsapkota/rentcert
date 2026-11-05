@@ -39,7 +39,7 @@ export function ClientForm({ action, initialValues, submitLabel, cancelHref }: P
           rows={4}
           defaultValue={value("notes")}
           aria-invalid={errors.notes ? true : undefined}
-          className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base aria-invalid:border-danger"
+          className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base aria-invalid:border-danger"
         />
         {errors.notes && <p className="text-sm text-danger">{errors.notes}</p>}
       </div>

@@ -20,7 +20,7 @@ export function PhotoUploadForm({ action }: { action: (state: PhotoFormState, fo
           type="file"
           accept="image/jpeg,image/png,image/webp"
           aria-describedby="photo-hint"
-          className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-line file:bg-surface file:px-3 file:py-2 file:text-sm file:font-medium"
+          className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-surface file:px-3 file:py-2 file:text-sm file:font-medium"
         />
         <p id="photo-hint" className="text-sm text-ink-muted">
           JPG, PNG or WebP, up to 8 MB.
@@ -30,7 +30,7 @@ export function PhotoUploadForm({ action }: { action: (state: PhotoFormState, fo
         <label htmlFor="caption" className="block text-sm font-medium">
           Caption (optional)
         </label>
-        <input id="caption" name="caption" maxLength={200} className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base" />
+        <input id="caption" name="caption" maxLength={200} className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base" />
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Uploading…" : "Upload photo"}

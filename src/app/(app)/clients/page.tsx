@@ -37,7 +37,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
         <label htmlFor="q" className="sr-only">
           Search clients
         </label>
-        <input id="q" name="q" type="search" defaultValue={q} placeholder="Search by name or email" className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base" />
+        <input id="q" name="q" type="search" defaultValue={q} placeholder="Search by name or email" className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base" />
         <button type="submit" className={buttonClasses("secondary")}>
           Search
         </button>

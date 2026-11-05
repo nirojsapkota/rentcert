@@ -26,7 +26,7 @@ export function NewRequirementForm() {
         <label htmlFor="new-jurisdiction" className="block text-sm font-medium">
           State
         </label>
-        <select id="new-jurisdiction" name="jurisdiction" className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base">
+        <select id="new-jurisdiction" name="jurisdiction" className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base">
           {JURISDICTIONS.map((jurisdiction) => (
             <option key={jurisdiction} value={jurisdiction}>
               {jurisdiction}

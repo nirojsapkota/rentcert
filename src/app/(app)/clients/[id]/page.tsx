@@ -47,7 +47,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       {query.created === "1" && <Alert tone="success">Client added.</Alert>}
       {query.saved === "1" && <Alert tone="success">Changes saved.</Alert>}
 
-      <dl className="grid gap-3 rounded-lg border border-line bg-surface p-5 sm:grid-cols-2">
+      <dl className="grid gap-3 border-y border-line py-4 sm:grid-cols-2">
         <div>
           <dt className="text-sm text-ink-muted">Email</dt>
           <dd className="break-words">{client.email ?? "—"}</dd>

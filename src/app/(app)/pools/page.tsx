@@ -37,7 +37,7 @@ export default async function PoolsPage({ searchParams }: PageProps<"/pools">) {
         <label htmlFor="q" className="sr-only">
           Search pools
         </label>
-        <input id="q" name="q" type="search" defaultValue={q} placeholder="Search by address, suburb, postcode or client" className="block w-full rounded-md border border-line bg-surface px-3 py-2 text-base" />
+        <input id="q" name="q" type="search" defaultValue={q} placeholder="Search by address, suburb, postcode or client" className="block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-base" />
         <button type="submit" className={buttonClasses("secondary")}>
           Search
         </button>

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Alert } from "@/components/ui/alert";
 import { buttonClasses } from "@/components/ui/button";
-import { formatCalendarDate } from "@/lib/calendar-date";
+import { formatCalendarDate, formatShortDate } from "@/lib/calendar-date";
 import { INSPECTION_KINDS, INSPECTION_OUTCOMES } from "@/lib/inspection-validation";
 import { listInspectionsForPool } from "@/server/barrier/inspections";
 import { getPool } from "@/server/barrier/queries";
@@ -12,6 +12,13 @@ import { requireInspector } from "@/server/session";
 import { archivePoolAction, restorePoolAction } from "../actions";
 
 export const metadata: Metadata = { title: "Pool or spa" };
+
+// Inspection outcome as a service-tag stamp, matching the compliance status stamps.
+const OUTCOME_STAMP: Record<string, string> = {
+  PASS: "border-success text-success",
+  FAIL: "border-danger text-danger",
+  PENDING: "border-[#d9b21a] bg-tag-soft text-tag-ink",
+};
 
 export default async function PoolPage({ params, searchParams }: PageProps<"/pools/[id]">) {
   const { id } = await params;
@@ -52,7 +59,7 @@ export default async function PoolPage({ params, searchParams }: PageProps<"/poo
       {query.saved === "1" && <Alert tone="success">Changes saved.</Alert>}
       {query.restore === "client_archived" && <Alert tone="error">Restore the client first, then restore this pool or spa.</Alert>}
 
-      <dl className="grid gap-3 rounded-lg border border-line bg-surface p-5">
+      <dl className="grid gap-3 border-y border-line py-4">
         <div>
           <dt className="text-sm text-ink-muted">Client</dt>
           <dd>
@@ -73,7 +80,7 @@ export default async function PoolPage({ params, searchParams }: PageProps<"/poo
         )}
       </dl>
 
-      <div className="space-y-4 rounded-lg border border-line bg-surface p-5">
+      <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-xl font-bold">Inspections</h2>
           {!archived && (
@@ -90,22 +97,38 @@ export default async function PoolPage({ params, searchParams }: PageProps<"/poo
         {inspections.length === 0 ? (
           <p className="text-ink-muted">No inspections logged yet.</p>
         ) : (
-          <ul className="divide-y divide-line">
-            {inspections.map((inspection) => (
-              <li key={inspection.id} className="py-2">
-                <Link href={"/pools/" + pool.id + "/inspections/" + inspection.id} className="font-medium text-brand hover:underline">
-                  {formatCalendarDate(inspection.inspectedOn)}
-                </Link>
-                <span className="text-ink-muted">
-                  {" · "}
-                  {INSPECTION_KINDS.find((k) => k.code === inspection.kind)?.name} · {INSPECTION_OUTCOMES.find((o) => o.code === inspection.outcome)?.name}
-                  {inspection._count.photos > 0 && " · " + inspection._count.photos + (inspection._count.photos === 1 ? " photo" : " photos")}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="relative overflow-x-auto border-y border-line bg-surface">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
+                <tr>
+                  <th scope="col" className="py-2 pr-3 pl-4 font-medium">Date</th>
+                  <th scope="col" className="px-3 py-2 font-medium">Type</th>
+                  <th scope="col" className="px-3 py-2 font-medium">Outcome</th>
+                  <th scope="col" className="hidden py-2 pr-4 pl-3 font-medium sm:table-cell">Photos</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {inspections.map((inspection) => (
+                  <tr key={inspection.id}>
+                    <td className="py-2.5 pr-3 pl-4 whitespace-nowrap">
+                      <Link href={"/pools/" + pool.id + "/inspections/" + inspection.id} className="font-mono font-medium text-brand">
+                        {formatShortDate(inspection.inspectedOn)}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2.5">{INSPECTION_KINDS.find((k) => k.code === inspection.kind)?.name}</td>
+                    <td className="px-3 py-2.5">
+                      <span className={`inline-block rounded-sm border px-2 py-1 font-mono text-xs leading-none font-semibold tracking-[0.04em] uppercase ${OUTCOME_STAMP[inspection.outcome]}`}>
+                        {INSPECTION_OUTCOMES.find((o) => o.code === inspection.outcome)?.name}
+                      </span>
+                    </td>
+                    <td className="hidden py-2.5 pr-4 pl-3 font-mono sm:table-cell">{inspection._count.photos}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </section>
     </section>
   );
 }

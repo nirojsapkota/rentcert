@@ -32,7 +32,8 @@ test("landlord signs up, verifies, manages the account and deletes it", async ({
   // Opening the verification link signs the user in.
   await page.goto(await linkFromLatestMail(email, "Verify your email for RentCert"));
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Alex");
+  await expect(page.getByRole("heading", { level: 1, name: "Due checks" })).toBeVisible();
+  await expect(page.getByText(/Good (morning|afternoon|evening), Alex\./)).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Dashboard" })).toHaveAttribute(
     "aria-current",
     "page",
@@ -66,7 +67,8 @@ test("landlord signs up, verifies, manages the account and deletes it", async ({
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(NEW_PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Sam");
+  await expect(page.getByRole("heading", { level: 1, name: "Due checks" })).toBeVisible();
+  await expect(page.getByText(/Good (morning|afternoon|evening), Sam\./)).toBeVisible();
 
   // Account deletion.
   await page.goto("/account");

@@ -29,6 +29,11 @@ export function formatCalendarDate(date: Date): string {
   );
 }
 
+// Compact form for tables ("28 Aug 2026"). Same UTC rule as formatCalendarDate.
+export function formatShortDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(date);
+}
+
 // Today's date in the given timezone, as YYYY-MM-DD.
 export function todayIn(timezone: string, now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(

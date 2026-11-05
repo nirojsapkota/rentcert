@@ -22,6 +22,7 @@ export type AuditAction =
   | "document.deleted"
   | "compliance_pack.generated"
   | "billing.checkout_started"
+  | "billing.plan_change_started"
   | "billing.subscription_changed"
   | "admin.viewed"
   | "admin.requirement_updated"

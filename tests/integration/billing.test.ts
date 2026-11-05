@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getEntitlement } from "@/server/billing/entitlements";
-import { cancelSubscriptionsForUser, startCheckout } from "@/server/billing/checkout";
+import { AlreadySubscribedError, cancelSubscriptionsForUser, startCheckout, startPlanChange } from "@/server/billing/checkout";
 import { handleStripeWebhook } from "@/server/billing/webhook";
 import { recordCompletion, setUpChecks } from "@/server/compliance/commands";
 import { getPropertySchedule } from "@/server/compliance/queries";
@@ -233,9 +233,23 @@ describe("Checkout", () => {
 
     expect(stripe.mocks.customers.create).toHaveBeenCalledTimes(1);
     const params = stripe.mocks.checkout.sessions.create.mock.calls[0][0] as unknown as Record<string, unknown> & { subscription_data: { trial_end?: number }; line_items: { price: string }[] };
-    expect(params).toMatchObject({ mode: "subscription", client_reference_id: user.id, line_items: [{ price: "price_portfolio", quantity: 1 }] });
+    expect(params).toMatchObject({
+      mode: "subscription",
+      client_reference_id: user.id,
+      line_items: [{ price: "price_portfolio", quantity: 1 }],
+      adaptive_pricing: { enabled: false },
+    });
     expect(params.subscription_data.trial_end).toBeGreaterThan(Date.now() / 1000 + 300 * 86_400);
     expect(await db.auditEvent.count({ where: { userId: user.id, action: "billing.checkout_started" } })).toBe(2);
+  });
+
+  it("refuses a second checkout while a plan is active", async () => {
+    const stripe = fakeStripe();
+    const user = await createUser();
+    await subscribe(user.id, "PROPERTY");
+
+    await expect(startCheckout(user.id, "PORTFOLIO", stripe.client)).rejects.toThrow(AlreadySubscribedError);
+    expect(stripe.mocks.checkout.sessions.create).not.toHaveBeenCalled();
   });
 
   it("starts billing immediately when less than 48 hours of trial remain", async () => {
@@ -247,6 +261,45 @@ describe("Checkout", () => {
 
     const params = stripe.mocks.checkout.sessions.create.mock.calls[0][0] as unknown as { subscription_data: { trial_end?: number } };
     expect(params.subscription_data.trial_end).toBeUndefined();
+  });
+});
+
+describe("plan change", () => {
+  it("opens Stripe's confirm page with the other price on the same subscription item", async () => {
+    const stripe = fakeStripe();
+    const user = await createUser();
+    const row = await subscribe(user.id, "PROPERTY");
+    const account = await db.billingAccount.findUniqueOrThrow({ where: { userId: user.id } });
+    stripe.subscriptions.set(row.stripeSubscriptionId, { customer: account.stripeCustomerId, status: "active", price: "price_property" });
+
+    expect(await startPlanChange(user.id, "PORTFOLIO", 1, stripe.client)).toEqual({ ok: true, url: "https://billing.stripe.test/session" });
+    expect(stripe.mocks.billingPortal.sessions.create.mock.calls[0][0]).toMatchObject({
+      customer: account.stripeCustomerId,
+      flow_data: {
+        type: "subscription_update_confirm",
+        subscription_update_confirm: {
+          subscription: row.stripeSubscriptionId,
+          items: [{ id: `si_${row.stripeSubscriptionId}`, price: "price_portfolio", quantity: 1 }],
+        },
+      },
+    });
+  });
+
+  it("refuses a downgrade while more properties are active than the plan allows", async () => {
+    const stripe = fakeStripe();
+    const user = await createUser();
+    await subscribe(user.id, "PORTFOLIO");
+
+    expect(await startPlanChange(user.id, "PROPERTY", 2, stripe.client)).toEqual({ ok: false, reason: "too_many_properties" });
+    expect(stripe.mocks.billingPortal.sessions.create).not.toHaveBeenCalled();
+  });
+
+  it("does nothing without a subscription or for the same plan", async () => {
+    const stripe = fakeStripe();
+    const user = await createUser();
+    expect(await startPlanChange(user.id, "PORTFOLIO", 0, stripe.client)).toEqual({ ok: false, reason: "no_subscription" });
+    await subscribe(user.id, "PORTFOLIO");
+    expect(await startPlanChange(user.id, "PORTFOLIO", 0, stripe.client)).toEqual({ ok: false, reason: "same_plan" });
   });
 });
 

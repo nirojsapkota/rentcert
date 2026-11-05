@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { getEntitlement } from "@/server/billing/entitlements";
-import { PLAN_DETAILS } from "@/server/billing/plans";
+import { PLAN_DETAILS, PROPERTY_LIMITS } from "@/server/billing/plans";
 import { countActiveProperties } from "@/server/properties/queries";
 import { requireUser } from "@/server/session";
-import { checkoutAction, portalAction } from "./actions";
+import { changePlanAction, checkoutAction, portalAction } from "./actions";
 
 export const metadata: Metadata = { title: "Billing" };
 
@@ -27,7 +27,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         <Alert tone="success">Payment received. Your plan updates in a moment. Refresh this page if it doesn&apos;t.</Alert>
       )}
       {query.checkout === "success" && subscription && <Alert tone="success">Your {PLAN_DETAILS[subscription.plan].name} plan is active.</Alert>}
-      {query.error && <Alert tone="error">We couldn&apos;t reach our payment provider. Please try again in a few minutes.</Alert>}
+      {query.plan === "changed" && <Alert tone="success">Plan change confirmed. Your plan updates in a moment. Refresh this page if it doesn&apos;t.</Alert>}
+      {query.error === "too_many_properties" && (
+        <Alert tone="error">The Single Property plan covers 1 active property. Archive the others before you switch.</Alert>
+      )}
+      {query.error && query.error !== "too_many_properties" && (
+        <Alert tone="error">We couldn&apos;t reach our payment provider. Please try again in a few minutes.</Alert>
+      )}
 
       <div className="rounded-lg border border-line bg-surface p-6">
         <h2 className="text-xl font-bold">Current plan</h2>
@@ -75,6 +81,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         )}
       </div>
 
+      {subscription && !subscription.cancelAtPeriodEnd && <PlanSwitch current={subscription.plan} activeCount={activeCount} />}
+
       {!subscription && (
         <ul className="grid gap-4 md:grid-cols-2">
           {(["PROPERTY", "PORTFOLIO"] as const).map((plan) => (
@@ -99,5 +107,27 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
       )}
       <p className="text-sm text-ink-muted">Payments are processed by Stripe. RentCert never sees your card details.</p>
     </section>
+  );
+}
+
+// Offers the other plan. A downgrade is blocked while more properties are active than it allows.
+function PlanSwitch({ current, activeCount }: { current: "PROPERTY" | "PORTFOLIO"; activeCount: number }) {
+  const other = current === "PROPERTY" ? "PORTFOLIO" : "PROPERTY";
+  const blocked = activeCount > PROPERTY_LIMITS[other];
+  return (
+    <div className="rounded-lg border border-line bg-surface p-6">
+      <h2 className="text-xl font-bold">Switch to {PLAN_DETAILS[other].name}</h2>
+      <p className="mt-2">
+        <span className="text-2xl font-bold">{PLAN_DETAILS[other].price}</span>
+        <span className="text-ink-muted"> AUD / month, incl. GST · {PLAN_DETAILS[other].properties}</span>
+      </p>
+      <p className="mt-2 text-sm text-ink-muted">Stripe shows the adjusted amount before you confirm. The difference for the current month is prorated.</p>
+      {blocked && <p className="mt-2 text-sm">You have {activeCount} active properties. Archive all but 1 before you switch.</p>}
+      <form action={changePlanAction.bind(null, other)} className="mt-4">
+        <Button type="submit" variant={other === "PORTFOLIO" ? "primary" : "secondary"} disabled={blocked}>
+          Switch to {PLAN_DETAILS[other].name}
+        </Button>
+      </form>
+    </div>
   );
 }

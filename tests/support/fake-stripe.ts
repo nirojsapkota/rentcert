@@ -24,7 +24,7 @@ export function fakeStripe() {
           status: state.status,
           cancel_at_period_end: state.cancelAtPeriodEnd ?? false,
           trial_end: null,
-          items: { data: [{ price: { id: state.price }, current_period_start: 1_790_000_000, current_period_end: 1_792_592_000 }] },
+          items: { data: [{ id: `si_${id}`, price: { id: state.price }, current_period_start: 1_790_000_000, current_period_end: 1_792_592_000 }] },
         };
       }),
       cancel: vi.fn(async (id: string, _params?: unknown) => ({ id, status: "canceled" })),

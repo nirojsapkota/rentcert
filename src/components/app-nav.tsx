@@ -19,13 +19,14 @@ const INSPECTOR_LINKS = [
   { href: "/account", label: "Account" },
 ] as const;
 
+// Plain text links on the ink app bar. The current page gets a yellow underline.
 export function AppNav({ isAdmin = false, isInspector = false }: { isAdmin?: boolean; isInspector?: boolean }) {
   const LINKS = isInspector ? INSPECTOR_LINKS : LANDLORD_LINKS;
   const pathname = usePathname();
   return (
     // Wraps on narrow screens so every section stays visible (no hidden sideways scroll).
-    <nav aria-label="Primary" className="w-full lg:w-auto">
-      <ul className="flex flex-wrap gap-1 rounded-3xl bg-canvas p-1 lg:rounded-full">
+    <nav aria-label="Primary" className="w-full lg:w-auto lg:flex-1">
+      <ul className="-mx-2 flex flex-wrap">
         {[...LINKS, ...(isAdmin ? [{ href: "/admin", label: "Admin" } as const] : [])].map(({ href, label }) => {
           const current = pathname === href || pathname.startsWith(`${href}/`);
           return (
@@ -33,7 +34,7 @@ export function AppNav({ isAdmin = false, isInspector = false }: { isAdmin?: boo
               <Link
                 href={href}
                 aria-current={current ? "page" : undefined}
-                className="block whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold text-ink-muted hover:bg-surface hover:text-ink aria-[current=page]:bg-brand aria-[current=page]:text-white"
+                className="block border-b-2 border-transparent px-2 py-3 text-sm font-medium whitespace-nowrap text-bar-muted hover:text-white aria-[current=page]:border-tag aria-[current=page]:text-white lg:py-4"
               >
                 {label}
               </Link>

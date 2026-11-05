@@ -16,18 +16,18 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const showReadOnly = entitlement.plan === "READ_ONLY" && ownedCount > 0;
   return (
     <>
-      <header className="border-b border-line bg-surface pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
-          <Logo href="/dashboard" />
+      <header className="on-ink bg-ink text-white pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-2 px-4 pt-3 lg:py-0">
+          <Logo href="/dashboard" className="text-white lg:py-3" />
           <div className="flex items-center gap-3 lg:order-last">
             <span
               aria-hidden="true"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft font-display font-bold text-accent-ink"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-tag font-mono text-sm font-semibold text-ink"
             >
               {user.firstName.charAt(0).toUpperCase()}
             </span>
-            <span className="hidden text-sm text-ink-muted sm:inline">{user.email}</span>
-            <SignOutButton />
+            <span className="hidden text-sm text-bar-muted sm:inline">{user.email}</span>
+            <SignOutButton className="text-white" />
           </div>
           <AppNav isAdmin={user.role === "ADMIN"} isInspector={user.accountType === "INSPECTOR"} />
         </div>

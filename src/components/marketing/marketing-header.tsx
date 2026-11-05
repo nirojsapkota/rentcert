@@ -17,7 +17,7 @@ export function MarketingHeader() {
           <Link href="/sign-in" className="whitespace-nowrap text-ink-muted hover:text-ink">
             Sign in
           </Link>
-          <Link href="/sign-up" className={`${buttonClasses("primary")} whitespace-nowrap px-4`}>
+          <Link href="/sign-up" className={`${buttonClasses("primary")} whitespace-nowrap`}>
             Start free
           </Link>
         </nav>

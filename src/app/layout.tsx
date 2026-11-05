@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Figtree } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { connection } from "next/server";
 import "./globals.css";
 
 // Self-hosted by next/font at build time, so no request goes to Google and the CSP stays 'self'.
-const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree", display: "swap" });
-const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", display: "swap" });
+const plexSans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-plex-sans", display: "swap" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono", display: "swap" });
 
 // viewport-fit=cover makes the browser report the real safe-area insets (status bar, notch, home
 // indicator). Without it they read as 0 even on browsers that draw the page under the status bar.
@@ -14,7 +14,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#ffffff",
+  themeColor: "#16191d", // matches the ink app bar, so the phone status bar blends in
   colorScheme: "light",
 };
 
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   await connection();
   return (
-    <html lang="en-AU" className={`h-full antialiased ${figtree.variable} ${bricolage.variable}`}>
+    <html lang="en-AU" className={`h-full antialiased ${plexSans.variable} ${plexMono.variable}`}>
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   );

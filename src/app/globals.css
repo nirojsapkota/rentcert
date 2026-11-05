@@ -1,43 +1,56 @@
 @import "tailwindcss";
 
-/* Harbour theme: deep teal with a warm amber accent on a soft green-grey canvas.
-   Text colours meet WCAG AA on the surfaces they sit on. */
+/* Service Tag theme (SPEC-theme-redesign.md): near-black ink on off-white, with safety-tag yellow
+   used sparingly. Text colours meet WCAG AA on the surfaces they sit on; contrast ratios are in the spec. */
 @theme {
-  --color-canvas: #f3f6f2;
+  --color-canvas: #fbfbf9;
   --color-surface: #ffffff;
-  --color-ink: #17312f;
-  --color-ink-muted: #4f6461;
-  --color-line: #dde7e2;
-  --color-brand: #0a5c5c;
-  --color-brand-strong: #074646;
-  --color-brand-soft: #e3efeb;
-  --color-deep: #0d3b3a;
-  --color-accent: #e8a33d;
-  --color-accent-soft: #fcecd0;
-  --color-accent-ink: #7a4a06;
-  --color-danger: #b3261e;
-  --color-danger-soft: #fdeeee;
-  --color-success: #1f5c46;
-  --color-success-soft: #e6f2ed;
-  --color-warning: #7a4a06;
-  --color-warning-soft: #fdf3e1;
+  --color-ink: #16191d;
+  --color-ink-muted: #5d646d;
+  --color-line: #e3e4e0;
+  --color-line-strong: #80857f; /* input and secondary-button borders (3.6:1, WCAG 1.4.11) */
+  --color-brand: #16191d;
+  --color-brand-strong: #000000;
+  --color-brand-soft: #f1f1ed;
+  --color-deep: #16191d;
+  --color-bar-muted: #a7adb5; /* inactive nav text on the ink app bar */
 
-  /* Softer corners than Tailwind's defaults: inputs and alerts 10px, cards 16px. */
-  --radius-md: 0.625rem;
-  --radius-lg: 1rem;
+  /* Safety-tag yellow. Never use `tag` as text on a light background. */
+  --color-tag: #f5c518;
+  --color-tag-soft: #fff6cc;
+  --color-tag-ink: #7a5b00;
+  --color-accent: #f5c518;
+  --color-accent-soft: #fff6cc;
+  --color-accent-ink: #7a5b00;
+
+  --color-danger: #b42318;
+  --color-danger-soft: #fdeeec;
+  --color-success: #1d6b43;
+  --color-success-soft: #e8f3ec;
+  --color-warning: #7a5b00;
+  --color-warning-soft: #fff6cc;
+
+  /* Square, tag-like corners. */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.1875rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.25rem;
+  --radius-2xl: 0.25rem;
+  --radius-3xl: 0.25rem;
 }
 
 /* Fonts come from next/font in the root layout. */
 @theme inline {
-  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-bricolage), var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, Menlo, monospace;
 }
 
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
   /* Keep content clear of notches and the home indicator (insets are 0 on desktop). The top inset
-     is handled by each header so its white background fills the status bar area. */
+     is handled by each header so its background fills the status bar area. */
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
@@ -47,11 +60,36 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  letter-spacing: -0.015em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* Dates, counts and amounts line up in columns. */
+time,
+.font-mono {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Visible focus for keyboard users on every interactive element. */
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: 3px solid var(--color-brand);
+  outline: 2px solid var(--color-ink);
   outline-offset: 2px;
+}
+
+/* On the ink app bar the focus ring must be light to stay visible. */
+.on-ink :where(a, button):focus-visible {
+  outline-color: var(--color-tag);
+}
+
+/* Form controls: square corners and a border strong enough to see (WCAG 1.4.11). */
+:where(input:not([type="checkbox"], [type="radio"], [type="hidden"]), select, textarea) {
+  border-color: var(--color-line-strong);
+}
+
+/* Links coloured as `brand` used to stand out by teal. With ink as the brand, an underline marks them. */
+a.text-brand {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }

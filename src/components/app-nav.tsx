@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const LINKS = [
+const LANDLORD_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/properties", label: "Properties" },
   { href: "/documents", label: "Documents" },
@@ -12,7 +12,15 @@ const LINKS = [
   { href: "/account", label: "Account" },
 ] as const;
 
-export function AppNav({ isAdmin = false }: { isAdmin?: boolean }) {
+const INSPECTOR_LINKS = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/clients", label: "Clients" },
+  { href: "/pools", label: "Pools" },
+  { href: "/account", label: "Account" },
+] as const;
+
+export function AppNav({ isAdmin = false, isInspector = false }: { isAdmin?: boolean; isInspector?: boolean }) {
+  const LINKS = isInspector ? INSPECTOR_LINKS : LANDLORD_LINKS;
   const pathname = usePathname();
   return (
     // Wraps on narrow screens so every section stays visible (no hidden sideways scroll).

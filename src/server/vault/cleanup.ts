@@ -1,4 +1,5 @@
 import "server-only";
+import { knownPhotoKeys } from "@/server/barrier/inspections";
 import { db } from "@/server/db";
 import { getStorage } from "@/server/vault/storage";
 
@@ -18,6 +19,7 @@ export async function deleteOrphanedFiles(now: Date = new Date()): Promise<numbe
         (row) => row.storageKey,
       ),
     );
+    for (const key of await knownPhotoKeys(keys)) known.add(key);
     for (const object of batch) {
       if (known.has(object.key) || now.getTime() - object.lastModified.getTime() < MIN_AGE_MS) continue;
       await storage.delete(object.key);

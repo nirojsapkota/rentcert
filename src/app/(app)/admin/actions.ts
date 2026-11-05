@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
+import { councilSchema } from "@/lib/council";
+import { updateCouncil } from "@/server/councils/commands";
 import { JURISDICTIONS } from "@/lib/jurisdictions";
 import {
   createRequirement,
@@ -81,4 +83,13 @@ export async function setUserRoleAction(userId: string, formData: FormData) {
   const result = await setUserRole(admin.id, userId, role.data);
   if (result === "not_found") notFound();
   revalidatePath("/admin/users");
+}
+
+export async function updateCouncilAction(councilId: string, _prev: AdminFormState, formData: FormData): Promise<AdminFormState> {
+  const admin = await requireAdmin();
+  const parsed = councilSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "invalid", message: parsed.error.issues[0].message };
+  if (!(await updateCouncil(admin.id, councilId, parsed.data))) notFound();
+  revalidatePath("/", "layout");
+  return { status: "saved" };
 }

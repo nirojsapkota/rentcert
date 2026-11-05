@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <span className="hidden text-sm text-ink-muted sm:inline">{user.email}</span>
             <SignOutButton />
           </div>
-          <AppNav isAdmin={user.role === "ADMIN"} />
+          <AppNav isAdmin={user.role === "ADMIN"} isInspector={user.accountType === "INSPECTOR"} />
         </div>
       </header>
       {showReadOnly && (

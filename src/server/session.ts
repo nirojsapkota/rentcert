@@ -24,3 +24,10 @@ export const requireAdmin = cache(async () => {
   if (user.role !== "ADMIN") notFound();
   return user;
 });
+
+// BarrierTrack pages are for inspector accounts; everyone else gets the same 404 as a missing page.
+export const requireInspector = cache(async () => {
+  const user = await requireUser();
+  if (user.accountType !== "INSPECTOR") notFound();
+  return user;
+});

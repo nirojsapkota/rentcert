@@ -8,6 +8,7 @@ export const authClient = createAuthClient({
       user: {
         firstName: { type: "string", required: true },
         lastName: { type: "string", required: true },
+        accountType: { type: "string", required: false },
       },
     }),
   ],

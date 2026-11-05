@@ -12,6 +12,8 @@ import {
   listRecentCompletions,
   type DashboardFilter,
 } from "@/server/compliance/queries";
+import { countRecallsDue } from "@/server/barrier/inspections";
+import { countActiveBarrierRecords } from "@/server/barrier/queries";
 import { requireUser } from "@/server/session";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -28,8 +30,48 @@ function parseFilter(value: unknown): DashboardFilter {
   return FILTERS.some((filter) => filter.value === value) ? (value as DashboardFilter) : "all";
 }
 
+async function InspectorDashboard({ firstName, timezone, userId }: { firstName: string; timezone: string; userId: string }) {
+  const { clients, pools } = await countActiveBarrierRecords(userId);
+  const recalls = await countRecallsDue(userId, todayIn(timezone), 90);
+  const stats = [
+    { label: clients === 1 ? "Client" : "Clients", value: clients, href: "/clients" },
+    { label: pools === 1 ? "Pool or spa" : "Pools and spas", value: pools, href: "/pools" },
+    { label: recalls === 1 ? "Recall due in 90 days" : "Recalls due in 90 days", value: recalls, href: "/pools" },
+  ];
+  return (
+    <section className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-deep sm:text-4xl">
+          {greetingFor(new Date(), timezone)}, {firstName}
+        </h1>
+        <p className="mt-1 text-ink-muted">Your client and pool register</p>
+      </div>
+      <ul className="grid grid-cols-2 gap-3">
+        {stats.map((stat) => (
+          <li key={stat.label}>
+            <Link href={stat.href} className="block rounded-lg border border-line bg-surface p-4 text-deep transition hover:-translate-y-0.5 hover:shadow-sm sm:p-5">
+              <span className="block font-display text-4xl font-bold">{stat.value}</span>
+              <span className="text-sm font-semibold">{stat.label}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {clients === 0 && (
+        <div className="rounded-lg border border-line bg-surface p-8 text-center">
+          <h2 className="text-xl font-bold">Add your first client</h2>
+          <p className="mt-1 text-ink-muted">Then add the pools and spas you inspect for them.</p>
+          <Link href="/clients/new" className={`${buttonClasses("primary")} mt-4`}>
+            Add client
+          </Link>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   const user = await requireUser();
+  if (user.accountType === "INSPECTOR") return <InspectorDashboard firstName={user.firstName} timezone={user.timezone ?? "Australia/Melbourne"} userId={user.id} />;
   const query = await searchParams;
   const filter = parseFilter(query.filter);
   const timezone = user.timezone ?? "Australia/Melbourne";

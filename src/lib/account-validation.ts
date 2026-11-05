@@ -37,6 +37,7 @@ export const signUpSchema = z.object({
   lastName: lastNameSchema,
   email: emailSchema,
   password: passwordSchema,
+  accountType: z.enum(["LANDLORD", "INSPECTOR"], "Choose whether you are a landlord or a pool inspector.").default("LANDLORD"),
 });
 
 export const profileSchema = z.object({

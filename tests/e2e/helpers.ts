@@ -6,11 +6,12 @@ export const PASSWORD = "correct horse battery staple";
 
 // Signs up through the UI, opens the verification link and lands on the dashboard.
 // A random tag keeps the address unique across retries and --repeat-each runs.
-export async function signUpAndVerify(page: Page, baseEmail: string, firstName = "Alex") {
+export async function signUpAndVerify(page: Page, baseEmail: string, firstName = "Alex", accountType: "LANDLORD" | "INSPECTOR" = "LANDLORD") {
   const email = baseEmail.replace("@", `+${Math.random().toString(36).slice(2, 8)}@`);
   await page.goto("/sign-up");
   await page.getByLabel("First name").fill(firstName);
   await page.getByLabel("Last name").fill("Nguyen");
+  if (accountType === "INSPECTOR") await page.getByLabel("Pool or spa barrier inspector").check();
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();

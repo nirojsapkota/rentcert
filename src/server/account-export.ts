@@ -2,6 +2,8 @@ import "server-only";
 import { Zip, ZipDeflate, ZipPassThrough } from "fflate";
 import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
+import { listInspectionsForExport } from "@/server/barrier/inspections";
+import { listBarrierForExport } from "@/server/barrier/queries";
 import { listComplianceForExport } from "@/server/compliance/queries";
 import { listPropertiesForExport } from "@/server/properties/queries";
 import { listRemindersForExport } from "@/server/reminders/queries";
@@ -13,7 +15,7 @@ const encoder = new TextEncoder();
 
 // Everything RentCert holds about one user, as a ZIP stream: JSON files plus the original documents.
 export async function exportAccountData(userId: string): Promise<ReadableStream<Uint8Array>> {
-  const [user, properties, compliance, reminders, documents, auditEvents, sharing] = await Promise.all([
+  const [user, properties, compliance, reminders, documents, auditEvents, sharing, barrier, inspectionData] = await Promise.all([
     db.user.findUniqueOrThrow({
       where: { id: userId },
       select: { email: true, firstName: true, lastName: true, timezone: true, notificationEmail: true, reminderEmailsEnabled: true, createdAt: true, trialEndsAt: true },
@@ -25,6 +27,8 @@ export async function exportAccountData(userId: string): Promise<ReadableStream<
     db.auditEvent.findMany({ where: { userId }, orderBy: { createdAt: "asc" }, select: { action: true, resourceType: true, resourceId: true, metadata: true, createdAt: true } }),
     // Shared accounts are listed only; another owner's records and files belong to their export.
     listSharingForExport(userId),
+    listBarrierForExport(userId),
+    listInspectionsForExport(userId),
   ]);
   await recordAuditEvent({ userId, resourceType: "user", resourceId: userId, action: "account.exported" });
 
@@ -35,6 +39,8 @@ export async function exportAccountData(userId: string): Promise<ReadableStream<
     usedNames.add(name);
     return `documents/${name}`;
   };
+
+  const photoPath = (id: string, filename: string) => `inspection-photos/${id.slice(0, 8)}-${filename}`;
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -60,7 +66,22 @@ export async function exportAccountData(userId: string): Promise<ReadableStream<
       );
       addJson("audit-events.json", auditEvents);
       addJson("sharing.json", sharing);
+      if (barrier.clients.length > 0 || barrier.pools.length > 0) {
+        addJson("clients.json", barrier.clients);
+        addJson("pools.json", barrier.pools);
+        addJson("inspections.json", inspectionData.inspections);
+        addJson(
+          "inspection-photos.json",
+          inspectionData.photos.map(({ storageKey: _key, ...photo }) => ({ ...photo, file: photoPath(photo.id, photo.filename) })),
+        );
+      }
 
+      usedNames.clear();
+      for (const photo of inspectionData.photos) {
+        const file = new ZipPassThrough(photoPath(photo.id, photo.filename));
+        zip.add(file);
+        file.push(await storage.read(photo.storageKey), true);
+      }
       usedNames.clear();
       for (const document of documents) {
         // Files are already compressed (PDF, JPEG, PNG), so store them as-is.

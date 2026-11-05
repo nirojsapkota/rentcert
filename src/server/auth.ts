@@ -12,6 +12,7 @@ import {
   fullName,
   lastNameSchema,
 } from "@/lib/account-validation";
+import { ACCOUNT_TYPES, type AccountTypeCode } from "@/lib/barrier-validation";
 import { track } from "@/server/analytics/track";
 import { recordAuditEvent } from "@/server/audit";
 import { db } from "@/server/db";
@@ -86,6 +87,8 @@ export const auth = betterAuth({
       trialEndsAt: { type: "date", required: false, input: false },
       // Granted only by `npm run admin:grant`; never accepted from the client.
       role: { type: "string", required: false, input: false, defaultValue: "USER" },
+      // Chosen at sign-up (LANDLORD or INSPECTOR) and checked in the create hook.
+      accountType: { type: "string", required: false, input: true, defaultValue: "LANDLORD" },
     },
     deleteUser: {
       enabled: true,
@@ -128,8 +131,12 @@ export const auth = betterAuth({
         before: async (user) => {
           const firstName = parseName(firstNameSchema, user.firstName);
           const lastName = parseName(lastNameSchema, user.lastName);
+          const accountType = user.accountType === undefined ? "LANDLORD" : user.accountType;
+          if (!ACCOUNT_TYPES.includes(accountType as AccountTypeCode)) {
+            throw new APIError("BAD_REQUEST", { message: "Choose whether you are a landlord or a pool inspector." });
+          }
           const trialEndsAt = new Date(Date.now() + (await trialDays()) * 24 * 60 * 60 * 1000);
-          return { data: { ...user, firstName, lastName, name: fullName(firstName, lastName), trialEndsAt } };
+          return { data: { ...user, firstName, lastName, name: fullName(firstName, lastName), trialEndsAt, accountType } };
         },
         after: async (user) => {
           await recordAuditEvent({ userId: user.id, resourceType: "user", resourceId: user.id, action: "user.created" });

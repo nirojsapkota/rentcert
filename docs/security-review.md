@@ -16,6 +16,7 @@ unprotected route fails the build.
 | `(auth)/**`, `(marketing)/**` | Public | No user data rendered |
 | `/api/auth/[...all]` | Public | Better Auth, with database-backed rate limits |
 | `/api/documents/[id]/download` | Owner | Session plus owner-scoped lookup; 404 otherwise |
+| `/api/inspection-photos/[id]/download` | Inspector owner | Session, inspector account type and owner-scoped lookup; 404 otherwise |
 | `/api/properties/[id]/compliance-pack` | Owner | Session plus owner-scoped lookup; 404 otherwise |
 | `/api/account/export` | Owner | Session; the user's own rows only |
 | `/api/address-search` | Signed-in user | Verified session; 30 requests a minute per user; proxies Geoapify with the key kept on the server; query text never logged |

@@ -9,6 +9,7 @@ section 57.
 |---|---|---|---|
 | 1 (done) | foundation | Next.js app, PostgreSQL + Prisma, Tailwind, base layout, `User`, auth (sign up, sign in, sign out, reset, email verification, account deletion), `AuditEvent`, `/health`, mail adapter | — |
 | 2 (done) | properties | Property CRUD, archive and restore, Australian state and postcode validation, tenant scoping, dashboard shell (counts only) | foundation |
+| 12 (done) | barriertrack-inspections | `Inspection` history per pool, 48-month recall date from the inspection date (pass only), `InspectionPhoto` uploads (JPEG, PNG, WebP, magic-byte checked), authorised photo download, export, dashboard count of recalls due in 90 days. See `SPEC-barriertrack-inspections.md` | foundation |
 | 3 (done) | compliance | `ComplianceRequirement` config (VIC rules plus a labelled generic schedule for other states), per-property applicability, `ComplianceRecord`, due-date and status calculators, property cards, history, mark-completed flow, onboarding wizard, dashboard statuses and filters | properties |
 | 4 (done) | vault | `ComplianceDocument`, S3 private storage, upload validation (magic bytes), authorised download and delete, scan hook | compliance |
 | 5 (done) | reminders | `ComplianceReminder`, daily scheduler (pg-boss), idempotent reminder emails, welcome email | compliance |
@@ -17,6 +18,8 @@ section 57.
 | 8 (done in code; deploy pending a domain) | hardening | Admin (read-only), data export, legal pages, landing, pricing, FAQ, analytics events, observability, CI/CD, deploy | all |
 | 9 (done) | coowner-access | Account-level sharing with collaborators: invites, accept, remove, leave, property transfer, reminders to every member | properties, compliance, vault, reminders, billing |
 | 10 (done) | jurisdictions | Requirement sets for every state and territory with a basis label, admin create/edit per state, GENERIC fallback | compliance, hardening |
+| 13 (done) | barriertrack-councils | `Council` configuration (28 metro names seeded unverified), `Pool.councilId` picker, "How to lodge" panel on inspections, Admin → Councils edit with audit. See `SPEC-barriertrack-councils.md` and `docs/council-sources.md` | barriertrack-inspections |
+| 11 (done) | barriertrack-foundation | `User.accountType` (LANDLORD / INSPECTOR, chosen at sign-up), inspector `Client` and `Pool` register (Victoria only), search, archive. See `SPEC-barriertrack-foundation.md` and `new_plan.md` | foundation |
 
 Notes:
 

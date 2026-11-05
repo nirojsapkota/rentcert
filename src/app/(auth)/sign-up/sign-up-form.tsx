@@ -10,7 +10,7 @@ import { authClient } from "@/lib/auth-client";
 import { authErrorMessage } from "@/lib/auth-errors";
 import { useHydrated } from "@/lib/use-hydrated";
 
-type FieldErrors = Partial<Record<"firstName" | "lastName" | "email" | "password", string>>;
+type FieldErrors = Partial<Record<"firstName" | "lastName" | "email" | "password" | "accountType", string>>;
 
 // returnTo is an already-validated invite path (see inviteReturnPath).
 export function SignUpForm({ returnTo }: { returnTo?: string }) {
@@ -37,12 +37,13 @@ export function SignUpForm({ returnTo }: { returnTo?: string }) {
     setFieldErrors({});
 
     setPending(true);
-    const { firstName, lastName, email, password } = parsed.data;
+    const { firstName, lastName, email, password, accountType } = parsed.data;
     const { error } = await authClient.signUp.email({
       email,
       password,
       firstName,
       lastName,
+      accountType,
       name: fullName(firstName, lastName),
       callbackURL: returnTo ?? "/verify-email/done",
     });
@@ -62,6 +63,16 @@ export function SignUpForm({ returnTo }: { returnTo?: string }) {
         <Field label="First name" name="firstName" autoComplete="given-name" required error={fieldErrors.firstName} />
         <Field label="Last name" name="lastName" autoComplete="family-name" required error={fieldErrors.lastName} />
       </div>
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">I am a</legend>
+        <label className="flex items-center gap-2 text-base">
+          <input type="radio" name="accountType" value="LANDLORD" defaultChecked /> Landlord or property manager
+        </label>
+        <label className="flex items-center gap-2 text-base">
+          <input type="radio" name="accountType" value="INSPECTOR" /> Pool or spa barrier inspector
+        </label>
+        {fieldErrors.accountType && <p className="text-sm text-danger">{fieldErrors.accountType}</p>}
+      </fieldset>
       <Field label="Email" name="email" type="email" autoComplete="email" required error={fieldErrors.email} />
       <Field
         label="Password"

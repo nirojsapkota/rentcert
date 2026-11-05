@@ -25,6 +25,11 @@ describe("tenant isolation architecture", () => {
     ["complianceReminder", ["reminders"]],
     ["accountCollaborator", ["sharing"]],
     ["sharingInvite", ["sharing"]],
+    ["client", ["barrier"]],
+    ["pool", ["barrier"]],
+    ["council", ["councils"]],
+    ["inspection", ["barrier"]],
+    ["inspectionPhoto", ["barrier"]],
   ])("only the allowed modules touch %s", (model, moduleDirs) => {
     const allowed = moduleDirs.map((dir) => path.join(SRC, "server", dir));
     const pattern = new RegExp(`\\b(db|tx)\\.${model}\\.`);
@@ -62,7 +67,7 @@ describe("route protection", () => {
   it("every signed-in page and server action checks the session", () => {
     const offenders = sourceFiles(path.join(APP, "(app)"))
       .filter((file) => /(page\.tsx|actions\.ts)$/.test(file))
-      .filter((file) => !/requireUser\(\)|requireAdmin\(\)/.test(readFileSync(file, "utf8")))
+      .filter((file) => !/requireUser\(\)|requireAdmin\(\)|requireInspector\(\)/.test(readFileSync(file, "utf8")))
       .map((file) => path.relative(SRC, file));
     expect(offenders).toEqual([]);
   });
@@ -74,6 +79,7 @@ describe("route protection", () => {
       "api/address-search/route.ts": /auth\.api\.getSession/,
       "api/auth/[...all]/route.ts": /toNextJsHandler/,
       "api/documents/[id]/download/route.ts": /auth\.api\.getSession/,
+      "api/inspection-photos/[id]/download/route.ts": /auth\.api\.getSession/,
       "api/health/route.ts": /checkHealth/,
       "api/properties/[id]/compliance-pack/route.ts": /auth\.api\.getSession/,
       "api/visit/route.ts": /countLandingVisit/,

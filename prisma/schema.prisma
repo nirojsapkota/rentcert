@@ -12,34 +12,40 @@ datasource db {
 }
 
 model User {
-  id                    String    @id
+  id                    String      @id
   name                  String
-  email                 String    @unique
-  emailVerified         Boolean   @default(false) @map("email_verified")
+  email                 String      @unique
+  emailVerified         Boolean     @default(false) @map("email_verified")
   image                 String?
-  firstName             String    @map("first_name")
-  lastName              String    @map("last_name")
-  timezone              String    @default("Australia/Melbourne")
-  notificationEmail     String?   @map("notification_email")
-  reminderEmailsEnabled Boolean   @default(true) @map("reminder_emails_enabled")
-  welcomeEmailSentAt    DateTime? @map("welcome_email_sent_at")
+  firstName             String      @map("first_name")
+  lastName              String      @map("last_name")
+  timezone              String      @default("Australia/Melbourne")
+  notificationEmail     String?     @map("notification_email")
+  reminderEmailsEnabled Boolean     @default(true) @map("reminder_emails_enabled")
+  welcomeEmailSentAt    DateTime?   @map("welcome_email_sent_at")
   // Set at sign-up from the trial_days setting; the default is a safety net only.
-  trialEndsAt           DateTime  @default(dbgenerated("(now() + '365 days'::interval)")) @map("trial_ends_at")
+  trialEndsAt           DateTime    @default(dbgenerated("(now() + '365 days'::interval)")) @map("trial_ends_at")
   // Granted only from the command line (npm run admin:grant). Never settable through the app.
-  role                  Role      @default(USER)
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  role                  Role        @default(USER)
+  // Chosen at sign-up. INSPECTORs use the BarrierTrack client and pool register.
+  accountType           AccountType @default(LANDLORD) @map("account_type")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
 
-  sessions       Session[]
-  accounts       Account[]
-  auditEvents    AuditEvent[]
-  properties     Property[]
-  billingAccount BillingAccount?
-  productEvents  ProductEvent[]
-  collaborators  AccountCollaborator[] @relation("owner")
-  sharedWithMe   AccountCollaborator[] @relation("member")
-  sharingInvites SharingInvite[]
-  reminders      ComplianceReminder[]
+  sessions         Session[]
+  accounts         Account[]
+  auditEvents      AuditEvent[]
+  properties       Property[]
+  billingAccount   BillingAccount?
+  productEvents    ProductEvent[]
+  collaborators    AccountCollaborator[] @relation("owner")
+  sharedWithMe     AccountCollaborator[] @relation("member")
+  sharingInvites   SharingInvite[]
+  reminders        ComplianceReminder[]
+  clients          Client[]
+  pools            Pool[]
+  inspections      Inspection[]
+  inspectionPhotos InspectionPhoto[]
 
   @@map("users")
 }
@@ -171,20 +177,20 @@ enum RequirementBasis {
 // Configuration: what must happen and how often, per jurisdiction ("VIC", or "GENERIC" for the
 // unresearched fallback). Rows are seeded by migration; last_verified_at stays null until a person verifies them.
 model ComplianceRequirement {
-  id               String    @id @default(uuid(7)) @db.Uuid
+  id               String           @id @default(uuid(7)) @db.Uuid
   code             String
   jurisdiction     String
   name             String
   description      String
-  recurrenceMonths Int       @map("recurrence_months")
+  recurrenceMonths Int              @map("recurrence_months")
   basis            RequirementBasis @default(REQUIRED_INTERVAL)
-  sortOrder        Int       @map("sort_order")
-  active           Boolean   @default(true)
-  sourceName       String?   @map("source_name")
-  sourceUrl        String?   @map("source_url")
-  lastVerifiedAt   DateTime? @map("last_verified_at")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  sortOrder        Int              @map("sort_order")
+  active           Boolean          @default(true)
+  sourceName       String?          @map("source_name")
+  sourceUrl        String?          @map("source_url")
+  lastVerifiedAt   DateTime?        @map("last_verified_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
 
   records ComplianceRecord[]
 
@@ -406,4 +412,143 @@ model SharingInvite {
 
   @@unique([ownerId, email])
   @@map("sharing_invites")
+}
+
+enum AccountType {
+  LANDLORD
+  INSPECTOR
+}
+
+enum PoolKind {
+  POOL
+  SPA
+}
+
+// An inspector's customer. Archived (not deleted) once pools exist, so history survives.
+model Client {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String    @map("user_id")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  email      String?
+  phone      String?
+  notes      String?
+  // Set when the client asks not to be contacted; recall emails (later phase) must honour it.
+  optedOutAt DateTime? @map("opted_out_at")
+  archivedAt DateTime? @map("archived_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  pools Pool[]
+
+  @@index([userId, archivedAt, name])
+  @@map("clients")
+}
+
+// A pool or spa site in Victoria that an inspector looks after.
+model Pool {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  userId       String    @map("user_id")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId     String    @map("client_id") @db.Uuid
+  client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  kind         PoolKind  @default(POOL)
+  addressLine1 String    @map("address_line_1")
+  addressLine2 String?   @map("address_line_2")
+  suburb       String
+  postcode     String
+  councilId    String?   @map("council_id") @db.Uuid
+  council      Council?  @relation(fields: [councilId], references: [id], onDelete: SetNull)
+  notes        String?
+  archivedAt   DateTime? @map("archived_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  inspections Inspection[]
+
+  @@index([userId, archivedAt, createdAt])
+  @@index([clientId])
+  @@index([councilId])
+  @@map("pools")
+}
+
+enum LodgementMethod {
+  PORTAL
+  EMAIL
+  POST
+  OTHER
+}
+
+// Configuration, not user data: seeded by migration and edited by admins only.
+model Council {
+  id              String          @id @default(uuid(7)) @db.Uuid
+  name            String          @unique
+  lodgementMethod LodgementMethod @default(OTHER) @map("lodgement_method")
+  contactEmail    String?         @map("contact_email")
+  contactPhone    String?         @map("contact_phone")
+  portalUrl       String?         @map("portal_url")
+  notes           String?
+  sourceUrl       String?         @map("source_url")
+  verifiedAt      DateTime?       @map("verified_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  pools Pool[]
+
+  @@map("councils")
+}
+
+enum InspectionKind {
+  INITIAL
+  PERIODIC
+  REINSPECTION
+}
+
+enum InspectionOutcome {
+  PASS
+  FAIL
+  PENDING
+}
+
+// One visit to a pool or spa. nextRecallOn is set only for a PASS (inspectedOn plus 48 months).
+// Inspections are edited, never deleted.
+model Inspection {
+  id                String            @id @default(uuid(7)) @db.Uuid
+  userId            String            @map("user_id")
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poolId            String            @map("pool_id") @db.Uuid
+  pool              Pool              @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  kind              InspectionKind
+  inspectedOn       DateTime          @map("inspected_on") @db.Date
+  outcome           InspectionOutcome
+  certificateNumber String?           @map("certificate_number")
+  lodgedOn          DateTime?         @map("lodged_on") @db.Date
+  nextRecallOn      DateTime?         @map("next_recall_on") @db.Date
+  notes             String?
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  photos InspectionPhoto[]
+
+  @@index([userId, nextRecallOn])
+  @@index([poolId, inspectedOn])
+  @@map("inspections")
+}
+
+// Photo metadata. The file lives in storage under documents/<userId>/<uuid>; the name is display only.
+model InspectionPhoto {
+  id           String     @id @default(uuid(7)) @db.Uuid
+  userId       String     @map("user_id")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inspectionId String     @map("inspection_id") @db.Uuid
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  storageKey   String     @unique @map("storage_key")
+  filename     String
+  contentType  String     @map("content_type")
+  byteSize     Int        @map("byte_size")
+  caption      String?
+  uploadedAt   DateTime   @default(now()) @map("uploaded_at")
+
+  @@index([inspectionId, uploadedAt])
+  @@map("inspection_photos")
 }

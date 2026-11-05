@@ -24,6 +24,7 @@ npm run lint
 npm run typecheck            # next typegen && tsc (PageProps/LayoutProps come from typegen)
 npm run db:migrate -- --name <change>
 npm run db:seed              # demo@rentcert.local / demo-password-123, 3 properties with sample statuses
+npm run stripe:listen        # forward sandbox webhooks to :3000 (Stripe CLI); put the printed whsec_ in STRIPE_WEBHOOK_SECRET
 ```
 
 ## Architecture

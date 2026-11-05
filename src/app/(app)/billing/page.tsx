@@ -89,7 +89,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
             <li key={plan} className="flex flex-col rounded-lg border border-line bg-surface p-6">
               <h2 className="text-xl font-bold">{PLAN_DETAILS[plan].name}</h2>
               <p className="mt-2">
-                <span className="text-3xl font-bold">{PLAN_DETAILS[plan].price}</span>
+                <span className="font-mono text-3xl font-semibold">{PLAN_DETAILS[plan].price}</span>
                 <span className="text-ink-muted"> AUD / month, incl. GST</span>
               </p>
               <p className="mt-1 text-ink-muted">{PLAN_DETAILS[plan].properties}</p>
@@ -118,7 +118,7 @@ function PlanSwitch({ current, activeCount }: { current: "PROPERTY" | "PORTFOLIO
     <div className="rounded-lg border border-line bg-surface p-6">
       <h2 className="text-xl font-bold">Switch to {PLAN_DETAILS[other].name}</h2>
       <p className="mt-2">
-        <span className="text-2xl font-bold">{PLAN_DETAILS[other].price}</span>
+        <span className="font-mono text-2xl font-semibold">{PLAN_DETAILS[other].price}</span>
         <span className="text-ink-muted"> AUD / month, incl. GST · {PLAN_DETAILS[other].properties}</span>
       </p>
       <p className="mt-2 text-sm text-ink-muted">Stripe shows the adjusted amount before you confirm. The difference for the current month is prorated.</p>

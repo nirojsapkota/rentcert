@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
           <div className="mb-6 flex justify-center">
             <Logo />
           </div>
-          <div className="rounded-lg border border-line bg-surface p-6 shadow-[0_24px_48px_-32px_rgba(13,59,58,0.35)] sm:p-8">{children}</div>
+          <div className="rounded-lg border border-line bg-surface p-6 sm:p-8">{children}</div>
         </div>
       </main>
       <SiteFooter />

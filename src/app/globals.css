@@ -93,3 +93,9 @@ a.text-brand {
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
+
+/* Checkboxes and radios in ink instead of the browser's default blue. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-ink);
+}

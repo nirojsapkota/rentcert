@@ -12,13 +12,13 @@ const LINKS = [
 
 export function AdminNav({ current }: { current: string }) {
   return (
-    <nav aria-label="Admin" className="flex flex-wrap gap-2">
+    <nav aria-label="Admin" className="flex flex-wrap gap-x-1 border-b border-line">
       {LINKS.map(([href, label]) => (
         <Link
           key={href}
           href={href}
           aria-current={current === href ? "page" : undefined}
-          className="rounded-full border border-line bg-surface px-3 py-1 text-sm font-medium text-ink-muted aria-[current=page]:border-brand aria-[current=page]:bg-brand aria-[current=page]:text-white"
+          className="-mb-px border-b-2 border-transparent px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink aria-[current=page]:border-ink aria-[current=page]:text-ink"
         >
           {label}
         </Link>

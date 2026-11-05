@@ -27,14 +27,14 @@ export default async function AdminPage() {
     <section className="space-y-6">
       <h1 className="text-3xl font-bold text-deep">Admin</h1>
       <AdminNav current="/admin" />
-      <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <li className="rounded-lg border border-line bg-surface p-4">
-          <span className="block text-3xl font-bold">${metrics.mrr}</span>
-          <span className="text-sm text-ink-muted">MRR (AUD, incl. GST)</span>
+      <ul className="flex flex-wrap border-y border-line">
+        <li className="w-1/2 border-line px-4 py-3 sm:w-auto sm:min-w-48 sm:border-r">
+          <span className="block font-mono text-3xl leading-none font-semibold">${metrics.mrr}</span>
+          <span className="mt-1.5 block text-sm text-ink-muted">MRR (AUD, incl. GST)</span>
         </li>
-        <li className="rounded-lg border border-line bg-surface p-4">
-          <span className="block text-3xl font-bold">{metrics.activeSubscriptions}</span>
-          <span className="text-sm text-ink-muted">Active subscriptions</span>
+        <li className="w-1/2 px-4 py-3 sm:w-auto sm:min-w-48">
+          <span className="block font-mono text-3xl leading-none font-semibold">{metrics.activeSubscriptions}</span>
+          <span className="mt-1.5 block text-sm text-ink-muted">Active subscriptions</span>
         </li>
       </ul>
       <div className={tableWrap}>
@@ -51,9 +51,9 @@ export default async function AdminPage() {
           <tbody className="divide-y divide-line">
             {metrics.months.map((row) => (
               <tr key={row.month}>
-                <th scope="row" className={`${td} font-medium`}>{row.month}</th>
+                <th scope="row" className={`${td} font-mono font-medium whitespace-nowrap`}>{row.month}</th>
                 {COLUMNS.map(([key]) => (
-                  <td key={key} className={td}>{row[key]}</td>
+                  <td key={key} className={`${td} font-mono`}>{row[key]}</td>
                 ))}
               </tr>
             ))}

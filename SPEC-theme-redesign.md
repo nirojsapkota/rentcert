@@ -1,6 +1,6 @@
 # SPEC: theme-redesign ("Service Tag")
 
-Status: APPROVED 2026-11-05 with the default answers to all three open questions. Slice 1 in progress.
+Status: APPROVED 2026-11-05 with the default answers to all three open questions. Built (slices 1-6). Email templates remain on the old palette (non-goal).
 
 Direction chosen 2026-11-05 from three mocks (https://claude.ai/artifact/K8Mey2sPN5v2A2snJ9SqEB): **A. Service Tag**.
 

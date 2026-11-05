@@ -23,7 +23,9 @@ npm run test:e2e             # Playwright; boots next dev on :3100 with EMAIL_PR
 npm run lint
 npm run typecheck            # next typegen && tsc (PageProps/LayoutProps come from typegen)
 npm run db:migrate -- --name <change>
-npm run db:seed              # demo@rentcert.local / demo-password-123, 3 properties with sample statuses
+npm run db:seed              # demo@rentcert.local / demo-password-123, 3 properties with sample statuses;
+                             # inspector@rentcert.local (same password) with clients, pools and inspections
+npm run screens              # re-capture public/screens/dashboard.png (landing hero) from the demo account; dev server must be up
 npm run stripe:listen        # forward sandbox webhooks to :3000 (Stripe CLI); put the printed whsec_ in STRIPE_WEBHOOK_SECRET
 ```
 
@@ -95,6 +97,7 @@ npm run stripe:listen        # forward sandbox webhooks to :3000 (Stripe CLI); p
 - Admin (`src/server/admin/`, `src/app/(app)/admin/`): `requireAdmin()` (404 for non-admins) in every admin page and action, enforced by the architecture test. The admin module is the only cross-account reader, may read `property`, and must never touch documents. `role` is a Better Auth `input: false` field, granted only by `npm run admin:grant`.
 - Analytics: `track()` (`src/server/analytics/track.ts`) writes `product_events` (name, user id, time; never addresses or filenames). It swallows its own errors. Landing visits are a cookieless daily counter (`/api/visit`).
 - Data export (`src/server/account-export.ts`) composes per-module `list…ForExport(userId)` functions and streams a ZIP with fflate. It never includes storage keys or password hashes.
+- Theme ("Service Tag", `SPEC-theme-redesign.md`): tokens in `src/app/globals.css`, IBM Plex Sans + Plex Mono via `next/font`. Ink (`#16191d`) is the brand colour, so links use `text-brand` and get an underline from the global rule. Safety yellow (`tag`) is only for the logo, "due soon" stamps and one landing accent; never as text on white. Status is a mono uppercase stamp (`StatusBadge`), lists are ruled tables rather than cards, dates in tables use `formatShortDate()` in `font-mono`, and `rounded-full` is only for the avatar and filter toggles. Emails still use the old teal (not yet redesigned).
 - Public pages live in `src/app/(marketing)/`. `tests/unit/public-wording.test.ts` bans the PLAN.md section 61 claims, and the privacy and terms pages must keep `<DraftNotice />` until legal review.
 - Security and observability (8b):
   - `src/proxy.ts` sets a per-request nonce CSP and `x-request-id`. The root layout calls `connection()`, so every page renders dynamically, which nonces need. Never add inline `<script>` without the nonce (`headers().get("x-nonce")`), and keep `connect-src 'self'` (Sentry uses the `/monitoring` tunnel).

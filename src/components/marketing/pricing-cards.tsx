@@ -10,32 +10,27 @@ const FEATURES = ["Compliance date tracking", "Certificate storage", "Email remi
 
 function Tick() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-brand">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true" className="shrink-0 text-ink">
       <path d="M5 12l5 5 9-10" />
     </svg>
   );
 }
 
+// Two plans side by side, split by a rule. The plan for more than one property is marked by its
+// solid button and a line of text, not a badge.
 export function PricingCards() {
   return (
     <div className="space-y-4">
-      <ul className="grid gap-4 md:grid-cols-2">
+      <ul className="grid border-y-2 border-ink md:grid-cols-2">
         {PLANS.map((plan) => (
-          <li
-            key={plan.name}
-            className={`relative flex flex-col rounded-lg border bg-surface p-7 ${plan.featured ? "border-brand shadow-[0_24px_48px_-32px_rgba(13,59,58,0.45)]" : "border-line"}`}
-          >
-            {plan.featured && (
-              <span className="absolute -top-3 left-7 rounded-full bg-accent px-3 py-1 text-xs font-bold text-[#3d2600]">
-                Best for more than one property
-              </span>
-            )}
+          <li key={plan.name} className="flex flex-col py-7 not-last:border-b not-last:border-line md:px-8 md:first:pl-0 md:last:pr-0 md:not-last:border-r md:not-last:border-b-0">
             <h3 className="text-xl font-bold">{plan.name}</h3>
-            <p className="mt-3">
-              <span className="font-display text-4xl font-bold text-deep">{plan.price}</span>
-              <span className="text-ink-muted"> AUD / month, incl. GST</span>
+            <p className="mt-1 text-sm text-ink-muted">{plan.featured ? "Best for more than one property" : "For a single rental"}</p>
+            <p className="mt-4 flex items-baseline gap-2">
+              <span className="font-mono text-4xl font-semibold">{plan.price}</span>
+              <span className="text-ink-muted">AUD / month, incl. GST</span>
             </p>
-            <p className="mt-1 font-semibold text-ink-muted">{plan.detail}</p>
+            <p className="mt-1 font-semibold">{plan.detail}</p>
             <ul className="mt-5 space-y-2">
               {FEATURES.map((feature) => (
                 <li key={feature} className="flex items-center gap-2">

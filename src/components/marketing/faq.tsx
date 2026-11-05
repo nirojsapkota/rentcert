@@ -12,15 +12,15 @@ const FAQ = [
 export function Faq() {
   return (
     <section aria-labelledby="faq-heading" className="space-y-4">
-      <h2 id="faq-heading" className="text-3xl font-bold text-deep">
+      <h2 id="faq-heading" className="text-2xl font-bold sm:text-3xl">
         Frequently asked questions
       </h2>
-      <div className="divide-y divide-line border-y border-line bg-surface">
+      <div className="divide-y divide-line border-y border-line">
         {FAQ.map(([question, answer]) => (
-          <details key={question} className="group px-5 py-1">
+          <details key={question} className="group py-1">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold [&::-webkit-details-marker]:hidden">
               {question}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-brand transition-transform group-open:rotate-180">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-ink transition-transform group-open:rotate-180">
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </summary>

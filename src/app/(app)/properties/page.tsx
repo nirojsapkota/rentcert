@@ -3,7 +3,7 @@ import Link from "next/link";
 import { localityLine, propertyTitle, streetLine } from "@/components/property-address";
 import { Alert } from "@/components/ui/alert";
 import { buttonClasses } from "@/components/ui/button";
-import { formatCalendarDate } from "@/lib/calendar-date";
+import { formatShortDate } from "@/lib/calendar-date";
 import { listPropertiesForUser, type PropertyView } from "@/server/properties/queries";
 import { requireUser } from "@/server/session";
 
@@ -54,7 +54,7 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
 
       {items.length === 0 ? (
         view === "active" ? (
-          <div className="rounded-lg border border-line bg-surface p-8 text-center">
+          <div className="border border-line bg-surface p-6">
             <h2 className="text-xl font-bold">Add your first property</h2>
             <p className="mt-1 text-ink-muted">Start tracking your compliance deadlines and certificates.</p>
             <Link href="/properties/new" className={`${buttonClasses("primary")} mt-4`}>
@@ -69,7 +69,7 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
           <p className="text-sm text-ink-muted">
             {total} {view} {total === 1 ? "property" : "properties"}
           </p>
-          <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+          <ul className="divide-y divide-line border-y border-line bg-surface">
             {items.map((property) => (
               <li key={property.id}>
                 <Link href={`/properties/${property.id}`} className="block px-4 py-4 hover:bg-canvas">
@@ -83,7 +83,7 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
                   </span>
                   {property.leaseStartDate && (
                     <span className="mt-1 block text-sm text-ink-muted">
-                      Lease started {formatCalendarDate(property.leaseStartDate)}
+                      Lease started <span className="font-mono">{formatShortDate(property.leaseStartDate)}</span>
                     </span>
                   )}
                 </Link>

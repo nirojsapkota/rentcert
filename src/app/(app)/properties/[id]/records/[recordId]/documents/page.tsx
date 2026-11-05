@@ -45,7 +45,7 @@ export default async function RecordDocumentsPage({ params, searchParams }: Page
       {documents.length === 0 ? (
         <p className="text-ink-muted">No certificates uploaded yet. Upload your first compliance certificate.</p>
       ) : (
-        <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+        <ul className="divide-y divide-line border-y border-line bg-surface">
           {documents.map((document) => (
             <li key={document.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">

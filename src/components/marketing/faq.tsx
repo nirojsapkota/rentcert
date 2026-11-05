@@ -15,7 +15,7 @@ export function Faq() {
       <h2 id="faq-heading" className="text-3xl font-bold text-deep">
         Frequently asked questions
       </h2>
-      <div className="divide-y divide-line rounded-lg border border-line bg-surface">
+      <div className="divide-y divide-line border-y border-line bg-surface">
         {FAQ.map(([question, answer]) => (
           <details key={question} className="group px-5 py-1">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold [&::-webkit-details-marker]:hidden">

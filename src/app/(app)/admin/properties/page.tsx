@@ -18,7 +18,7 @@ export default async function AdminPropertiesPage({ searchParams }: PageProps<"/
       <AdminNav current="/admin/properties" />
       <div className={tableWrap}>
         <table className="w-full min-w-[40rem] text-sm">
-          <thead className="border-b border-line bg-canvas text-ink-muted">
+          <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
             <tr>
               <th scope="col" className={th}>Locality</th>
               <th scope="col" className={th}>Owner</th>

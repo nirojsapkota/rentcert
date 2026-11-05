@@ -75,7 +75,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       {client.pools.length === 0 ? (
         <p className="text-ink-muted">No pools or spas yet.</p>
       ) : (
-        <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+        <ul className="divide-y divide-line border-y border-line bg-surface">
           {client.pools.map((pool) => (
             <li key={pool.id}>
               <Link href={"/pools/" + pool.id} className="block px-4 py-3 hover:bg-canvas">

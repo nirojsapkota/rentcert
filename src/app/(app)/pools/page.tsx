@@ -63,7 +63,7 @@ export default async function PoolsPage({ searchParams }: PageProps<"/pools">) {
           <p className="text-sm text-ink-muted">
             {total} {view} {total === 1 ? "pool or spa" : "pools and spas"}
           </p>
-          <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+          <ul className="divide-y divide-line border-y border-line bg-surface">
             {items.map((pool) => (
               <li key={pool.id}>
                 <Link href={"/pools/" + pool.id} className="block px-4 py-4 hover:bg-canvas">

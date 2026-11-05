@@ -63,7 +63,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
           <p className="text-sm text-ink-muted">
             {total} {view} {total === 1 ? "client" : "clients"}
           </p>
-          <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+          <ul className="divide-y divide-line border-y border-line bg-surface">
             {items.map((client) => (
               <li key={client.id}>
                 <Link href={"/clients/" + client.id} className="block px-4 py-4 hover:bg-canvas">

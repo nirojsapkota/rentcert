@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/status-badge";
+import { Alert } from "@/components/ui/alert";
 import { buttonClasses } from "@/components/ui/button";
-import { formatCalendarDate, parseCalendarDate } from "@/lib/calendar-date";
+import { formatShortDate, parseCalendarDate } from "@/lib/calendar-date";
 import { basisLine } from "@/lib/requirement-basis";
 import type { ScheduleItem } from "@/server/compliance/schedule";
 import { setApplicableAction } from "./compliance-actions";
 
 function formatDate(value: string | null): string {
-  return value ? formatCalendarDate(parseCalendarDate(value)!) : "—";
+  return value ? formatShortDate(parseCalendarDate(value)!) : "—";
 }
 
 function daysText(item: ScheduleItem): string {
@@ -48,31 +49,36 @@ export function ComplianceSection({
         licensed provider or the official guidance for your state or territory.
       </p>
       {isGeneric && (
-        <p className="rounded-md border border-brand/20 bg-brand-soft px-4 py-3 text-sm">
+        <Alert tone="info">
           General reminder schedule. RentCert has not yet researched {state} rules. Confirm what applies to your property.
-        </p>
+        </Alert>
       )}
 
-      <ul className="grid gap-4 md:grid-cols-3">
+      <ul className="divide-y divide-line border-y border-line bg-surface">
         {items.map((item) => (
-          <li key={item.requirement.code} className="flex flex-col rounded-lg border border-line bg-surface p-5">
-            <h3 className="text-lg font-bold">{item.requirement.name}</h3>
+          <li
+            key={item.requirement.code}
+            className={`grid gap-x-8 gap-y-3 px-4 py-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] ${item.status === "overdue" ? "shadow-[inset_3px_0_0_var(--color-danger)]" : ""}`}
+          >
+            <div className="min-w-0">
+              <h3 className="text-base font-bold">{item.requirement.name}</h3>
             <p className="mt-1 text-sm text-ink-muted">
               {basisLine(item.requirement.basis, item.requirement.jurisdiction, item.requirement.recurrenceMonths)}
             </p>
-            <div className="mt-3">
+            <div className="mt-2">
               <StatusBadge status={item.status} label={item.label} />
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+            </div>
+            <dl className="grid grid-cols-[auto_1fr] content-start gap-x-4 gap-y-1 text-sm">
               <dt className="text-ink-muted">Last completed</dt>
-              <dd>{item.currentRecordKind === "UNKNOWN_LAST_CHECK" && !item.lastCompletedOn ? "Unknown" : formatDate(item.lastCompletedOn)}</dd>
+              <dd className="font-mono">{item.currentRecordKind === "UNKNOWN_LAST_CHECK" && !item.lastCompletedOn ? "Unknown" : formatDate(item.lastCompletedOn)}</dd>
               <dt className="text-ink-muted">Next due</dt>
-              <dd>{formatDate(item.nextDueOn)}</dd>
+              <dd className="font-mono">{formatDate(item.nextDueOn)}</dd>
               <dt className="text-ink-muted">Days remaining</dt>
-              <dd>{daysText(item)}</dd>
+              <dd className="font-mono">{daysText(item)}</dd>
             </dl>
             {!isGeneric && (
-              <p className="mt-3 text-xs text-ink-muted">
+              <p className="text-xs text-ink-muted md:col-span-2">
                 {item.requirement.sourceUrl && (
                   <>
                     Source:{" "}
@@ -85,7 +91,7 @@ export function ComplianceSection({
                 {item.requirement.lastVerifiedAt ? `Checked ${item.requirement.lastVerifiedAt.toLocaleDateString("en-AU")}.` : "Not yet verified."}
               </p>
             )}
-            <div className="mt-auto flex flex-wrap items-center gap-3 pt-4">
+            <div className="flex flex-wrap items-center gap-3 md:col-start-3 md:row-start-1 md:flex-col md:items-end">
               {item.status !== "not_applicable" && item.status !== "not_set_up" && !archived && (
                 <Link
                   href={`/properties/${propertyId}/checks/${item.requirement.code}/complete`}
@@ -97,7 +103,7 @@ export function ComplianceSection({
               )}
               {item.status === "not_applicable" ? (
                 <form action={setApplicableAction.bind(null, propertyId, item.requirement.code, true)}>
-                  <button type="submit" className="text-sm font-medium text-brand hover:underline">
+                  <button type="submit" className="text-sm font-medium text-ink underline underline-offset-[3px]">
                     This check applies
                   </button>
                 </form>

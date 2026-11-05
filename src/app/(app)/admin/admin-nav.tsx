@@ -44,6 +44,6 @@ export const pageParam = (value: unknown) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 };
 
-export const tableWrap = "relative overflow-x-auto rounded-lg border border-line bg-surface";
+export const tableWrap = "relative overflow-x-auto border-y border-line bg-surface";
 export const th = "px-3 py-2 text-left font-medium";
 export const td = "px-3 py-2";

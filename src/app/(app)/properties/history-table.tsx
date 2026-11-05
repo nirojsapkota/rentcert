@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatCalendarDate } from "@/lib/calendar-date";
+import { formatCalendarDate, formatShortDate } from "@/lib/calendar-date";
 
 type HistoryRecord = {
   id: string;
@@ -23,9 +23,9 @@ export function HistoryTable({ propertyId, history }: { propertyId: string; hist
         <p className="text-ink-muted">No compliance records yet.</p>
       ) : (
         <>
-          <div className="relative overflow-x-auto rounded-lg border border-line bg-surface">
+          <div className="relative overflow-x-auto border-y border-line bg-surface">
             <table className="w-full min-w-[44rem] text-left text-sm">
-              <thead className="border-b border-line bg-canvas text-ink-muted">
+              <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
                 <tr>
                   <th scope="col" className="px-4 py-2 font-medium">Requirement</th>
                   <th scope="col" className="px-4 py-2 font-medium">Completed</th>
@@ -39,10 +39,10 @@ export function HistoryTable({ propertyId, history }: { propertyId: string; hist
                 {history.records.map((record) => (
                   <tr key={record.id}>
                     <td className="px-4 py-2">{record.requirement.name}</td>
-                    <td className="px-4 py-2">
-                      {record.completedOn ? formatCalendarDate(record.completedOn) : "Last check unknown"}
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      {record.completedOn ? <span className="font-mono">{formatShortDate(record.completedOn)}</span> : "Last check unknown"}
                     </td>
-                    <td className="px-4 py-2">{formatCalendarDate(record.nextDueOn)}</td>
+                    <td className="px-4 py-2 font-mono whitespace-nowrap">{formatShortDate(record.nextDueOn)}</td>
                     <td className="px-4 py-2">{record.providerName ?? "—"}</td>
                     <td className="px-4 py-2">
                       <ul className="space-y-1">
@@ -56,7 +56,7 @@ export function HistoryTable({ propertyId, history }: { propertyId: string; hist
                       </ul>
                       <Link
                         href={`/properties/${propertyId}/records/${record.id}/documents`}
-                        className="text-ink-muted hover:underline"
+                        className="text-ink-muted underline decoration-line-strong underline-offset-[3px] hover:text-ink"
                         aria-label={`${record.documents.length > 0 ? "Manage" : "Add"} documents for ${record.requirement.name.toLowerCase()}${record.completedOn ? ` from ${formatCalendarDate(record.completedOn)}` : ""}`}
                       >
                         {record.documents.length > 0 ? "Manage" : "Add document"}

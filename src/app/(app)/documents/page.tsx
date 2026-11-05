@@ -21,7 +21,7 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/docume
       {query.deleted === "1" && <Alert tone="success">The document has been deleted.</Alert>}
 
       {total === 0 ? (
-        <div className="rounded-lg border border-line bg-surface p-8 text-center">
+        <div className="border border-line bg-surface p-6">
           <h2 className="text-xl font-bold">No certificates uploaded yet.</h2>
           <p className="mt-1 text-ink-muted">Upload your first compliance certificate from a property&apos;s compliance history.</p>
           <Link href="/properties" className="mt-4 inline-block font-medium text-brand hover:underline">
@@ -33,7 +33,7 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/docume
           <p className="text-sm text-ink-muted">
             {total} {total === 1 ? "document" : "documents"}
           </p>
-          <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+          <ul className="divide-y divide-line border-y border-line bg-surface">
             {documents.map((document) => {
               const record = document.complianceRecord;
               return (

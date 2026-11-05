@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { localityLine, propertyTitle, streetLine } from "@/components/property-address";
 import { Alert } from "@/components/ui/alert";
 import { Button, buttonClasses } from "@/components/ui/button";
-import { formatCalendarDate, todayIn } from "@/lib/calendar-date";
+import { formatCalendarDate, formatShortDate, todayIn } from "@/lib/calendar-date";
 import { getPropertySchedule, listPropertyHistory } from "@/server/compliance/queries";
 import { getSharingOverview } from "@/server/sharing/queries";
 import { requireUser } from "@/server/session";
@@ -79,9 +79,9 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
 
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-deep">{propertyTitle(property)}</h1>
+          <h1 className="text-3xl font-bold">{propertyTitle(property)}</h1>
           {!isOwner && (
-            <p className="mt-2 inline-block rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-ink">
+            <p className="mt-2 inline-block rounded-sm border border-[#d9b21a] bg-tag-soft px-2 py-1 font-mono text-xs font-semibold tracking-[0.04em] text-tag-ink uppercase">
               Shared by {property.user.firstName}
             </p>
           )}
@@ -109,11 +109,11 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
         </div>
       </header>
 
-      <section aria-labelledby="details-heading" className="rounded-lg border border-line bg-surface p-6">
-        <h2 id="details-heading" className="text-xl font-bold">
+      <section aria-labelledby="details-heading">
+        <h2 id="details-heading" className="sr-only">
           Details
         </h2>
-        <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+        <dl className="grid gap-4 border-y border-line py-4 sm:grid-cols-3">
           <div>
             <dt className="text-sm text-ink-muted">Address</dt>
             <dd>
@@ -124,10 +124,10 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
           </div>
           <div>
             <dt className="text-sm text-ink-muted">Lease started</dt>
-            <dd>{property.leaseStartDate ? formatCalendarDate(property.leaseStartDate) : "Not entered"}</dd>
+            <dd className={property.leaseStartDate ? "font-mono" : ""}>{property.leaseStartDate ? formatShortDate(property.leaseStartDate) : "Not entered"}</dd>
           </div>
           {property.notes && (
-            <div className="sm:col-span-2">
+            <div>
               <dt className="text-sm text-ink-muted">Notes</dt>
               <dd className="whitespace-pre-line">{property.notes}</dd>
             </div>
@@ -146,7 +146,7 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
       <HistoryTable propertyId={property.id} history={history} />
 
       {isOwner && collaborators.length > 0 && (
-        <section aria-labelledby="transfer-heading" className="rounded-lg border border-line bg-surface p-6">
+        <section aria-labelledby="transfer-heading" className="border-t border-line pt-6">
           <h2 id="transfer-heading" className="text-xl font-bold">
             Transfer property
           </h2>
@@ -165,7 +165,7 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
       )}
 
       {isOwner && (
-        <section aria-labelledby="delete-heading" className="rounded-lg border border-line bg-surface p-6">
+        <section aria-labelledby="delete-heading" className="border-t border-line pt-6">
           <h2 id="delete-heading" className="text-base font-bold">
             Delete property
           </h2>

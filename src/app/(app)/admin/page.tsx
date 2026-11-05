@@ -40,7 +40,7 @@ export default async function AdminPage() {
       <div className={tableWrap}>
         <table className="w-full min-w-[56rem] text-sm">
           <caption className="sr-only">Monthly funnel</caption>
-          <thead className="border-b border-line bg-canvas text-ink-muted">
+          <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
             <tr>
               <th scope="col" className={th}>Month</th>
               {COLUMNS.map(([, label]) => (

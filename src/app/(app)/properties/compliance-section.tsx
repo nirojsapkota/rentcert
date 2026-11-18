@@ -71,11 +71,11 @@ export function ComplianceSection({
             </div>
             <dl className="grid grid-cols-[auto_1fr] content-start gap-x-4 gap-y-1 text-sm">
               <dt className="text-ink-muted">Last completed</dt>
-              <dd className="font-mono">{item.currentRecordKind === "UNKNOWN_LAST_CHECK" && !item.lastCompletedOn ? "Unknown" : formatDate(item.lastCompletedOn)}</dd>
+              <dd className="tabular-nums">{item.currentRecordKind === "UNKNOWN_LAST_CHECK" && !item.lastCompletedOn ? "Unknown" : formatDate(item.lastCompletedOn)}</dd>
               <dt className="text-ink-muted">Next due</dt>
-              <dd className="font-mono">{formatDate(item.nextDueOn)}</dd>
+              <dd className="tabular-nums">{formatDate(item.nextDueOn)}</dd>
               <dt className="text-ink-muted">Days remaining</dt>
-              <dd className="font-mono">{daysText(item)}</dd>
+              <dd className="tabular-nums">{daysText(item)}</dd>
             </dl>
             {!isGeneric && (
               <p className="text-xs text-ink-muted md:col-span-2">

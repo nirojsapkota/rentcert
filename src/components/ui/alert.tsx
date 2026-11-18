@@ -1,16 +1,19 @@
 import type { ReactNode } from "react";
+import { CircleAlert, CircleCheck, Info } from "lucide-react";
 
-// A leading rule in the tone colour on a light tint: reads as a notice, not as another card.
+// A soft tint with an icon, so the tone never depends on colour alone.
 const TONES = {
-  error: "border-danger bg-danger-soft text-danger",
-  success: "border-success bg-success-soft text-success",
-  info: "border-ink bg-brand-soft text-ink",
+  error: { className: "border-danger/25 bg-danger-soft text-danger", Icon: CircleAlert },
+  success: { className: "border-success/25 bg-success-soft text-success", Icon: CircleCheck },
+  info: { className: "border-brand/20 bg-brand-soft text-ink", Icon: Info },
 };
 
 export function Alert({ tone, children }: { tone: keyof typeof TONES; children: ReactNode }) {
+  const { className, Icon } = TONES[tone];
   return (
-    <div role={tone === "error" ? "alert" : "status"} className={`border-l-[3px] px-4 py-3 text-sm ${TONES[tone]}`}>
-      {children}
+    <div role={tone === "error" ? "alert" : "status"} className={`flex gap-3 rounded-lg border px-4 py-3 text-sm ${className}`}>
+      <Icon aria-hidden="true" className="mt-px h-4 w-4 shrink-0" />
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

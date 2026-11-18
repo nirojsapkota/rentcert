@@ -29,6 +29,7 @@
     "@sentry/node": "^11.0.0",
     "better-auth": "^1.7.5",
     "fflate": "^0.8.3",
+    "lucide-react": "1.67.0",
     "next": "16.3.6",
     "pdfkit": "^0.20.2",
     "pg": "^8.23.0",

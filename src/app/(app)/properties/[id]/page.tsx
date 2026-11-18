@@ -81,7 +81,7 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
         <div>
           <h1 className="text-3xl font-bold">{propertyTitle(property)}</h1>
           {!isOwner && (
-            <p className="mt-2 inline-block rounded-sm border border-[#d9b21a] bg-tag-soft px-2 py-1 font-mono text-xs font-semibold tracking-[0.04em] text-tag-ink uppercase">
+            <p className="mt-2 inline-block rounded-full bg-warning-soft px-2.5 py-1 text-xs font-semibold text-warning">
               Shared by {property.user.firstName}
             </p>
           )}
@@ -124,7 +124,7 @@ export default async function PropertyPage({ params, searchParams }: PageProps<"
           </div>
           <div>
             <dt className="text-sm text-ink-muted">Lease started</dt>
-            <dd className={property.leaseStartDate ? "font-mono" : ""}>{property.leaseStartDate ? formatShortDate(property.leaseStartDate) : "Not entered"}</dd>
+            <dd className={property.leaseStartDate ? "tabular-nums" : ""}>{property.leaseStartDate ? formatShortDate(property.leaseStartDate) : "Not entered"}</dd>
           </div>
           {property.notes && (
             <div>

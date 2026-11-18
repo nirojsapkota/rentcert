@@ -83,7 +83,7 @@ export default async function PropertiesPage({ searchParams }: PageProps<"/prope
                   </span>
                   {property.leaseStartDate && (
                     <span className="mt-1 block text-sm text-ink-muted">
-                      Lease started <span className="font-mono">{formatShortDate(property.leaseStartDate)}</span>
+                      Lease started <span className="tabular-nums">{formatShortDate(property.leaseStartDate)}</span>
                     </span>
                   )}
                 </Link>

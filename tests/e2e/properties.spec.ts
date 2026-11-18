@@ -26,7 +26,7 @@ test("landlord adds, edits, archives, restores and deletes a property", async ({
   await page.goto(page.url().replace(/\/setup$/, ""));
   await expect(page.getByRole("heading", { level: 1, name: "12 Example Street" })).toBeVisible();
   await expect(page.getByText("Parramatta NSW 2150").first()).toBeVisible();
-  await expect(page.getByText("12 October 2024")).toBeVisible();
+  await expect(page.getByText("12 Oct 2024")).toBeVisible();
 
   // Edit.
   await page.getByRole("link", { name: "Edit" }).click();

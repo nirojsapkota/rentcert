@@ -21,13 +21,13 @@ function Tick() {
 export function PricingCards() {
   return (
     <div className="space-y-4">
-      <ul className="grid border-y-2 border-ink md:grid-cols-2">
+      <ul className="grid border-y-2 border-line md:grid-cols-2">
         {PLANS.map((plan) => (
           <li key={plan.name} className="flex flex-col py-7 not-last:border-b not-last:border-line md:px-8 md:first:pl-0 md:last:pr-0 md:not-last:border-r md:not-last:border-b-0">
             <h3 className="text-xl font-bold">{plan.name}</h3>
             <p className="mt-1 text-sm text-ink-muted">{plan.featured ? "Best for more than one property" : "For a single rental"}</p>
             <p className="mt-4 flex items-baseline gap-2">
-              <span className="font-mono text-4xl font-semibold">{plan.price}</span>
+              <span className="tabular-nums text-4xl font-semibold">{plan.price}</span>
               <span className="text-ink-muted">AUD / month, incl. GST</span>
             </p>
             <p className="mt-1 font-semibold">{plan.detail}</p>

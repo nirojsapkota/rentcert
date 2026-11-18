@@ -13,11 +13,11 @@ import { archivePoolAction, restorePoolAction } from "../actions";
 
 export const metadata: Metadata = { title: "Pool or spa" };
 
-// Inspection outcome as a service-tag stamp, matching the compliance status stamps.
+// Inspection outcome as a soft pill, matching the compliance status badges.
 const OUTCOME_STAMP: Record<string, string> = {
   PASS: "border-success text-success",
   FAIL: "border-danger text-danger",
-  PENDING: "border-[#d9b21a] bg-tag-soft text-tag-ink",
+  PENDING: "bg-warning-soft text-warning",
 };
 
 export default async function PoolPage({ params, searchParams }: PageProps<"/pools/[id]">) {
@@ -99,7 +99,7 @@ export default async function PoolPage({ params, searchParams }: PageProps<"/poo
         ) : (
           <div className="relative overflow-x-auto border-y border-line bg-surface">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
+              <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
                 <tr>
                   <th scope="col" className="py-2 pr-3 pl-4 font-medium">Date</th>
                   <th scope="col" className="px-3 py-2 font-medium">Type</th>
@@ -111,17 +111,17 @@ export default async function PoolPage({ params, searchParams }: PageProps<"/poo
                 {inspections.map((inspection) => (
                   <tr key={inspection.id}>
                     <td className="py-2.5 pr-3 pl-4 whitespace-nowrap">
-                      <Link href={"/pools/" + pool.id + "/inspections/" + inspection.id} className="font-mono font-medium text-brand">
+                      <Link href={"/pools/" + pool.id + "/inspections/" + inspection.id} className="tabular-nums font-medium text-brand">
                         {formatShortDate(inspection.inspectedOn)}
                       </Link>
                     </td>
                     <td className="px-3 py-2.5">{INSPECTION_KINDS.find((k) => k.code === inspection.kind)?.name}</td>
                     <td className="px-3 py-2.5">
-                      <span className={`inline-block rounded-sm border px-2 py-1 font-mono text-xs leading-none font-semibold tracking-[0.04em] uppercase ${OUTCOME_STAMP[inspection.outcome]}`}>
+                      <span className={`inline-block rounded-full px-2.5 py-1 text-xs leading-none font-semibold ${OUTCOME_STAMP[inspection.outcome]}`}>
                         {INSPECTION_OUTCOMES.find((o) => o.code === inspection.outcome)?.name}
                       </span>
                     </td>
-                    <td className="hidden py-2.5 pr-4 pl-3 font-mono sm:table-cell">{inspection._count.photos}</td>
+                    <td className="hidden py-2.5 pr-4 pl-3 tabular-nums sm:table-cell">{inspection._count.photos}</td>
                   </tr>
                 ))}
               </tbody>

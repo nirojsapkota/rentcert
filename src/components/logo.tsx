@@ -1,23 +1,23 @@
 import Link from "next/link";
 
-// A yellow service tag with a punched hole and a tick: a check that has been done.
+// A white house with a tick on a brand-blue tile: a check that has been done.
 // Decorative; the wordmark carries the name.
-export const TAG_PATH = "M9 9.5 16 4l7 5.5V28H9z";
-export const TAG_HOLE = "M16 7.6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z";
+export const HOUSE_PATH = "M16 6.5 6.5 14.2V26h19V14.2z";
 
 export function LogoMark({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <path d={`${TAG_PATH}${TAG_HOLE}`} fill="#f5c518" fillRule="evenodd" />
-      <path d="m12.6 19.2 2.4 2.4 4.4-4.9" fill="none" stroke="#16191d" strokeWidth="2.2" strokeLinecap="square" />
+      <rect width="32" height="32" rx="8" fill="#1d4ed8" />
+      <path d={HOUSE_PATH} fill="#ffffff" />
+      <path d="m11.6 18.6 3.2 3.2 5.8-6.2" fill="none" stroke="#1d4ed8" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-// Inherits its text colour, so it works on the light canvas and on the ink app bar.
-export function Logo({ href = "/", size = 28, className = "" }: { href?: string; size?: number; className?: string }) {
+// Inherits its text colour, so it works on the light canvas and on the navy sidebar.
+export function Logo({ href = "/", size = 30, className = "" }: { href?: string; size?: number; className?: string }) {
   return (
-    <Link href={href} className={`inline-flex items-center gap-1.5 font-display text-lg font-bold tracking-[-0.02em] ${className}`}>
+    <Link href={href} className={`inline-flex items-center gap-2 font-display text-lg font-extrabold tracking-[-0.02em] ${className}`}>
       <LogoMark size={size} />
       RentCert
     </Link>

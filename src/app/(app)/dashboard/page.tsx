@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Building2, CalendarClock, CircleAlert, CircleCheck, Clock, Users, Waves } from "lucide-react";
 import { localityLine, propertyTitle } from "@/components/property-address";
 import { StatusBadge } from "@/components/status-badge";
 import { SummaryStats } from "@/components/summary-stats";
@@ -35,9 +36,9 @@ async function InspectorDashboard({ firstName, timezone, userId }: { firstName: 
   const { clients, pools } = await countActiveBarrierRecords(userId);
   const recalls = await countRecallsDue(userId, todayIn(timezone), 90);
   const stats = [
-    { label: clients === 1 ? "Client" : "Clients", value: clients, href: "/clients" },
-    { label: pools === 1 ? "Pool or spa" : "Pools and spas", value: pools, href: "/pools" },
-    { label: recalls === 1 ? "Recall due in 90 days" : "Recalls due in 90 days", value: recalls, href: "/pools", tone: "warning" as const },
+    { label: clients === 1 ? "Client" : "Clients", value: clients, href: "/clients", icon: <Users /> },
+    { label: pools === 1 ? "Pool or spa" : "Pools and spas", value: pools, href: "/pools", icon: <Waves /> },
+    { label: recalls === 1 ? "Recall due in 90 days" : "Recalls due in 90 days", value: recalls, href: "/pools", tone: "warning" as const, icon: <CalendarClock /> },
   ];
   return (
     <section className="space-y-6">
@@ -105,10 +106,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   const rows = filter === "completed" ? [] : filterDashboardRows(dashboard.rows, filter);
   const stats = [
-    { label: "Overdue", value: dashboard.counts.overdue, href: "/dashboard?filter=overdue", tone: "danger" as const },
-    { label: "Due soon", value: dashboard.counts.dueSoon, href: "/dashboard?filter=due_soon", tone: "warning" as const },
-    { label: "Up to date", value: dashboard.counts.upToDate, href: "/dashboard?filter=upcoming", tone: "success" as const },
-    { label: dashboard.propertyCount === 1 ? "Property" : "Properties", value: dashboard.propertyCount, href: "/properties" },
+    { label: "Overdue", value: dashboard.counts.overdue, href: "/dashboard?filter=overdue", tone: "danger" as const, icon: <CircleAlert /> },
+    { label: "Due soon", value: dashboard.counts.dueSoon, href: "/dashboard?filter=due_soon", tone: "warning" as const, icon: <Clock /> },
+    { label: "Up to date", value: dashboard.counts.upToDate, href: "/dashboard?filter=upcoming", tone: "success" as const, icon: <CircleCheck /> },
+    { label: dashboard.propertyCount === 1 ? "Property" : "Properties", value: dashboard.propertyCount, href: "/properties", icon: <Building2 /> },
   ];
 
   return (
@@ -136,7 +137,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               key={option.value}
               href={option.value === "all" ? "/dashboard" : `/dashboard?filter=${option.value}`}
               aria-current={filter === option.value ? "page" : undefined}
-              className="rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-sm font-medium text-ink-muted hover:text-ink aria-[current=page]:border-ink aria-[current=page]:bg-ink aria-[current=page]:text-white"
+              className="rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-sm font-medium text-ink-muted hover:text-ink aria-[current=page]:border-brand aria-[current=page]:bg-brand aria-[current=page]:text-white"
             >
               {option.label}
             </Link>
@@ -149,7 +150,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           ) : (
             <div className="relative overflow-x-auto border-y border-line bg-surface">
               <table className="w-full min-w-[32rem] text-left text-sm">
-                <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
+                <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
                   <tr>
                     <th scope="col" className="px-4 py-2 font-medium">Property</th>
                     <th scope="col" className="px-4 py-2 font-medium">Requirement</th>
@@ -166,8 +167,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                         </Link>
                       </td>
                       <td className="px-4 py-2">{record.requirement.name}</td>
-                      <td className="px-4 py-2 font-mono whitespace-nowrap">{record.completedOn ? formatShortDate(record.completedOn) : "—"}</td>
-                      <td className="px-4 py-2 font-mono whitespace-nowrap">{formatShortDate(record.nextDueOn)}</td>
+                      <td className="px-4 py-2 tabular-nums whitespace-nowrap">{record.completedOn ? formatShortDate(record.completedOn) : "—"}</td>
+                      <td className="px-4 py-2 tabular-nums whitespace-nowrap">{formatShortDate(record.nextDueOn)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -179,7 +180,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         ) : (
           <div className="relative overflow-x-auto border-y border-line bg-surface">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
+              <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
                 <tr>
                   <th scope="col" className="py-2 pr-3 pl-4 font-medium">Check</th>
                   <th scope="col" className="hidden px-3 py-2 font-medium sm:table-cell">Due</th>
@@ -202,10 +203,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                           {row.property.userId !== user.id && <> · Shared by {row.property.user.firstName}</>}
                         </p>
                       </td>
-                      <td className="hidden px-3 py-2.5 font-mono whitespace-nowrap sm:table-cell">{due}</td>
+                      <td className="hidden px-3 py-2.5 tabular-nums whitespace-nowrap sm:table-cell">{due}</td>
                       <td className="py-2.5 pr-4 pl-3 text-right sm:text-left">
                         <StatusBadge status={row.item.status} label={row.item.label} />
-                        <span className="mt-1.5 block font-mono text-[0.8125rem] whitespace-nowrap text-ink-muted sm:hidden">Due {due}</span>
+                        <span className="mt-1.5 block tabular-nums text-[0.8125rem] whitespace-nowrap text-ink-muted sm:hidden">Due {due}</span>
                       </td>
                     </tr>
                   );

@@ -25,7 +25,7 @@ export function HistoryTable({ propertyId, history }: { propertyId: string; hist
         <>
           <div className="relative overflow-x-auto border-y border-line bg-surface">
             <table className="w-full min-w-[44rem] text-left text-sm">
-              <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
+              <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
                 <tr>
                   <th scope="col" className="px-4 py-2 font-medium">Requirement</th>
                   <th scope="col" className="px-4 py-2 font-medium">Completed</th>
@@ -40,9 +40,9 @@ export function HistoryTable({ propertyId, history }: { propertyId: string; hist
                   <tr key={record.id}>
                     <td className="px-4 py-2">{record.requirement.name}</td>
                     <td className="px-4 py-2 whitespace-nowrap">
-                      {record.completedOn ? <span className="font-mono">{formatShortDate(record.completedOn)}</span> : "Last check unknown"}
+                      {record.completedOn ? <span className="tabular-nums">{formatShortDate(record.completedOn)}</span> : "Last check unknown"}
                     </td>
-                    <td className="px-4 py-2 font-mono whitespace-nowrap">{formatShortDate(record.nextDueOn)}</td>
+                    <td className="px-4 py-2 tabular-nums whitespace-nowrap">{formatShortDate(record.nextDueOn)}</td>
                     <td className="px-4 py-2">{record.providerName ?? "—"}</td>
                     <td className="px-4 py-2">
                       <ul className="space-y-1">

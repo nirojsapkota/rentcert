@@ -1,27 +1,35 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
+import { StatTile, type StatTileTone } from "@/components/ui/stat-tile";
 
-export type SummaryStat = { label: string; value: number; href: string; tone?: "danger" | "warning" | "success" | "plain" };
-
-const TONE = {
-  danger: "text-danger",
-  warning: "text-tag-ink",
-  success: "text-success",
-  plain: "text-ink",
+export type SummaryStat = {
+  label: string;
+  value: number;
+  href: string;
+  icon: ReactNode;
+  tone?: "danger" | "warning" | "success" | "plain";
 };
 
-// One summary line of counts above a table: large mono numbers with a label, separated by rules.
-// A non-zero danger count is the only coloured number, so attention goes where it is needed.
+// Danger only turns red when there is something overdue, so attention goes where it is needed.
+function tileTone(stat: SummaryStat): StatTileTone {
+  switch (stat.tone) {
+    case "danger":
+      return stat.value > 0 ? "danger" : "violet";
+    case "warning":
+      return "amber";
+    case "success":
+      return "green";
+    default:
+      return "blue";
+  }
+}
+
+// A row of tinted stat tiles with icons. Kept as a list so screen readers hear the count of items.
 export function SummaryStats({ stats, label }: { stats: SummaryStat[]; label: string }) {
   return (
-    <ul aria-label={label} className="flex flex-wrap border-y border-line">
+    <ul aria-label={label} className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {stats.map((stat) => (
-        <li key={stat.label} className="w-1/2 border-line sm:w-auto sm:flex-1 sm:not-last:border-r">
-          <Link href={stat.href} className="group block px-4 py-3 hover:bg-brand-soft">
-            <span className={`block font-mono text-3xl font-semibold leading-none ${stat.value > 0 ? TONE[stat.tone ?? "plain"] : "text-ink"}`}>
-              {stat.value}
-            </span>
-            <span className="mt-1.5 block text-sm text-ink-muted group-hover:text-ink">{stat.label}</span>
-          </Link>
+        <li key={stat.label} className="min-w-0">
+          <StatTile href={stat.href} value={stat.value} label={stat.label} icon={stat.icon} tone={tileTone(stat)} />
         </li>
       ))}
     </ul>

@@ -26,7 +26,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
       </form>
       <div className={tableWrap}>
         <table className="w-full min-w-[52rem] text-sm">
-          <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
+          <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
             <tr>
               <th scope="col" className={th}>Email</th>
               <th scope="col" className={th}>Signed up</th>

@@ -12,7 +12,7 @@ type Council = {
 
 export function LodgePanel({ council }: { council: Council | null }) {
   return (
-    <section aria-labelledby="lodge-heading" className="space-y-2 border-l-[3px] border-tag bg-surface px-5 py-4">
+    <section aria-labelledby="lodge-heading" className="space-y-2 rounded-xl border border-line bg-surface p-5 shadow-card">
       <h2 id="lodge-heading" className="text-xl font-bold">
         How to lodge
       </h2>

@@ -17,9 +17,9 @@ const STEPS = [
   ["Get reminders", "RentCert emails you 30 and 7 days before a due date, on the day, and if it passes."],
 ] as const;
 
-// Eyebrow label: mono, uppercase, muted. Marks a section without another pill or chip.
+// Eyebrow label: small, bold, brand blue. Marks a section.
 function Eyebrow({ children }: { children: ReactNode }) {
-  return <p className="font-mono text-xs font-medium tracking-[0.08em] text-ink-muted uppercase">{children}</p>;
+  return <p className="text-sm font-semibold text-brand">{children}</p>;
 }
 
 export default function HomePage() {
@@ -46,7 +46,7 @@ export default function HomePage() {
         </div>
 
         <figure>
-          <div className="overflow-hidden rounded-lg border border-ink bg-surface shadow-[8px_8px_0_0_var(--color-tag)]">
+          <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
             <Image
               src={dashboardShot}
               alt="The RentCert dashboard: a summary of overdue, due soon and up-to-date checks above a table of upcoming deadlines for three example properties."
@@ -59,7 +59,7 @@ export default function HomePage() {
         </figure>
       </section>
 
-      <section aria-labelledby="problem-heading" className="grid gap-6 border-t border-ink pt-8 md:grid-cols-[1fr_2fr]">
+      <section aria-labelledby="problem-heading" className="grid gap-6 border-t border-line pt-8 md:grid-cols-[1fr_2fr]">
         <h2 id="problem-heading" className="text-2xl font-bold sm:text-3xl">
           Compliance dates are easy to lose track of
         </h2>
@@ -75,11 +75,11 @@ export default function HomePage() {
           How it works
         </h2>
         {/* A real sequence, so the steps are numbered and sit on one rule. */}
-        <ol className="mt-8 grid gap-8 border-ink sm:grid-cols-2 sm:border-t-2 lg:grid-cols-4 lg:gap-6">
+        <ol className="mt-8 grid gap-8 border-line sm:grid-cols-2 sm:border-t-2 lg:grid-cols-4 lg:gap-6">
           {STEPS.map(([title, body], index) => (
-            <li key={title} className="relative border-t-2 border-ink pt-5 sm:border-t-0">
-              <span aria-hidden="true" className="absolute -top-[7px] left-0 h-3 w-3 bg-tag ring-2 ring-ink" />
-              <p className="font-mono text-xs font-semibold tracking-[0.08em] text-ink-muted">
+            <li key={title} className="relative border-t-2 border-line pt-5 sm:border-t-0">
+              <span aria-hidden="true" className="absolute -top-[7px] left-0 h-3 w-3 rounded-full bg-brand ring-2 ring-white" />
+              <p className="tabular-nums text-xs font-semibold text-brand">
                 <span className="sr-only">Step </span>
                 {String(index + 1).padStart(2, "0")}
               </p>
@@ -119,7 +119,7 @@ export default function HomePage() {
 
       <Faq />
 
-      <section aria-labelledby="disclaimer-heading" className="border-l-[3px] border-ink bg-surface px-5 py-4">
+      <section aria-labelledby="disclaimer-heading" className="rounded-xl border border-line bg-surface px-5 py-4">
         <h2 id="disclaimer-heading" className="text-base font-bold">
           Important
         </h2>
@@ -130,7 +130,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <section className="on-ink flex flex-col gap-6 rounded-lg bg-ink px-6 py-10 text-white sm:flex-row sm:items-center sm:justify-between sm:px-10">
+      <section className="on-deep flex flex-col gap-6 rounded-2xl bg-deep px-6 py-10 text-white sm:flex-row sm:items-center sm:justify-between sm:px-10">
         <div className="flex items-start gap-4">
           <LogoMark size={44} />
           <div>
@@ -140,7 +140,7 @@ export default function HomePage() {
         </div>
         <Link
           href="/sign-up"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-tag px-6 py-3 font-semibold text-ink hover:bg-[#ffd43b]"
+          className="btn inline-flex min-h-11 shrink-0 items-center justify-center rounded-[10px] bg-white px-6 py-3 font-semibold text-brand hover:bg-brand-soft"
         >
           Start free
         </Link>

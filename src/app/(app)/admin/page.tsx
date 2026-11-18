@@ -29,18 +29,18 @@ export default async function AdminPage() {
       <AdminNav current="/admin" />
       <ul className="flex flex-wrap border-y border-line">
         <li className="w-1/2 border-line px-4 py-3 sm:w-auto sm:min-w-48 sm:border-r">
-          <span className="block font-mono text-3xl leading-none font-semibold">${metrics.mrr}</span>
+          <span className="block tabular-nums text-3xl leading-none font-semibold">${metrics.mrr}</span>
           <span className="mt-1.5 block text-sm text-ink-muted">MRR (AUD, incl. GST)</span>
         </li>
         <li className="w-1/2 px-4 py-3 sm:w-auto sm:min-w-48">
-          <span className="block font-mono text-3xl leading-none font-semibold">{metrics.activeSubscriptions}</span>
+          <span className="block tabular-nums text-3xl leading-none font-semibold">{metrics.activeSubscriptions}</span>
           <span className="mt-1.5 block text-sm text-ink-muted">Active subscriptions</span>
         </li>
       </ul>
       <div className={tableWrap}>
         <table className="w-full min-w-[56rem] text-sm">
           <caption className="sr-only">Monthly funnel</caption>
-          <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
+          <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
             <tr>
               <th scope="col" className={th}>Month</th>
               {COLUMNS.map(([, label]) => (
@@ -51,9 +51,9 @@ export default async function AdminPage() {
           <tbody className="divide-y divide-line">
             {metrics.months.map((row) => (
               <tr key={row.month}>
-                <th scope="row" className={`${td} font-mono font-medium whitespace-nowrap`}>{row.month}</th>
+                <th scope="row" className={`${td} tabular-nums font-medium whitespace-nowrap`}>{row.month}</th>
                 {COLUMNS.map(([key]) => (
-                  <td key={key} className={`${td} font-mono`}>{row[key]}</td>
+                  <td key={key} className={`${td} tabular-nums`}>{row[key]}</td>
                 ))}
               </tr>
             ))}

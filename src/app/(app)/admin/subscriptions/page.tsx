@@ -18,7 +18,7 @@ export default async function AdminSubscriptionsPage({ searchParams }: PageProps
       <AdminNav current="/admin/subscriptions" />
       <div className={tableWrap}>
         <table className="w-full min-w-[40rem] text-sm">
-          <thead className="border-b border-line font-mono text-[0.6875rem] tracking-[0.07em] text-ink-muted uppercase">
+          <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
             <tr>
               <th scope="col" className={th}>Customer</th>
               <th scope="col" className={th}>Plan</th>

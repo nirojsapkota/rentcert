@@ -1,6 +1,6 @@
 # SPEC: blue-retheme ("Clear Blue")
 
-Status: APPROVED 2026-11-18 with the default answers to all open questions. Slice 1 built.
+Status: APPROVED 2026-11-18 with the default answers to all open questions. Slices 1-2 built. Approved new dashboard strings: card titles "Next due", "Recent activity", "Your properties"; "View all"; "{Check} completed"; "Reminder sent {30 days before / 7 days before / on / 7 days after} the due date: {check}"; "{Check} due {date}"; and the empty activity line.
 
 Reference: `Rental Gas Check Dashboard.png`, supplied by the user on 2026-11-18. It shows a navy sidebar, an illustrated blue hero banner, four coloured stat tiles, an "Upcoming check" card, "Recent activity", a property list with thumbnails, and a tip card. Only the visual style is taken from it, not its text.
 
@@ -91,7 +91,7 @@ Keep all existing wording. This phase is visual only.
 2. **Dashboard:**
    - A hero banner (`brand-soft`, with the illustration on the right) holding the existing dashboard heading and add-property button. On phones the banner shrinks and hides the illustration.
    - Four stat tiles: Properties; Due in 30 days; Overdue (danger tint when above 0, otherwise blue); Up to date. Each links to the filtered list.
-   - "Next due" card: the soonest overdue or due check, with its address, due date, check type and the existing record-check button.
+   - "Next due" card: the soonest overdue or due check, with its address, due date and the existing "Mark completed" button.
    - "Recent activity" card: the last 5 events, either a check recorded or a reminder sent. It reads `compliance_records` and `compliance_reminders` through new owner-scoped functions in the compliance and reminders modules, so the architecture test still holds.
    - "Your properties" card: each address with an illustrated house thumbnail (see open question 3), its next check date and a status badge.
    - The upcoming-deadlines table stays below the cards, inside a card, so nothing in it is lost.

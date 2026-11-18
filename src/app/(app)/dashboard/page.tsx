@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Building2, CalendarClock, CircleAlert, CircleCheck, Clock, Users, Waves } from "lucide-react";
+import { Building2, CalendarClock, CircleAlert, CircleCheck, Clock, ListChecks, Plus, Users, Waves } from "lucide-react";
 import { localityLine, propertyTitle } from "@/components/property-address";
 import { StatusBadge } from "@/components/status-badge";
 import { SummaryStats } from "@/components/summary-stats";
 import { Alert } from "@/components/ui/alert";
 import { buttonClasses } from "@/components/ui/button";
-import { formatShortDate, parseCalendarDate, todayIn } from "@/lib/calendar-date";
+import { formatShortDate, parseCalendarDate, toCalendarDateString, todayIn } from "@/lib/calendar-date";
 import { greetingFor } from "@/lib/greeting";
 import {
   filterDashboardRows,
@@ -16,7 +16,16 @@ import {
 } from "@/server/compliance/queries";
 import { countRecallsDue } from "@/server/barrier/inspections";
 import { countActiveBarrierRecords } from "@/server/barrier/queries";
+import { listRecentRemindersSent } from "@/server/reminders/queries";
 import { requireUser } from "@/server/session";
+import {
+  DashboardHero,
+  NextDueCard,
+  PropertiesCard,
+  RecentActivityCard,
+  reminderActivityTitle,
+  type ActivityItem,
+} from "./dashboard-cards";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -50,7 +59,7 @@ async function InspectorDashboard({ firstName, timezone, userId }: { firstName: 
       </div>
       <SummaryStats label="Register summary" stats={stats} />
       {clients === 0 && (
-        <div className="border border-line bg-surface p-6">
+        <div className="rounded-xl border border-line bg-surface p-6 shadow-card">
           <h2 className="text-xl font-bold">Add your first client</h2>
           <p className="mt-1 text-ink-muted">Then add the pools and spas you inspect for them.</p>
           <Link href="/clients/new" className={`${buttonClasses("primary")} mt-4`}>
@@ -69,31 +78,66 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const filter = parseFilter(query.filter);
   const timezone = user.timezone ?? "Australia/Melbourne";
   const today = todayIn(timezone);
-  const dashboard = await getDashboard(user.id, today);
-  const completions = filter === "completed" ? await listRecentCompletions(user.id, today) : [];
+  const [dashboard, recentCompletions, recentReminders] = await Promise.all([
+    getDashboard(user.id, today),
+    listRecentCompletions(user.id, today, filter === "completed" ? 50 : 5),
+    listRecentRemindersSent(user.id, 5),
+  ]);
+  const completions = filter === "completed" ? recentCompletions : [];
+  // Newest first across both kinds; reminders are dated in the user's timezone.
+  const activity: ActivityItem[] = [
+    ...recentCompletions.slice(0, 5).map((record) => ({
+      id: record.id,
+      kind: "completed" as const,
+      title: `${record.requirement.name} completed`,
+      property: { id: record.property.id, label: propertyTitle(record.property) },
+      date: toCalendarDateString(record.completedOn!),
+    })),
+    ...recentReminders.map((reminder) => ({
+      id: reminder.id,
+      kind: "reminder" as const,
+      title: reminderActivityTitle(reminder.reminderType, reminder.complianceRecord.requirement.name),
+      property: { id: reminder.complianceRecord.property.id, label: propertyTitle(reminder.complianceRecord.property) },
+      date: todayIn(timezone, reminder.sentAt!),
+    })),
+  ]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
 
   const heading = (
-    <div>
-      <h1 className="text-3xl font-bold sm:text-4xl">Due checks</h1>
-      <p className="mt-1 text-ink-muted">
-        {greetingFor(new Date(), timezone)}, {user.firstName}. Dates are based on the ones you entered.
-      </p>
+    <>
+      <DashboardHero
+        heading={
+          <>
+            <h1 className="text-3xl font-extrabold sm:text-5xl">Due checks</h1>
+            <p className="mt-2 text-ink-muted sm:text-lg">
+              {greetingFor(new Date(), timezone)}, {user.firstName}. Dates are based on the ones you entered.
+            </p>
+          </>
+        }
+      >
+        {/* With no properties the empty-state card below carries the only "Add property" button. */}
+        {dashboard.propertyCount > 0 && (
+          <Link href="/properties/new" className={buttonClasses("primary")}>
+            <Plus aria-hidden="true" className="h-4 w-4" />
+            Add property
+          </Link>
+        )}
+      </DashboardHero>
       {query.shared === "1" && (
-        <div className="mt-4">
-          <Alert tone="success">
-            Invite accepted. You&apos;re signed in as {user.email}. Properties shared with you now appear here, marked
-            &ldquo;Shared by&rdquo;.
-          </Alert>
-        </div>
+        <Alert tone="success">
+          Invite accepted. You&apos;re signed in as {user.email}. Properties shared with you now appear here, marked
+          &ldquo;Shared by&rdquo;.
+        </Alert>
       )}
-    </div>
+    </>
   );
 
   if (dashboard.propertyCount === 0) {
     return (
       <section className="space-y-6">
         {heading}
-        <div className="border border-line bg-surface p-6">
+        <div className="rounded-xl border border-line bg-surface p-6 shadow-card">
           <h2 className="text-xl font-bold">Add your first property</h2>
           <p className="mt-1 text-ink-muted">Start tracking your compliance deadlines and certificates.</p>
           <Link href="/properties/new" className={`${buttonClasses("primary")} mt-4`}>
@@ -118,6 +162,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
       <SummaryStats label="Compliance summary" stats={stats} />
 
+      <div className="grid items-start gap-6 lg:grid-cols-[3fr_2fr]">
+        <NextDueCard rows={dashboard.rows} />
+        <RecentActivityCard items={activity} />
+      </div>
+
+      <PropertiesCard rows={dashboard.rows} notSetUp={dashboard.notSetUp} />
+
       {dashboard.notSetUp.length > 0 && (
         <Alert tone="info">
           {dashboard.notSetUp.length} {dashboard.notSetUp.length === 1 ? "check needs" : "checks need"} a starting date.{" "}
@@ -127,8 +178,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </Alert>
       )}
 
-      <section aria-labelledby="deadlines-heading" className="space-y-4">
-        <h2 id="deadlines-heading" className="text-xl font-bold">
+      <section aria-labelledby="deadlines-heading" className="scroll-mt-6 space-y-4 rounded-xl border border-line bg-surface p-5 shadow-card">
+        <h2 id="deadlines-heading" className="flex items-center gap-2 text-lg font-bold">
+          <ListChecks aria-hidden="true" className="h-5 w-5 text-brand" />
           {filter === "completed" ? "Completed checks (last 12 months)" : "Upcoming deadlines"}
         </h2>
         <nav aria-label="Deadline filters" className="flex flex-wrap gap-1.5">
@@ -148,7 +200,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           completions.length === 0 ? (
             <p className="text-ink-muted">No checks completed in the last 12 months.</p>
           ) : (
-            <div className="relative overflow-x-auto border-y border-line bg-surface">
+            <div className="relative -mx-5 overflow-x-auto border-t border-line">
               <table className="w-full min-w-[32rem] text-left text-sm">
                 <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
                   <tr>
@@ -176,9 +228,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             </div>
           )
         ) : rows.length === 0 ? (
-          <p className="border-y border-line py-6 text-ink-muted">You&apos;re all caught up.</p>
+          <p className="py-4 text-ink-muted">You&apos;re all caught up.</p>
         ) : (
-          <div className="relative overflow-x-auto border-y border-line bg-surface">
+          <div className="relative -mx-5 overflow-x-auto border-t border-line">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-line bg-canvas text-xs font-semibold text-ink-muted">
                 <tr>

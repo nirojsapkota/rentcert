@@ -6,6 +6,7 @@ import { recordCompletion, setRequirementApplicable, setUpChecks } from "@/serve
 import { db } from "@/server/db";
 import { testOutbox } from "@/server/mail/deliver";
 import { archiveProperty } from "@/server/properties/commands";
+import { listRecentRemindersSent } from "@/server/reminders/queries";
 import { scanDueReminders } from "@/server/reminders/scan";
 import { MAX_SEND_ATTEMPTS, sendReminder } from "@/server/reminders/send";
 import { sendWelcome } from "@/server/reminders/welcome";
@@ -244,5 +245,33 @@ describe("orphaned file cleanup", () => {
     expect(await deleteOrphanedFiles()).toBe(1);
     expect(existsSync(oldOrphan)).toBe(false);
     expect(existsSync(newOrphan)).toBe(true);
+  });
+});
+
+describe("listRecentRemindersSent", () => {
+  async function reminder(userId: string, recordId: string, reminderType: "DAYS_30" | "DAYS_7", status: "SENT" | "PENDING", sentAt: Date | null) {
+    return db.complianceReminder.create({
+      data: { userId, complianceRecordId: recordId, reminderType, scheduledFor: new Date(`${T}T00:00:00Z`), status, sentAt },
+    });
+  }
+
+  it("returns only the user's own sent reminders on active properties, newest first", async () => {
+    const owner = await createUser();
+    const stranger = await createUser();
+    const ownRecord = await gasRecord(owner.id, 20);
+    const archivedRecord = await gasRecord(owner.id, 20);
+    const strangerRecord = await gasRecord(stranger.id, 20);
+
+    const older = await reminder(owner.id, ownRecord.recordId, "DAYS_30", "SENT", new Date("2026-01-01T00:00:00Z"));
+    const newer = await reminder(owner.id, ownRecord.recordId, "DAYS_7", "SENT", new Date("2026-02-01T00:00:00Z"));
+    await reminder(owner.id, archivedRecord.recordId, "DAYS_30", "SENT", new Date("2026-03-01T00:00:00Z"));
+    await reminder(stranger.id, strangerRecord.recordId, "DAYS_30", "SENT", new Date("2026-03-01T00:00:00Z"));
+    await reminder(stranger.id, ownRecord.recordId, "DAYS_30", "PENDING", null);
+    await archiveProperty(owner.id, archivedRecord.propertyId);
+
+    const rows = await listRecentRemindersSent(owner.id);
+    expect(rows.map((row) => row.id)).toEqual([newer.id, older.id]);
+    expect(rows[0].complianceRecord.requirement.name).toMatch(/gas/i);
+    expect(await listRecentRemindersSent(stranger.id)).toHaveLength(1);
   });
 });
